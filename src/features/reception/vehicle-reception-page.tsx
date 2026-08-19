@@ -11,7 +11,6 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { FormField, TextAreaField } from '../../components/ui/form-field'
-import { env } from '../../config/env'
 import { ApiError, errorMessage } from '../../lib/api-error'
 import { createWorkOrder, getVehicleHistory } from './reception.api'
 import type {

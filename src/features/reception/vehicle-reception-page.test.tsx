@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '../../lib/api-error'
-import { createWorkOrder, getVehicleHistory } from './reception.api'
+import { createWorkOrder, getVehicleHistory } from './api/reception-api'
 import { VehicleReceptionPage } from './vehicle-reception-page'
 
 vi.mock('./reception.api', () => ({

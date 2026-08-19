@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createWorkOrder, getVehicleHistory } from './reception.api'
+import { createWorkOrder, getVehicleHistory } from './api/reception-api'
 import type { RegisterVehicleEntryRequest } from './reception.types'
 
 describe('reception API', () => {
