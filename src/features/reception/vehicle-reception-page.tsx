@@ -12,7 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { FormField, TextAreaField } from '../../components/ui/form-field'
 import { ApiError, errorMessage } from '../../lib/api-error'
-import { createWorkOrder, getVehicleHistory } from './reception.api'
+import { useCreateWorkOrder, useVehicleHistory } from './api/reception-api'
 import type {
   CreatedWorkOrderResponse,
   LookupState,
@@ -46,52 +46,65 @@ export function VehicleReceptionPage() {
   } = useForm<VehicleEntryFormValues>({ defaultValues, mode: 'onBlur' })
   const plate = useWatch({ control, name: 'plate' })
   const isFullyElectric = useWatch({ control, name: 'isFullyElectric' })
-  const [lookup, setLookup] = useState<LookupState>({ status: 'idle' })
+  const [searchedPlate, setSearchedPlate] = useState('')
   const [submitError, setSubmitError] = useState('')
   const [createdOrder, setCreatedOrder] = useState<CreatedWorkOrderResponse | null>(null)
-  const autoCompletedName = useRef('')
+  const autoCompletedValues = useRef<Partial<VehicleEntryFormValues>>({})
+  const historyQuery = useVehicleHistory(searchedPlate)
+  const createWorkOrder = useCreateWorkOrder()
+  const normalizedPlate = normalizePlate(plate)
+  const lookup: LookupState = !PLATE_PATTERN.test(normalizedPlate)
+    ? { status: 'idle' }
+    : searchedPlate !== normalizedPlate || historyQuery.isPending || historyQuery.isFetching
+      ? { status: 'loading' }
+      : historyQuery.isError
+        ? { status: 'error', message: errorMessage(historyQuery.error) }
+        : historyQuery.data
+          ? { status: 'found', data: historyQuery.data }
+          : { status: 'new' }
   const isPersistedElectric = lookup.status === 'found' && lookup.data.is_fully_electric
   const isElectricBlocked = isFullyElectric || isPersistedElectric
 
   useEffect(() => {
-    const normalized = normalizePlate(plate)
     setSubmitError('')
 
-    if (autoCompletedName.current && getValues('customerName') === autoCompletedName.current) {
-      setValue('customerName', '')
-      autoCompletedName.current = ''
+    for (const [field, value] of Object.entries(autoCompletedValues.current)) {
+      const fieldName = field as keyof VehicleEntryFormValues
+      if (getValues(fieldName) === value) {
+        setValue(fieldName, defaultValues[fieldName])
+      }
     }
+    autoCompletedValues.current = {}
 
-    if (!PLATE_PATTERN.test(normalized)) {
-      setLookup({ status: 'idle' })
+    if (!PLATE_PATTERN.test(normalizedPlate)) {
+      setSearchedPlate('')
       return
     }
 
-    const controller = new AbortController()
-    const timeout = window.setTimeout(async () => {
-      setLookup({ status: 'loading' })
-      try {
-        const data = await getVehicleHistory(normalized, controller.signal)
-        setLookup({ status: 'found', data })
-        autoCompletedName.current = data.customer_name
-        setValue('customerName', data.customer_name, { shouldValidate: true })
-        setValue('isFullyElectric', data.is_fully_electric)
-      } catch (error) {
-        if (controller.signal.aborted) return
-        if (error instanceof ApiError && error.status === 404) {
-          setLookup({ status: 'new' })
-          setValue('isFullyElectric', false)
-          return
-        }
-        setLookup({ status: 'error', message: errorMessage(error) })
-      }
-    }, 450)
+    const timeout = window.setTimeout(() => setSearchedPlate(normalizedPlate), 350)
 
-    return () => {
-      window.clearTimeout(timeout)
-      controller.abort()
+    return () => window.clearTimeout(timeout)
+  }, [getValues, normalizedPlate, setValue])
+
+  useEffect(() => {
+    const data = historyQuery.data
+    if (!data || data.plate !== searchedPlate) return
+
+    const values: Partial<VehicleEntryFormValues> = {
+      customerIdentification: data.customer_identification,
+      customerName: data.customer_name,
+      customerPhone: data.customer_phone ?? '',
+      brand: data.brand,
+      model: data.model,
+      year: String(data.year),
+      isFullyElectric: data.is_fully_electric,
     }
-  }, [getValues, plate, setValue])
+
+    for (const [field, value] of Object.entries(values)) {
+      setValue(field as keyof VehicleEntryFormValues, value, { shouldValidate: true })
+    }
+    autoCompletedValues.current = values
+  }, [historyQuery.data, searchedPlate, setValue])
 
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError('')
@@ -101,7 +114,7 @@ export function VehicleReceptionPage() {
     }
 
     try {
-      const order = await createWorkOrder(toRegisterRequest(values))
+      const order = await createWorkOrder.mutateAsync(toRegisterRequest(values))
       setCreatedOrder(order)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
@@ -115,10 +128,11 @@ export function VehicleReceptionPage() {
 
   function startNewEntry() {
     reset(defaultValues)
-    setLookup({ status: 'idle' })
+    setSearchedPlate('')
     setCreatedOrder(null)
     setSubmitError('')
-    autoCompletedName.current = ''
+    createWorkOrder.reset()
+    autoCompletedValues.current = {}
   }
 
   if (createdOrder) {

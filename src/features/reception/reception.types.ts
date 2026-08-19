@@ -7,9 +7,14 @@ export type TechnicalHistoryItem = {
 export type VehicleHistoryResponse = {
   id: string
   plate: string
+  brand: string
+  model: string
+  year: number
   is_fully_electric: boolean
   customer_id: string
+  customer_identification: string
   customer_name: string
+  customer_phone?: string
   history: TechnicalHistoryItem[]
 }
 

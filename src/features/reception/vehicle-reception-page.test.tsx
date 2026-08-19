@@ -1,26 +1,18 @@
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ApiError } from '../../lib/api-error'
-import { createWorkOrder, getVehicleHistory } from './api/reception-api'
+import { AppProviders } from '../../app/providers/AppProviders'
+import type { VehicleHistoryResponse } from './reception.types'
 import { VehicleReceptionPage } from './vehicle-reception-page'
-
-vi.mock('./reception.api', () => ({
-  getVehicleHistory: vi.fn(),
-  createWorkOrder: vi.fn(),
-}))
-
-const mockedHistory = vi.mocked(getVehicleHistory)
-const mockedCreate = vi.mocked(createWorkOrder)
 
 describe('VehicleReceptionPage', () => {
   beforeEach(() => {
-    vi.resetAllMocks()
+    vi.stubGlobal('fetch', vi.fn())
   })
 
-  it('validates every field required by the backend DTO', async () => {
+  it('validates every required work-order field', async () => {
     const user = userEvent.setup()
-    render(<VehicleReceptionPage />)
+    renderPage()
 
     await user.click(screen.getByRole('button', { name: /Registrar ingreso/ }))
 
@@ -31,60 +23,48 @@ describe('VehicleReceptionPage', () => {
     expect(screen.getByText('La identificación es obligatoria.')).toBeInTheDocument()
     expect(screen.getByText('El nombre es obligatorio.')).toBeInTheDocument()
     expect(screen.getByText('El reclamo inicial es obligatorio.')).toBeInTheDocument()
-    expect(mockedCreate).not.toHaveBeenCalled()
+    expect(fetch).not.toHaveBeenCalled()
   })
 
-  it('automatically searches, autocompletes and shows technical history', async () => {
-    mockedHistory.mockResolvedValue({
-      id: 'vehicle-1',
-      plate: 'ABC123',
-      is_fully_electric: false,
-      customer_id: 'customer-1',
-      customer_name: 'María Flores',
-      history: [{ id: 'history-1', description: 'Cambio de pastillas', createdAt: '2026-08-18T10:00:00.000Z' }],
-    })
+  it('searches, autocompletes vehicle and customer data, and shows history', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse([existingVehicle()]))
     const user = userEvent.setup()
-    render(<VehicleReceptionPage />)
+    renderPage()
 
     await user.type(screen.getByLabelText('Placa del vehículo *'), 'abc123')
 
-    await waitFor(() => expect(mockedHistory).toHaveBeenCalledWith('ABC123', expect.any(AbortSignal)))
     expect(await screen.findByText('Cambio de pastillas')).toBeInTheDocument()
     expect(screen.getByLabelText('Nombre completo *')).toHaveValue('María Flores')
+    expect(screen.getByLabelText('Identificación *')).toHaveValue('7845123')
+    expect(screen.getByLabelText('Marca *')).toHaveValue('Toyota')
+    expect(screen.getByLabelText('Modelo *')).toHaveValue('Corolla')
+    expect(screen.getByLabelText('Año *')).toHaveValue('2022')
     expect(screen.getByText('Recepción permitida')).toBeInTheDocument()
   })
 
   it('blocks an existing fully electric vehicle', async () => {
-    mockedHistory.mockResolvedValue({
+    vi.mocked(fetch).mockResolvedValue(jsonResponse([{
+      ...existingVehicle(),
       id: 'vehicle-electric',
       plate: 'ELE123',
       is_fully_electric: true,
-      customer_id: 'customer-1',
-      customer_name: 'Cliente eléctrico',
-      history: [],
-    })
+    }]))
     const user = userEvent.setup()
-    render(<VehicleReceptionPage />)
+    renderPage()
 
     await user.type(screen.getByLabelText('Placa del vehículo *'), 'ELE123')
 
     expect(await screen.findByText('Recepción bloqueada')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registrar ingreso/ })).toBeDisabled()
-    expect(mockedCreate).not.toHaveBeenCalled()
   })
 
-  it('treats a 404 as new vehicle and creates the work order with the real DTO', async () => {
-    mockedHistory.mockRejectedValue(new ApiError(404, { message: 'Vehicle not found' }))
-    mockedCreate.mockResolvedValue({
-      id: 'order-1',
-      vehicle_id: 'vehicle-1',
-      customer_id: 'customer-1',
-      status: 'OPEN',
-      initial_complaint: 'Ruido al frenar',
-      created_at: '2026-08-18T10:00:00.000Z',
+  it('detects a new vehicle and persists its vehicle, customer and work order data', async () => {
+    vi.mocked(fetch).mockImplementation(async (_url, options) => {
+      if (!options?.method) return jsonResponse([])
+      return jsonResponse(JSON.parse(String(options.body)), 201)
     })
     const user = userEvent.setup()
-    render(<VehicleReceptionPage />)
+    renderPage()
 
     await user.type(screen.getByLabelText('Placa del vehículo *'), 'NEW123')
     expect(await screen.findByText('Vehículo nuevo')).toBeInTheDocument()
@@ -96,13 +76,44 @@ describe('VehicleReceptionPage', () => {
     await user.type(screen.getByLabelText('Síntomas o solicitud del cliente *'), 'Ruido al frenar')
     await user.click(screen.getByRole('button', { name: /Registrar ingreso/ }))
 
-    await waitFor(() => expect(mockedCreate).toHaveBeenCalledWith({
-      plate: 'NEW123',
-      customer: { identification: '123456', name: 'Ana Pérez' },
-      vehicle: { brand: 'Toyota', model: 'Corolla', year: 2022, isFullyElectric: false },
-      initialComplaint: 'Ruido al frenar',
-    }))
     expect(await screen.findByText('Orden de Trabajo creada')).toBeInTheDocument()
     expect(screen.getByText('OPEN')).toBeInTheDocument()
+    expect(fetch).toHaveBeenCalledWith('/api/v1/vehicles', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('/api/v1/workOrders', expect.objectContaining({ method: 'POST' }))
   })
 })
+
+function renderPage() {
+  return render(
+    <AppProviders>
+      <VehicleReceptionPage />
+    </AppProviders>,
+  )
+}
+
+function existingVehicle(): VehicleHistoryResponse {
+  return {
+    id: 'vehicle-1',
+    plate: 'ABC123',
+    brand: 'Toyota',
+    model: 'Corolla',
+    year: 2022,
+    is_fully_electric: false,
+    customer_id: 'customer-1',
+    customer_identification: '7845123',
+    customer_name: 'María Flores',
+    customer_phone: '+591 71234567',
+    history: [{
+      id: 'history-1',
+      description: 'Cambio de pastillas',
+      createdAt: '2026-08-18T10:00:00.000Z',
+    }],
+  }
+}
+
+function jsonResponse(body: unknown, status = 200) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/json' },
+  })
+}
