@@ -1,4 +1,4 @@
-import { apiClient, ApiResponse } from '../../../shared/api/api-client';
+import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
 import { Vehicle } from '../../../shared/types/openapi';
 
@@ -8,6 +8,37 @@ export const vehiclesService = {
   },
 
   async getByPlate(plate: string): Promise<ApiResponse<Vehicle | null>> {
+    if (isBackendMode) {
+      try {
+        const response = await apiClient.getHttp<{
+          id: string;
+          plate: string;
+          isFullyElectric: boolean;
+          customer_name: string;
+          customer_id: string;
+          history: Array<{ createdAt: string }>;
+        }>(`/vehicles/${encodeURIComponent(plate.trim().toUpperCase())}/history`);
+        return {
+          ...response,
+          data: {
+            id: response.data.id,
+            plate: response.data.plate,
+            brand: '',
+            model: '',
+            year: new Date().getFullYear(),
+            fuelType: response.data.isFullyElectric ? 'ELECTRICO' : 'GASOLINA',
+            color: '',
+            mileage: 0,
+            clientName: response.data.customer_name,
+            clientDocument: response.data.customer_id,
+            clientPhone: '',
+            totalPreviousVisits: response.data.history.length,
+          },
+        };
+      } catch {
+        return { success: true, data: null, timestamp: new Date().toISOString() };
+      }
+    }
     return apiClient.get(() => {
       const vehicles = mockDb.getVehicles();
       const normalized = plate.trim().toUpperCase();

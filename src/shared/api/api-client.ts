@@ -20,6 +20,20 @@ export interface ApiError {
   details?: unknown;
 }
 
+export class ApiClientError extends Error {
+  readonly errorCode: string;
+  readonly details?: unknown;
+
+  constructor(error: ApiError) {
+    super(error.message);
+    this.name = 'ApiClientError';
+    this.errorCode = error.errorCode;
+    this.details = error.details;
+  }
+}
+
+export const isBackendMode = import.meta.env.VITE_DATA_SOURCE !== 'mock';
+
 class ApiClient {
   private delayMs = 180; // Fast and smooth simulated delay
 
@@ -45,19 +59,19 @@ class ApiClient {
       };
     } catch (error) {
       if (axios.isAxiosError(error)) {
-        throw {
+         throw new ApiClientError({
           success: false,
           errorCode: error.response ? `HTTP_${error.response.status}` : 'NETWORK_ERROR',
           message: error.response?.data?.message || error.message || 'Error al consultar la API',
           details: error.response?.data,
-        } as ApiError;
+         });
       }
 
-      throw {
+       throw new ApiClientError({
         success: false,
         errorCode: 'REQUEST_ERROR',
         message: 'Error inesperado al consultar la API',
-      } as ApiError;
+       });
     }
   }
 
@@ -83,11 +97,11 @@ class ApiClient {
         timestamp: new Date().toISOString(),
       };
     } catch (err) {
-      throw {
+      throw new ApiClientError({
         success: false,
         errorCode: 'FETCH_ERROR',
         message: err instanceof Error ? err.message : 'Error al consultar datos',
-      } as ApiError;
+      });
     }
   }
 
@@ -101,11 +115,11 @@ class ApiClient {
         timestamp: new Date().toISOString(),
       };
     } catch (err) {
-      throw {
+      throw new ApiClientError({
         success: false,
         errorCode: 'MUTATION_ERROR',
         message: err instanceof Error ? err.message : 'Error al procesar la solicitud',
-      } as ApiError;
+      });
     }
   }
 

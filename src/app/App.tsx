@@ -27,6 +27,7 @@ import { BudgetsAndApprovalsView } from '../features/budgets/pages/BudgetsAndApp
 import { WorkshopSettlementView } from '../features/billing/pages/WorkshopSettlementView';
 import { ClientPublicPortalView } from '../features/client-portal/pages/ClientPublicPortalView';
 import { resetStorageToSeed } from '../shared/api/mock-db';
+import { isBackendMode } from '../shared/api/api-client';
 
 type ActiveView =
   | 'reception'
@@ -126,6 +127,10 @@ const MainAppContent: React.FC = () => {
   };
 
   const handleResetData = () => {
+    if (isBackendMode) {
+      toast.info('Datos administrados por el backend', 'El reinicio de datos solo está disponible en modo mock.');
+      return;
+    }
     if (window.confirm('¿Desea restablecer todos los datos del taller al estado inicial con ejemplos?')) {
       resetStorageToSeed();
       toast.info('Datos Restablecidos', 'Se reiniciaron las órdenes, bahías e inventario.');

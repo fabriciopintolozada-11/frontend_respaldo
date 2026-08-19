@@ -2,21 +2,18 @@
 <img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
 </div>
 
-# Run and deploy your AI Studio app
+# Taller Frontend
 
-This contains everything you need to run your app locally.
-
-View your app in AI Studio: https://ai.studio/apps/51bde03c-d177-43e1-8110-d28cafe86353
+SPA de gestión de taller para E1: recepción, consulta pública, asignación y consola del mecánico.
 
 ## Run Locally
 
 **Prerequisites:**  Node.js
 
 
-1. Install dependencies:
-   `npm install`
-2. Copy `.env.example` to `.env.local` and set the required API keys.
-3. Start the mock backend and frontend together:
-   `npm run dev:full`
+1. Instala dependencias: `npm install`.
+2. Copia `.env.example` a `.env.local`.
+3. Para integración con NestJS, configura `VITE_API_TOKEN` con un JWT válido y ejecuta `npm run dev`.
+4. Para trabajar sin backend, configura `VITE_DATA_SOURCE=mock` y ejecuta `npm run dev:full`.
 
-The JSON Server mock exposes products at `http://localhost:3001/products`.
+La API integrada usa `http://localhost:3000/api/v1`; el portal público no requiere token.

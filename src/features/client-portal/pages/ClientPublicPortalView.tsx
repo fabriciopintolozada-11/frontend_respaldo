@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import {
   Car,
   Search,
@@ -28,36 +29,32 @@ import { WorkOrder } from '../../../shared/types/openapi';
 export const ClientPublicPortalView: React.FC = () => {
   const toast = useToast();
   const [searchPlate, setSearchPlate] = useState('3849-ABC');
-  const [searchCode, setSearchCode] = useState('OT-2026-001');
+  const [searchDocument, setSearchDocument] = useState('');
   const [foundOrder, setFoundOrder] = useState<WorkOrder | null>(null);
   const [hasSearched, setHasSearched] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const publicStatusQuery = useQuery({
+    queryKey: ['public-vehicle-status', searchPlate, searchDocument],
+    queryFn: () => workOrdersService.searchPublic({ plate: searchPlate.trim(), identification: searchDocument.trim() }),
+    enabled: false,
+  });
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!searchPlate.trim()) {
-      toast.warning('Ingrese la placa de su vehículo');
+    if (!searchPlate.trim() || !searchDocument.trim()) {
+      toast.warning('Ingrese la placa y el documento del propietario');
       return;
     }
 
-    setIsLoading(true);
     setHasSearched(true);
-    try {
-      const res = await workOrdersService.searchPublic({
-        plate: searchPlate.toUpperCase().trim(),
-        orderCode: searchCode.toUpperCase().trim() || undefined,
-      });
-
-      if (res.data && res.data.length > 0) {
-        setFoundOrder(res.data[0]);
-      } else {
-        setFoundOrder(null);
-      }
-    } catch {
+    const result = await publicStatusQuery.refetch();
+    if (result.data?.data.length) {
+      setFoundOrder(result.data.data[0]);
+    } else {
+      setFoundOrder(null);
+    }
+    if (result.isError) {
       toast.danger('No se pudo realizar la consulta');
       setFoundOrder(null);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -107,7 +104,7 @@ export const ClientPublicPortalView: React.FC = () => {
 
       {/* Search Consultation Form (RN-17) */}
       <Card variant="flat" padding="lg">
-        <form onSubmit={handleSearch} className="space-y-4">
+      <form onSubmit={handleSearch} className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <Input
@@ -122,10 +119,10 @@ export const ClientPublicPortalView: React.FC = () => {
 
             <div>
               <Input
-                label="Código de Orden de Trabajo (Opcional)"
-                value={searchCode}
-                onChange={(e) => setSearchCode(e.target.value.toUpperCase())}
-                placeholder="Ej: OT-2026-001"
+                label="Documento de identidad del propietario"
+                value={searchDocument}
+                onChange={(e) => setSearchDocument(e.target.value.toUpperCase())}
+                placeholder="Ej: 4892019 LP"
                 icon={<FileText className="w-4 h-4 text-[#F97316]" />}
               />
             </div>
@@ -136,7 +133,7 @@ export const ClientPublicPortalView: React.FC = () => {
               type="submit"
               variant="primary"
               size="md"
-              isLoading={isLoading}
+               isLoading={publicStatusQuery.isFetching}
               leftIcon={<Search className="w-4 h-4" />}
               className="w-full sm:w-auto px-8"
             >
@@ -147,7 +144,7 @@ export const ClientPublicPortalView: React.FC = () => {
       </Card>
 
       {/* Search Result */}
-      {hasSearched && !isLoading && !foundOrder && (
+      {hasSearched && !publicStatusQuery.isFetching && !foundOrder && (
         <Card padding="lg" className="text-center py-10 space-y-3">
           <div className="w-12 h-12 rounded-full bg-[#1C2028] border border-[#2D3139] flex items-center justify-center mx-auto text-[#8E949F]">
             <Car className="w-6 h-6" />

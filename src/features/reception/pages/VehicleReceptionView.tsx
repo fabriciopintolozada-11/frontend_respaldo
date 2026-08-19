@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -59,6 +60,7 @@ export const VehicleReceptionView: React.FC<{
   onOrderCreated?: (orderId: string) => void;
 }> = ({ onOrderCreated }) => {
   const toast = useToast();
+  const queryClient = useQueryClient();
   const [searchPlateInput, setSearchPlateInput] = useState('');
   const [existingVehicle, setExistingVehicle] = useState<Vehicle | null>(null);
   const [isSearchingPlate, setIsSearchingPlate] = useState(false);
@@ -159,47 +161,24 @@ export const VehicleReceptionView: React.FC<{
 
     setIsSubmitting(true);
     try {
-      // 1. Register or update vehicle (RN-19, RN-20)
-      const vehicleRes = await vehiclesService.registerOrUpdate({
+      // RN-01: the backend creates customer, vehicle and work order atomically.
+      const orderRes = await workOrdersService.createVehicleEntry({
         plate: data.plate,
-        brand: data.brand,
-        model: data.model,
-        year: data.year,
-        fuelType: data.fuelType,
-        color: data.color,
-        vin: data.vin,
-        mileage: data.mileage,
-        clientName: data.clientName,
-        clientDocument: data.clientDocument,
-        clientPhone: data.clientPhone,
-        clientEmail: data.clientEmail || undefined,
-        inspectionChecklist: {
-          fuelLevel: data.fuelLevel,
-          spareTire: data.spareTire,
-          jackAndTools: data.jackAndTools,
-          documentsInCar: data.documentsInCar,
-          scratchesOrDents: data.scratchesOrDents ? [data.scratchesOrDents] : [],
-          valuableBelongings: data.valuableBelongings || 'Ninguno reportado',
+        customer: { identification: data.clientDocument, name: data.clientName, phone: data.clientPhone },
+        vehicle: {
+          brand: data.brand,
+          model: data.model,
+          year: data.year,
+          isFullyElectric: false,
         },
+        initialComplaint: data.entryReason,
       });
-
-      // 2. Create Work Order in REGISTRADA state
-      const orderRes = await workOrdersService.createOrder({
-        vehiclePlate: vehicleRes.data.plate,
-        vehicleBrand: vehicleRes.data.brand,
-        vehicleModel: vehicleRes.data.model,
-        vehicleYear: vehicleRes.data.year,
-        clientName: vehicleRes.data.clientName,
-        clientDocument: vehicleRes.data.clientDocument,
-        clientPhone: vehicleRes.data.clientPhone,
-        clientEmail: vehicleRes.data.clientEmail,
-        entryReason: data.entryReason,
-      });
+      await queryClient.invalidateQueries({ queryKey: ['work-orders'] });
 
       setCreatedOrderCode(orderRes.data.code);
       toast.success(
         `Orden ${orderRes.data.code} Registrada`,
-        `Vehículo ${vehicleRes.data.plate} ingresó al taller en estado REGISTRADA.`
+        `Vehículo ${data.plate.toUpperCase()} ingresó al taller en estado RECIBIDO.`
       );
 
       if (onOrderCreated) {

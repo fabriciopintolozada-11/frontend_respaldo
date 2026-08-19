@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   Wrench,
   CheckCircle2,
@@ -24,15 +25,13 @@ import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { baysService } from '../../workshop-head/api/bays-service';
-import { WorkOrder, Mechanic, WorkOrderStatus } from '../../../shared/types/openapi';
+import { WorkOrder } from '../../../shared/types/openapi';
 
 export const MechanicConsoleView: React.FC = () => {
   const toast = useToast();
-  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
-  const [selectedMechanicId, setSelectedMechanicId] = useState<string>('MEC-01');
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const assignedOrdersQuery = useQuery({ queryKey: ['work-orders', 'assigned'], queryFn: () => workOrdersService.getAssigned() });
+  const workOrders: WorkOrder[] = assignedOrdersQuery.data?.data ?? [];
 
   // Additional work reporting modal (RN-03)
   const [reportingOt, setReportingOt] = useState<WorkOrder | null>(null);
@@ -41,34 +40,10 @@ export const MechanicConsoleView: React.FC = () => {
   const [additionalPartDesc, setAdditionalPartDesc] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [mecsRes, ordersRes] = await Promise.all([
-        baysService.getMechanics(),
-        workOrdersService.getAll(),
-      ]);
-      setMechanics(mecsRes.data);
-      setWorkOrders(ordersRes.data);
-    } catch {
-      toast.danger('Error al cargar datos del mecánico');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const loadData = () => { void queryClient.invalidateQueries({ queryKey: ['work-orders', 'assigned'] }); };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  const activeMechanic = mechanics.find((m) => m.id === selectedMechanicId);
-
-  // Filter OTs assigned to this mechanic (HU-03, RN-04)
-  const assignedOrders = workOrders.filter(
-    (o) =>
-      o.primaryMechanicId === selectedMechanicId ||
-      o.assistantMechanicId === selectedMechanicId
-  );
+  // RN-04: the backend scopes this list to the authenticated mechanic.
+  const assignedOrders = workOrders;
 
   const handleToggleLabor = async (orderId: string, laborId: string) => {
     try {
@@ -113,7 +88,7 @@ export const MechanicConsoleView: React.FC = () => {
             estimatedHours: Number(additionalHours) || 2,
             hourlyRateBOB: 120,
             totalBOB: (Number(additionalHours) || 2) * 120,
-            assignedMechanicId: selectedMechanicId,
+            assignedMechanicId: undefined,
           },
         ],
         additionalPartDesc
@@ -146,8 +121,12 @@ export const MechanicConsoleView: React.FC = () => {
     }
   };
 
-  if (isLoading) {
+  if (assignedOrdersQuery.isPending) {
     return <LoadingSkeleton rows={4} />;
+  }
+
+  if (assignedOrdersQuery.isError) {
+    return <EmptyState icon={<AlertTriangle className="w-8 h-8 text-[#EF4444]" />} title="No se pudieron cargar tus órdenes" description="Verifique que la sesión corresponda a un mecánico." actionLabel="Reintentar" onAction={loadData} />;
   }
 
   return (
@@ -175,29 +154,10 @@ export const MechanicConsoleView: React.FC = () => {
         </div>
       </div>
 
-      {/* Select Active Mechanic (Tablet Switcher) */}
       <Card variant="flat" padding="sm">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8E949F]">
-            <User className="w-4 h-4 text-[#F97316]" />
-            <span>Mecánico Activo:</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {mechanics.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                onClick={() => setSelectedMechanicId(m.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] cursor-pointer ${
-                  selectedMechanicId === m.id
-                    ? 'bg-[#F97316] text-white shadow-xs'
-                    : 'bg-[#0F1115] border border-[#2D3139] text-[#8E949F] hover:text-white hover:border-[#3D4149]'
-                }`}
-              >
-                {m.name} ({m.specialty})
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8E949F]">
+          <User className="w-4 h-4 text-[#F97316]" />
+          <span>Sesión del mecánico autenticado</span>
         </div>
       </Card>
 
@@ -414,7 +374,7 @@ export const MechanicConsoleView: React.FC = () => {
                           await workOrdersService.updateStatus(
                             ot.id,
                             'FINALIZADA',
-                            `${activeMechanic?.name} (Trabajo completado)`
+                            'Mecánico autenticado (Trabajo completado)'
                           );
                           toast.success('OT Finalizada', 'Orden lista para control de calidad y liquidación.');
                           await loadData();

@@ -1,6 +1,7 @@
-import { apiClient, ApiResponse } from '../../../shared/api/api-client';
+import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
 import { WorkOrder, WorkOrderStatus, StatusHistoryEntry, WorkOrderLaborItem, WorkOrderPartItem } from '../../../shared/types/openapi';
+import { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleStatus, WorkOrderListItem } from '../../../shared/api/schema.gen';
 
 const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   REGISTRADA: ['DIAGNOSTICADA', 'CANCELADA'],
@@ -14,8 +15,53 @@ const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   CANCELADA: [],
 };
 
+const mapListItem = (item: WorkOrderListItem): WorkOrder => ({
+  id: item.id, code: `OT-${item.id.slice(0, 8).toUpperCase()}`, vehiclePlate: item.plate, vehicleBrand: item.vehicleBrand,
+  vehicleModel: item.vehicleModel, vehicleYear: item.vehicleYear, clientName: item.customerName,
+  clientDocument: item.customerIdentification, clientPhone: '', status: item.status as WorkOrderStatus,
+  entryDate: item.createdAt, entryReason: item.initialComplaint, laborItems: [], partsItems: [],
+  totalLaborBOB: 0, totalPartsBOB: 0, totalGeneralBOB: 0, lastClientContactDate: item.createdAt.slice(0, 10),
+  daysWithoutClientResponse: 0, hasPendingAdditionalWork: false, isSuspendedForAdditionalWork: false,
+  primaryMechanicId: item.mechanicId ?? undefined, statusHistory: [],
+});
+
+const mapAssignedItem = (item: AssignedWorkOrder | AssignedWorkOrderDetail): WorkOrder => {
+  const vehicle = 'vehicle' in item ? item.vehicle : undefined;
+  return {
+    id: item.id, code: `OT-${item.id.slice(0, 8).toUpperCase()}`, vehiclePlate: vehicle?.plate ?? item.plate, vehicleBrand: vehicle?.brand ?? '',
+    vehicleModel: vehicle?.model ?? '', vehicleYear: vehicle?.year ?? new Date().getFullYear(), clientName: '',
+    clientDocument: '', clientPhone: '', status: item.status as WorkOrderStatus,
+    entryDate: item.assignedAt ?? new Date().toISOString(), entryReason: item.initialComplaint,
+    laborItems: [], partsItems: [], totalLaborBOB: 0, totalPartsBOB: 0, totalGeneralBOB: 0,
+    lastClientContactDate: new Date().toISOString().slice(0, 10), daysWithoutClientResponse: 0,
+    hasPendingAdditionalWork: false, isSuspendedForAdditionalWork: false, statusHistory: [],
+  };
+};
+
+const mapPublicStatus = (status: VehicleStatus): WorkOrder => ({
+  id: status.workOrderId, code: `OT-${status.workOrderId.slice(0, 8).toUpperCase()}`, vehiclePlate: status.plate,
+  vehicleBrand: status.vehicle.brand, vehicleModel: status.vehicle.model, vehicleYear: status.vehicle.year,
+  clientName: status.customerName, clientDocument: '', clientPhone: '', status: status.status as WorkOrderStatus,
+  entryDate: status.createdAt, entryReason: status.initialComplaint, laborItems: [], partsItems: [],
+  totalLaborBOB: 0, totalPartsBOB: 0, totalGeneralBOB: 0, lastClientContactDate: status.createdAt.slice(0, 10),
+  daysWithoutClientResponse: 0, hasPendingAdditionalWork: false, isSuspendedForAdditionalWork: false,
+  statusHistory: [],
+});
+
 export const workOrdersService = {
   async getAll(): Promise<ApiResponse<WorkOrder[]>> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<ListResponse<WorkOrderListItem>>('/work-orders?page=1&pageSize=100');
+      return { ...response, data: response.data.data.map(mapListItem) };
+    }
+    return apiClient.get(() => mockDb.getWorkOrders());
+  },
+
+  async getAssigned(): Promise<ApiResponse<WorkOrder[]>> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<ListResponse<AssignedWorkOrder>>('/work-orders/assigned?page=1&pageSize=100');
+      return { ...response, data: response.data.data.map(mapAssignedItem) };
+    }
     return apiClient.get(() => mockDb.getWorkOrders());
   },
 
@@ -27,6 +73,10 @@ export const workOrdersService = {
   },
 
   async getByPlateAndDocument(plate: string, document: string): Promise<ApiResponse<WorkOrder | null>> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<VehicleStatus>(`/public/vehicle-status?plate=${encodeURIComponent(plate)}&identification=${encodeURIComponent(document)}`);
+      return { ...response, data: mapPublicStatus(response.data) };
+    }
     return apiClient.get(() => {
       const orders = mockDb.getWorkOrders();
       const normPlate = plate.trim().toUpperCase().replace(/\s+/g, '');
@@ -40,6 +90,31 @@ export const workOrdersService = {
 
       return match || null;
     });
+  },
+
+  async createVehicleEntry(payload: {
+    plate: string;
+    customer: { identification: string; name: string; phone: string };
+    vehicle: { brand: string; model: string; year: number; isFullyElectric: boolean };
+    initialComplaint: string;
+  }): Promise<ApiResponse<WorkOrder>> {
+    if (!isBackendMode) {
+      return this.createOrder({
+        vehiclePlate: payload.plate, vehicleBrand: payload.vehicle.brand, vehicleModel: payload.vehicle.model,
+        vehicleYear: payload.vehicle.year, clientName: payload.customer.name, clientDocument: payload.customer.identification,
+        clientPhone: payload.customer.phone, entryReason: payload.initialComplaint,
+      });
+    }
+    const response = await apiClient.postHttp<typeof payload, {
+      id: string; vehicleId: string; customerId: string; status: string; initialComplaint: string; createdAt: string;
+    }>('/work-orders', payload);
+    return { ...response, data: mapListItem({
+      id: response.data.id, vehicleId: response.data.vehicleId, plate: payload.plate.toUpperCase(),
+      vehicleBrand: payload.vehicle.brand, vehicleModel: payload.vehicle.model, vehicleYear: payload.vehicle.year,
+      customerName: payload.customer.name, customerIdentification: payload.customer.identification,
+      initialComplaint: response.data.initialComplaint, status: response.data.status, createdAt: response.data.createdAt,
+      mechanicId: null,
+    }) };
   },
 
   async createOrder(payload: {
@@ -174,6 +249,20 @@ export const workOrdersService = {
     primaryMechanicId: string,
     assistantMechanicId?: string
   ): Promise<ApiResponse<WorkOrder>> {
+    if (isBackendMode) {
+      const response = await apiClient.patchHttp<{ mecanicoId: string }, { id: string; mecanicoId: string; status: string; updatedAt: string }>(
+        `/work-orders/${orderId}/assign-mechanic`,
+        { mecanicoId: primaryMechanicId },
+      );
+      const order = await this.getById(response.data.id);
+      return order.data
+        ? { ...response, data: order.data }
+        : { ...response, data: { ...mapListItem({
+            id: response.data.id, vehicleId: '', plate: '', vehicleBrand: '', vehicleModel: '', vehicleYear: 0,
+            customerName: '', customerIdentification: '', initialComplaint: '', status: response.data.status,
+            createdAt: response.data.updatedAt, mechanicId: response.data.mecanicoId,
+          }), primaryMechanicId: response.data.mecanicoId } };
+    }
     return apiClient.post((_) => {
       const orders = mockDb.getWorkOrders();
       const idx = orders.findIndex((o) => o.id === orderId || o.code === orderId);
@@ -421,11 +510,15 @@ export const workOrdersService = {
     }, {});
   },
 
-  async searchPublic(params: { plate: string; orderCode?: string }): Promise<ApiResponse<WorkOrder[]>> {
+  async searchPublic(params: { plate: string; identification: string }): Promise<ApiResponse<WorkOrder[]>> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<VehicleStatus>(`/public/vehicle-status?plate=${encodeURIComponent(params.plate)}&identification=${encodeURIComponent(params.identification)}`);
+      return { ...response, data: [mapPublicStatus(response.data)] };
+    }
     return apiClient.get(() => {
       const orders = mockDb.getWorkOrders();
       const normPlate = params.plate.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const normCode = params.orderCode ? params.orderCode.trim().toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+      const normCode = params.identification.trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
 
       return orders.filter((o) => {
         const oPlate = o.vehiclePlate.toUpperCase().replace(/[^A-Z0-9]/g, '');

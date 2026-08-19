@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   FileText,
   Search,
@@ -21,7 +22,6 @@ import { Badge, WorkOrderStatusBadge } from '../../../shared/components/Badge';
 import { StatusPipeline } from '../../../shared/components/StatusPipeline';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
-import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../api/work-orders-service';
 import { WorkOrder, WorkOrderStatus } from '../../../shared/types/openapi';
 
@@ -31,28 +31,13 @@ export interface WorkOrdersListViewProps {
 }
 
 export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelectOrder, onNewOrder }) => {
-  const toast = useToast();
-  const [orders, setOrders] = useState<WorkOrder[]>([]);
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('TODOS');
   const [onlyAlertsFilter, setOnlyAlertsFilter] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  const loadOrders = async () => {
-    setIsLoading(true);
-    try {
-      const res = await workOrdersService.getAll();
-      setOrders(res.data);
-    } catch {
-      toast.danger('Error al cargar órdenes de trabajo');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadOrders();
-  }, []);
+  const ordersQuery = useQuery({ queryKey: ['work-orders'], queryFn: () => workOrdersService.getAll() });
+  const orders: WorkOrder[] = ordersQuery.data?.data ?? [];
+  const loadOrders = () => { void queryClient.invalidateQueries({ queryKey: ['work-orders'] }); };
 
   const filteredOrders = orders.filter((o) => {
     const matchesSearch =
@@ -70,8 +55,12 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
   const rn06Count = orders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTADA').length;
   const rn03Count = orders.filter((o) => o.isSuspendedForAdditionalWork).length;
 
-  if (isLoading) {
+  if (ordersQuery.isPending) {
     return <LoadingSkeleton rows={6} />;
+  }
+
+  if (ordersQuery.isError) {
+    return <EmptyState icon={<AlertTriangle className="w-8 h-8 text-[#EF4444]" />} title="No se pudieron cargar las órdenes" description="Verifique la sesión y la conexión con el backend." actionLabel="Reintentar" onAction={loadOrders} />;
   }
 
   return (

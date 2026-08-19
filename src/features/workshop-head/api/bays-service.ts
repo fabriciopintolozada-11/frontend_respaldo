@@ -1,6 +1,7 @@
-import { apiClient, ApiResponse } from '../../../shared/api/api-client';
+import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
 import { Bay, BayStatus, Mechanic } from '../../../shared/types/openapi';
+import { ListResponse } from '../../../shared/api/schema.gen';
 
 export interface WorkshopMetrics {
   totalBays: number;
@@ -20,6 +21,20 @@ export const baysService = {
   },
 
   async getMechanics(): Promise<ApiResponse<Mechanic[]>> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<ListResponse<{ id: string; isActive: boolean }>>('/mechanics');
+      return {
+        ...response,
+        data: response.data.data.map((mechanic) => ({
+          id: mechanic.id,
+          name: mechanic.id,
+          nickname: mechanic.id,
+          specialty: 'Mecánica General' as const,
+          activeOtCount: 0,
+          phone: '',
+        })),
+      };
+    }
     return apiClient.get(() => mockDb.getMechanics());
   },
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   LayoutDashboard,
   Layers,
@@ -26,17 +27,22 @@ import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
 import { baysService, WorkshopMetrics } from '../api/bays-service';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
+import { isBackendMode } from '../../../shared/api/api-client';
 import { Bay, WorkOrder, Mechanic, BayStatus } from '../../../shared/types/openapi';
 
 export const WorkshopHeadView: React.FC<{
   onSelectOrder?: (orderId: string) => void;
 }> = ({ onSelectOrder }) => {
   const toast = useToast();
-  const [bays, setBays] = useState<Bay[]>([]);
-  const [mechanics, setMechanics] = useState<Mechanic[]>([]);
-  const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
-  const [metrics, setMetrics] = useState<WorkshopMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const queryClient = useQueryClient();
+  const baysQuery = useQuery({ queryKey: ['bays'], queryFn: () => baysService.getAll() });
+  const mechanicsQuery = useQuery({ queryKey: ['mechanics'], queryFn: () => baysService.getMechanics() });
+  const ordersQuery = useQuery({ queryKey: ['work-orders'], queryFn: () => workOrdersService.getAll() });
+  const metricsQuery = useQuery({ queryKey: ['workshop-metrics'], queryFn: () => baysService.getMetrics() });
+  const bays: Bay[] = baysQuery.data?.data ?? [];
+  const mechanics: Mechanic[] = mechanicsQuery.data?.data ?? [];
+  const workOrders: WorkOrder[] = ordersQuery.data?.data ?? [];
+  const metrics: WorkshopMetrics | null = metricsQuery.data?.data ?? null;
 
   // Assignment Modal state (HU-04, RN-14)
   const [selectedBayForAssign, setSelectedBayForAssign] = useState<Bay | null>(null);
@@ -49,33 +55,16 @@ export const WorkshopHeadView: React.FC<{
   const [bayToEditStatus, setBayToEditStatus] = useState<Bay | null>(null);
   const [newBayStatus, setNewBayStatus] = useState<BayStatus>('LIBRE');
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const [baysRes, mecsRes, ordersRes, metricsRes] = await Promise.all([
-        baysService.getAll(),
-        baysService.getMechanics(),
-        workOrdersService.getAll(),
-        baysService.getMetrics(),
-      ]);
-      setBays(baysRes.data);
-      setMechanics(mecsRes.data);
-      setWorkOrders(ordersRes.data);
-      setMetrics(metricsRes.data);
-    } catch {
-      toast.danger('Error al cargar datos del taller');
-    } finally {
-      setIsLoading(false);
-    }
+  const loadData = () => {
+    void queryClient.invalidateQueries({ queryKey: ['bays'] });
+    void queryClient.invalidateQueries({ queryKey: ['mechanics'] });
+    void queryClient.invalidateQueries({ queryKey: ['work-orders'] });
+    void queryClient.invalidateQueries({ queryKey: ['workshop-metrics'] });
   };
-
-  useEffect(() => {
-    loadData();
-  }, []);
 
   // Filter unassigned approved orders or registered orders needing bay
   const unassignedOrders = workOrders.filter(
-    (o) => (o.status === 'APROBADA' || o.status === 'REGISTRADA' || o.status === 'DIAGNOSTICADA') && !o.assignedBayId
+    (o) => (String(o.status) === 'RECIBIDO' || o.status === 'APROBADA' || o.status === 'REGISTRADA' || o.status === 'DIAGNOSTICADA') && !o.assignedBayId
   );
 
   // Filter RN-06 alert orders (15+ days without response)
@@ -101,16 +90,16 @@ export const WorkshopHeadView: React.FC<{
 
     setIsAssigning(true);
     try {
+      const targetOt = workOrders.find((o) => o.code === selectedOtCode);
       await workOrdersService.assignBayAndMechanic(
-        selectedOtCode,
+        targetOt?.id ?? selectedOtCode,
         selectedBayForAssign.id,
         selectedPrimaryMechanic,
         selectedAssistantMechanic || undefined
       );
 
       // Transition to EN_PROGRESO if already approved
-      const targetOt = workOrders.find((o) => o.code === selectedOtCode);
-      if (targetOt && targetOt.status === 'APROBADA') {
+      if (!isBackendMode && targetOt && targetOt.status === 'APROBADA') {
         await workOrdersService.updateStatus(
           targetOt.id,
           'EN_PROGRESO',
@@ -144,8 +133,12 @@ export const WorkshopHeadView: React.FC<{
     }
   };
 
-  if (isLoading) {
+  if (baysQuery.isPending || mechanicsQuery.isPending || ordersQuery.isPending || metricsQuery.isPending) {
     return <LoadingSkeleton rows={5} />;
+  }
+
+  if (baysQuery.isError || mechanicsQuery.isError || ordersQuery.isError || metricsQuery.isError) {
+    return <EmptyState icon={<AlertTriangle className="w-8 h-8 text-[#EF4444]" />} title="No se pudo cargar el tablero" description="Verifique la sesión del jefe de taller y la conexión con el backend." actionLabel="Reintentar" onAction={loadData} />;
   }
 
   return (
