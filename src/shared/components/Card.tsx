@@ -1,29 +1,42 @@
-import { cn } from '@/shared/lib/utils'
-import type { ReactNode } from 'react'
+import React from 'react';
 
-interface CardProps {
-  children: ReactNode
-  variant?: 'default' | 'warning' | 'danger'
-  padding?: 'sm' | 'md' | 'lg'
-  className?: string
+export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: 'default' | 'flat' | 'bordered' | 'accent' | 'warning' | 'danger';
+  padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
-const paddingMap = {
-  sm: 'p-3',
-  md: 'p-4',
-  lg: 'p-6',
-}
+export const Card: React.FC<CardProps> = ({
+  children,
+  variant = 'default',
+  padding = 'md',
+  className = '',
+  ...props
+}) => {
+  const paddingStyles = {
+    none: 'p-0',
+    sm: 'p-3 sm:p-4',
+    md: 'p-4 sm:p-5',
+    lg: 'p-5 sm:p-6',
+  };
 
-const variantMap = {
-  default: 'border-border bg-card',
-  warning: 'border-warning/30 bg-warning/5',
-  danger: 'border-danger/30 bg-danger/5',
-}
+  const variantStyles = {
+    default:
+      'bg-[#16191F] border border-[#2D3139] rounded-2xl shadow-xs transition-all text-[#E0E2E6]',
+    flat:
+      'bg-[#1C2028] border border-[#2D3139] rounded-xl text-[#E0E2E6]',
+    bordered:
+      'bg-[#16191F] border-2 border-[#2D3139] rounded-2xl text-[#E0E2E6]',
+    accent:
+      'bg-[#16191F] border border-[#F97316]/50 shadow-xs shadow-orange-950/20 rounded-2xl text-[#E0E2E6]',
+    warning:
+      'bg-[#F59E0B10] border border-[#F59E0B30] rounded-2xl text-[#E0E2E6]',
+    danger:
+      'bg-[#EF444410] border border-[#EF444430] rounded-2xl text-[#E0E2E6]',
+  };
 
-export function Card({ children, variant = 'default', padding = 'md', className }: CardProps) {
   return (
-    <div className={cn('rounded-2xl border', paddingMap[padding], variantMap[variant], className)}>
+    <div className={`${variantStyles[variant]} ${paddingStyles[padding]} ${className}`} {...props}>
       {children}
     </div>
-  )
-}
+  );
+};

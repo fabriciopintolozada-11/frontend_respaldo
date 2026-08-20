@@ -1,32 +1,23 @@
-# React + TypeScript + Vite
+# Taller Mecánico "Los Fratelli" — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+SPA de gestión integral para taller mecánico: recepción, consulta pública, asignación, consola del mecánico, inventario, presupuestos, liquidaciones y portal cliente.
 
-Currently, two official plugins are available:
+## Ejecutar Localmente
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+**Prerrequisitos:** Node.js 18+
 
-## React Compiler
+1. Instala dependencias: `npm install`
+2. Copia `.env.example` a `.env`.
+3. Para integración con NestJS, configura `VITE_API_TOKEN` con un JWT válido y ejecuta `npm run dev`.
+4. Para trabajar sin backend, configura `VITE_DATA_SOURCE=mock` y ejecuta `npm run dev:full`.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+La API integrada usa `http://localhost:3000/api/v1`; el portal público no requiere token.
 
-## Expanding the Oxlint configuration
+## Scripts
 
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
-```
-
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+| Comando | Descripción |
+|---------|-------------|
+| `npm run dev` | Iniciar en modo desarrollo (puerto 5173) |
+| `npm run dev:full` | Iniciar con mock API en paralelo |
+| `npm run build` | Compilar para producción |
+| `npm run lint` | Verificar tipos TypeScript |

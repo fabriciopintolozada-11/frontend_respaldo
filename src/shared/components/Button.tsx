@@ -1,52 +1,69 @@
-import { cva, type VariantProps } from 'class-variance-authority'
-import { cn } from '@/shared/lib/utils'
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import React from 'react';
+import { Loader2 } from 'lucide-react';
 
-const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 rounded-xl font-bold transition-all focus:outline-none focus:ring-2 focus:ring-primary/50 disabled:opacity-50 disabled:pointer-events-none cursor-pointer',
-  {
-    variants: {
-      variant: {
-        primary: 'bg-primary text-primary-foreground hover:bg-primary/90',
-        secondary: 'bg-muted border border-border text-foreground hover:border-border-hover hover:text-white',
-        outline: 'border border-border text-muted-foreground hover:text-white hover:border-border-hover',
-        ghost: 'text-muted-foreground hover:text-foreground hover:bg-muted',
-        danger: 'bg-danger text-white hover:bg-danger/90',
-        success: 'bg-success text-white hover:bg-success/90',
-      },
-      size: {
-        sm: 'h-9 px-3 text-xs min-h-[36px]',
-        md: 'h-10 px-4 text-sm min-h-[44px]',
-        lg: 'h-12 px-6 text-sm min-h-[48px]',
-      },
-    },
-    defaultVariants: {
-      variant: 'primary',
-      size: 'md',
-    },
-  },
-)
-
-interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
-  leftIcon?: ReactNode
-  rightIcon?: ReactNode
-  isLoading?: boolean
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'danger' | 'success' | 'outline' | 'ghost' | 'warning';
+  size?: 'sm' | 'md' | 'lg';
+  isLoading?: boolean;
+  leftIcon?: React.ReactNode;
+  rightIcon?: React.ReactNode;
 }
 
-export function Button({ children, variant, size, leftIcon, rightIcon, isLoading, className, disabled, ...props }: ButtonProps) {
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  variant = 'primary',
+  size = 'md',
+  isLoading = false,
+  leftIcon,
+  rightIcon,
+  className = '',
+  disabled,
+  ...props
+}) => {
+  const baseStyles =
+    'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] min-h-[44px] min-w-[44px]';
+
+  const sizeStyles = {
+    sm: 'px-3 py-2 text-xs gap-1.5 min-h-[38px]',
+    md: 'px-4 py-2.5 text-sm gap-2 min-h-[44px]',
+    lg: 'px-6 py-3.5 text-base gap-2.5 min-h-[50px]',
+  };
+
+  const variantStyles = {
+    primary:
+      'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs shadow-orange-950/40 focus:ring-[#F97316] active:bg-[#C2410C]',
+    secondary:
+      'bg-[#2D3139] text-[#E0E2E6] hover:bg-[#3D4149] hover:text-white focus:ring-[#2D3139]',
+    outline:
+      'border border-[#2D3139] bg-[#1C2028] text-[#E0E2E6] hover:bg-[#2D3139] hover:text-white focus:ring-[#F97316]',
+    danger:
+      'bg-[#EF4444] text-white hover:bg-[#DC2626] focus:ring-[#EF4444]',
+    success:
+      'bg-[#22C55E] text-white hover:bg-[#16A34A] focus:ring-[#22C55E]',
+    warning:
+      'bg-[#F59E0B15] text-[#F59E0B] border border-[#F59E0B30] hover:bg-[#F59E0B25] focus:ring-[#F59E0B]',
+    ghost:
+      'text-[#8E949F] hover:text-[#E0E2E6] hover:bg-[#2D3139] focus:ring-[#2D3139]',
+  };
+
   return (
     <button
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={`${baseStyles} ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
       disabled={disabled || isLoading}
       {...props}
     >
       {isLoading ? (
-        <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <>
+          <Loader2 className="w-5 h-5 animate-spin" />
+          <span>Cargando...</span>
+        </>
       ) : (
-        leftIcon
+        <>
+          {leftIcon && <span className="flex-shrink-0">{leftIcon}</span>}
+          <span>{children}</span>
+          {rightIcon && <span className="flex-shrink-0">{rightIcon}</span>}
+        </>
       )}
-      {children}
-      {!isLoading && rightIcon}
     </button>
-  )
-}
+  );
+};
