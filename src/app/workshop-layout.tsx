@@ -1,10 +1,11 @@
 import { NavLink, Outlet } from 'react-router';
-import { Car, FileText, Globe, RotateCcw, Wrench } from 'lucide-react';
+import { Car, FileText, Globe, RotateCcw, Wrench, ClipboardPlus } from 'lucide-react';
 
 import { useWorkshop } from '../state/WorkshopContext';
 import { useToast } from '../shared/components/ToastContext';
 
 const NAV_ITEMS = [
+  { to: '/recepcion', label: 'Recepción', icon: <ClipboardPlus className="w-4 h-4" /> },
   { to: '/taller', label: 'Jefe de Taller', icon: <Car className="w-4 h-4" /> },
   { to: '/mecanico', label: 'Mecánico', icon: <Wrench className="w-4 h-4" /> },
   { to: '/ots', label: 'Órdenes de Trabajo', icon: <FileText className="w-4 h-4" /> },

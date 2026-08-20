@@ -5,7 +5,7 @@
   "type": "module",
   "description": "Los Fratelli - Taller Mecánico · Frontend (React + Vite + TypeScript)",
   "scripts": {
-    "dev": "concurrently -k -n mock,web -c yellow,cyan \"npm:mock\" \"npm:dev:web\"",
+    "dev": "vite",
     "dev:web": "vite",
     "mock": "node mock-server/server.cjs",
     "build": "tsc --noEmit && vite build",

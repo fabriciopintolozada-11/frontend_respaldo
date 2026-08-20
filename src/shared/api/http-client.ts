@@ -1,4 +1,13 @@
 const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
+const API_TOKEN = import.meta.env.MODE === 'test' ? undefined : import.meta.env.VITE_API_TOKEN?.trim();
+
+function headers(includeContentType = false): HeadersInit {
+  return {
+    Accept: 'application/json',
+    ...(includeContentType ? { 'Content-Type': 'application/json' } : {}),
+    ...(API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {}),
+  };
+}
 
 export interface ApiErrorBody {
   statusCode: number;
@@ -39,7 +48,7 @@ async function get<T>(
   signal?: AbortSignal,
 ): Promise<T> {
   const response = await fetch(buildUrl(path, params), {
-    headers: { Accept: 'application/json' },
+    headers: headers(),
     signal,
   });
 
@@ -63,10 +72,7 @@ export interface RequestConfig {
 async function request<T>(config: RequestConfig): Promise<{ data: T }> {
   const response = await fetch(buildUrl(config.url), {
     method: config.method,
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
+    headers: headers(true),
     body: config.data === undefined ? undefined : JSON.stringify(config.data),
   });
 
