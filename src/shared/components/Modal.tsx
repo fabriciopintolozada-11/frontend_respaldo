@@ -1,24 +1,26 @@
-import React, { useEffect } from 'react';
+import { useEffect, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import { motion, AnimatePresence } from 'motion/react';
 
 export interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   title: string;
   subtitle?: string;
-  children: React.ReactNode;
+  children: ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl';
 }
 
-export const Modal: React.FC<ModalProps> = ({
-  isOpen,
-  onClose,
-  title,
-  subtitle,
-  children,
-  maxWidth = 'lg',
-}) => {
+const maxStyles = {
+  sm: 'max-w-sm',
+  md: 'max-w-md',
+  lg: 'max-w-xl',
+  xl: 'max-w-2xl',
+  '2xl': 'max-w-3xl',
+  '4xl': 'max-w-5xl',
+};
+
+export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'lg' }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -33,58 +35,34 @@ export const Modal: React.FC<ModalProps> = ({
     };
   }, [isOpen, onClose]);
 
-  const maxStyles = {
-    sm: 'max-w-sm',
-    md: 'max-w-md',
-    lg: 'max-w-xl',
-    xl: 'max-w-2xl',
-    '2xl': 'max-w-3xl',
-    '4xl': 'max-w-5xl',
-  };
+  if (!isOpen) return null;
 
-  return (
-    <AnimatePresence>
-      {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+  return createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+      <div onClick={onClose} className="fixed inset-0 bg-[#0F1115]/85 backdrop-blur-xs transition-opacity" />
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className={`relative w-full ${maxStyles[maxWidth]} bg-[#16191F] rounded-2xl shadow-2xl border border-[#2D3139] text-[#E0E2E6] overflow-hidden z-10 my-auto`}
+      >
+        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2D3139] bg-[#1C2028]/80">
+          <div>
+            <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
+            {subtitle && <p className="text-xs text-[#8E949F] mt-0.5">{subtitle}</p>}
+          </div>
+          <button
+            type="button"
             onClick={onClose}
-            className="fixed inset-0 bg-[#0F1115]/85 backdrop-blur-xs transition-opacity"
-          />
-
-          {/* Modal Card */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 15 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 15 }}
-            className={`relative w-full ${maxStyles[maxWidth]} bg-[#16191F] rounded-2xl shadow-2xl border border-[#2D3139] text-[#E0E2E6] overflow-hidden z-10 my-auto`}
+            aria-label="Cerrar modal"
+            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#8E949F] hover:text-white hover:bg-[#2D3139] transition-colors"
           >
-            {/* Header */}
-            <div className="flex items-center justify-between px-6 py-4 border-b border-[#2D3139] bg-[#1C2028]/80">
-              <div>
-                <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
-                {subtitle && (
-                  <p className="text-xs text-[#8E949F] mt-0.5">{subtitle}</p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={onClose}
-                aria-label="Cerrar modal"
-                className="w-9 h-9 rounded-xl flex items-center justify-center text-[#8E949F] hover:text-white hover:bg-[#2D3139] transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Body */}
-            <div className="p-6 max-h-[80vh] overflow-y-auto scrollbar-thin">{children}</div>
-          </motion.div>
+            <X className="w-5 h-5" />
+          </button>
         </div>
-      )}
-    </AnimatePresence>
+        <div className="p-6 max-h-[80vh] overflow-y-auto">{children}</div>
+      </div>
+    </div>,
+    document.body,
   );
-};
+}

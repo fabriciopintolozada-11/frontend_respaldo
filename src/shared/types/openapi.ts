@@ -213,4 +213,15 @@ export interface BillingAccount {
   paymentMethod?: 'EFECTIVO' | 'TRANSFERENCIA_QR' | 'TARJETA_DEBITO_CREDITO';
   paidAt?: string;
   receiptType: 'FACTURA' | 'RECIBO_OFICIAL';
+  otCode?: string;
+  invoiceNumber?: string;
+  isSettled?: boolean;
+  settledAt?: string;
+  totalLaborBOB?: number;
+  totalPartsBOB?: number;
+  taxesBOB?: number;
+  totalGeneralBOB?: number;
+  clientDocument?: string;
+  createdAt?: string;
+  sinControlCode?: string;
 }
