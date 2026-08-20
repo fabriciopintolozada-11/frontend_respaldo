@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorkOrderStatus } from '../types/openapi';
+import type { WorkOrderStatus } from '../types/openapi';
 import { CheckCircle2, Clock, AlertTriangle, ArrowRight, ShieldAlert } from 'lucide-react';
 
 export interface StatusPipelineProps {

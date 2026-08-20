@@ -1,6 +1,6 @@
-import { apiClient, ApiResponse } from '../../../shared/api/api-client';
+import { apiClient, type ApiResponse } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
-import { Budget } from '../../../shared/types/openapi';
+import type { Budget } from '../../../shared/types/openapi';
 
 export const budgetsService = {
   async getAll(): Promise<ApiResponse<Budget[]>> {

@@ -23,7 +23,7 @@ import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
 import { budgetsService } from '../api/budgets-service';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { Budget, WorkOrder } from '../../../shared/types/openapi';
+import type { Budget, WorkOrder } from '../../../shared/types/openapi';
 
 export const BudgetsAndApprovalsView: React.FC<{
   onSelectOrder?: (orderId: string) => void;

@@ -1,7 +1,7 @@
-import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
+import { apiClient, type ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
-import { WorkOrder, WorkOrderStatus, StatusHistoryEntry, WorkOrderLaborItem, WorkOrderPartItem } from '../../../shared/types/openapi';
-import { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleStatus, WorkOrderListItem } from '../../../shared/api/schema.gen';
+import type { WorkOrder, WorkOrderStatus, StatusHistoryEntry, WorkOrderLaborItem, WorkOrderPartItem } from '../../../shared/types/openapi';
+import type { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleStatus, WorkOrderListItem } from '../../../shared/api/schema.gen';
 
 const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   REGISTRADA: ['DIAGNOSTICADA', 'CANCELADA'],

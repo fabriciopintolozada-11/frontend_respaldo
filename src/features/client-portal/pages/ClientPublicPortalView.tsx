@@ -24,7 +24,7 @@ import { StatusPipeline } from '../../../shared/components/StatusPipeline';
 import { Input } from '../../../shared/components/Input';
 import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { WorkOrder } from '../../../shared/types/openapi';
+import type { WorkOrder } from '../../../shared/types/openapi';
 
 export const ClientPublicPortalView: React.FC = () => {
   const toast = useToast();

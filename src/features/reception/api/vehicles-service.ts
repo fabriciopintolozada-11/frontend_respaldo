@@ -1,6 +1,6 @@
-import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
+import { apiClient, type ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
-import { Vehicle } from '../../../shared/types/openapi';
+import type { Vehicle } from '../../../shared/types/openapi';
 
 export const vehiclesService = {
   async getAll(): Promise<ApiResponse<Vehicle[]>> {

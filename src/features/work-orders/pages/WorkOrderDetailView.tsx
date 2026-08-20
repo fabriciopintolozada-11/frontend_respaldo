@@ -27,7 +27,7 @@ import { Modal } from '../../../shared/components/Modal';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../api/work-orders-service';
-import { WorkOrder, WorkOrderStatus } from '../../../shared/types/openapi';
+import type { WorkOrder, WorkOrderStatus } from '../../../shared/types/openapi';
 import {
   Table,
   TableBody,

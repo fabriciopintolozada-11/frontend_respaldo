@@ -1,5 +1,5 @@
 import React from 'react';
-import { WorkOrderStatus, BayStatus, PartRotation, FuelType } from '../types/openapi';
+import type { WorkOrderStatus, BayStatus, PartRotation, FuelType } from '../types/openapi';
 
 export interface BadgeProps {
   children?: React.ReactNode;

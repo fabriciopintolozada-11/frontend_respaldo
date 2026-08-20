@@ -25,7 +25,7 @@ import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { WorkOrder } from '../../../shared/types/openapi';
+import type { WorkOrder } from '../../../shared/types/openapi';
 
 export const MechanicConsoleView: React.FC = () => {
   const toast = useToast();

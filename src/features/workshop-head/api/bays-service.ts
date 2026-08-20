@@ -1,7 +1,7 @@
-import { apiClient, ApiResponse, isBackendMode } from '../../../shared/api/api-client';
+import { apiClient, type ApiResponse, isBackendMode } from '../../../shared/api/api-client';
 import { mockDb } from '../../../shared/api/mock-db';
-import { Bay, BayStatus, Mechanic } from '../../../shared/types/openapi';
-import { ListResponse } from '../../../shared/api/schema.gen';
+import type { Bay, BayStatus, Mechanic } from '../../../shared/types/openapi';
+import type { ListResponse } from '../../../shared/api/schema.gen';
 
 export interface WorkshopMetrics {
   totalBays: number;

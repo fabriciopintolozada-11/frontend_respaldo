@@ -24,8 +24,8 @@ import { Input } from '../../../shared/components/Input';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
-import { productsService, InventoryStats } from '../api/products-service';
-import { InventoryItem, PartCategory, PartRotation } from '../../../shared/types/openapi';
+import { productsService, type InventoryStats } from '../api/products-service';
+import type { InventoryItem, PartCategory, PartRotation } from '../../../shared/types/openapi';
 
 const CATEGORIES: { key: PartCategory | 'TODAS'; label: string }[] = [
   { key: 'TODAS', label: 'Todas las Categorías' },
