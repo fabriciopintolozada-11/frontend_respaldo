@@ -1,20 +1,19 @@
-# Taller Front
+<div align="center">
+<img width="1200" height="475" alt="GHBanner" src="https://ai.google.dev/static/site-assets/images/share-ais-513315318.png" />
+</div>
 
-Frontend del Taller Mecánico Los Fratelli. La primera funcionalidad implementada
-es HU-01, registro del ingreso de un vehículo y creación de su Orden de Trabajo.
+# Taller Frontend
 
-## Desarrollo
+SPA de gestión de taller para E1: recepción, consulta pública, asignación y consola del mecánico.
 
-1. Ejecutar `npm install`.
-2. Ejecutar `npm run dev`.
+## Run Locally
 
-El comando inicia Vite y JSON Server en paralelo. La HU-01 consume únicamente
-el mock disponible en `http://localhost:3001`, con los datos de `mock/db.json`
-y las rutas definidas en `mock/routes.json`. `VITE_MOCK_API_URL` permite cambiar
-la ubicación del mock si el puerto predeterminado no está disponible.
+**Prerequisites:**  Node.js
 
-## Verificación
 
-- `npm run lint`
-- `npm test`
-- `npm run build`
+1. Instala dependencias: `npm install`.
+2. Copia `.env.example` a `.env.local`.
+3. Para integración con NestJS, configura `VITE_API_TOKEN` con un JWT válido y ejecuta `npm run dev`.
+4. Para trabajar sin backend, configura `VITE_DATA_SOURCE=mock` y ejecuta `npm run dev:full`.
+
+La API integrada usa `http://localhost:3000/api/v1`; el portal público no requiere token.

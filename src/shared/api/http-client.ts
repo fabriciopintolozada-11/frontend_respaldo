@@ -1,4 +1,4 @@
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 export interface ApiErrorBody {
   statusCode: number;
@@ -33,9 +33,14 @@ function buildUrl(path: string, params?: Record<string, string>): string {
   return url.toString();
 }
 
-async function get<T>(path: string, params?: Record<string, string>): Promise<T> {
+async function get<T>(
+  path: string,
+  params?: Record<string, string>,
+  signal?: AbortSignal,
+): Promise<T> {
   const response = await fetch(buildUrl(path, params), {
     headers: { Accept: 'application/json' },
+    signal,
   });
 
   if (!response.ok) {

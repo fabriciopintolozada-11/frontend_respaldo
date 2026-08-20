@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiError } from '../../../lib/api-error'
-import { apiRequest } from '../../../shared/api/http-client'
+import { ApiError, httpClient } from '../../../shared/api/http-client'
 import type {
   CreatedWorkOrderResponse,
   RegisterVehicleEntryRequest,
@@ -12,12 +11,16 @@ export async function getVehicleHistory(
   plate: string,
   signal?: AbortSignal,
 ) {
-  const data = await apiRequest<VehicleHistoryResponse[]>(
-    `/vehicles?plate=${encodeURIComponent(normalizePlate(plate))}`,
-    { signal },
-  )
-
-  return data[0] ?? null
+  try {
+    return await httpClient.get<VehicleHistoryResponse>(
+      `/vehicles/${encodeURIComponent(normalizePlate(plate))}/history`,
+      undefined,
+      signal,
+    )
+  } catch (error) {
+    if (error instanceof ApiError && error.isNotFound) return null
+    throw error
+  }
 }
 
 export function useVehicleHistory(plate: string) {
@@ -34,45 +37,17 @@ export async function createWorkOrder(
   request: RegisterVehicleEntryRequest,
 ) {
   if (request.vehicle.isFullyElectric) {
-    throw new ApiError(422, {
-      message: 'Los vehículos 100% eléctricos no pueden ser recibidos por el taller.',
-    })
+    const message = 'Los vehículos 100% eléctricos no pueden ser recibidos por el taller.'
+    throw new ApiError(422, message, { statusCode: 422, message })
   }
 
-  const plate = normalizePlate(request.plate)
-  const existingVehicle = await getVehicleHistory(plate)
-  const vehicle = existingVehicle ?? await apiRequest<VehicleHistoryResponse>('/vehicles', {
+  const response = await httpClient.request<CreatedWorkOrderResponse>({
+    url: '/work-orders',
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      id: `vehicle-${crypto.randomUUID()}`,
-      plate,
-      brand: request.vehicle.brand,
-      model: request.vehicle.model,
-      year: request.vehicle.year,
-      is_fully_electric: false,
-      customer_id: `customer-${crypto.randomUUID()}`,
-      customer_identification: request.customer.identification,
-      customer_name: request.customer.name,
-      ...(request.customer.phone ? { customer_phone: request.customer.phone } : {}),
-      history: [],
-    }),
+    data: request,
   })
 
-  const workOrder: CreatedWorkOrderResponse = {
-    id: `work-order-${crypto.randomUUID()}`,
-    vehicle_id: vehicle.id,
-    customer_id: vehicle.customer_id,
-    status: 'OPEN',
-    initial_complaint: request.initialComplaint,
-    created_at: new Date().toISOString(),
-  }
-
-  return apiRequest<CreatedWorkOrderResponse>('/workOrders', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(workOrder),
-  })
+  return response.data
 }
 
 export function useCreateWorkOrder() {

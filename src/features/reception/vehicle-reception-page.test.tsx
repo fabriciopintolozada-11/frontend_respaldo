@@ -8,6 +8,7 @@ import { VehicleReceptionPage } from './vehicle-reception-page'
 describe('VehicleReceptionPage', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn())
+    vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
   })
 
   it('validates every required work-order field', async () => {
@@ -27,7 +28,7 @@ describe('VehicleReceptionPage', () => {
   })
 
   it('searches, autocompletes vehicle and customer data, and shows history', async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse([existingVehicle()]))
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(existingVehicle()))
     const user = userEvent.setup()
     renderPage()
 
@@ -43,12 +44,12 @@ describe('VehicleReceptionPage', () => {
   })
 
   it('blocks an existing fully electric vehicle', async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse([{
+    vi.mocked(fetch).mockResolvedValue(jsonResponse({
       ...existingVehicle(),
       id: 'vehicle-electric',
       plate: 'ELE123',
       is_fully_electric: true,
-    }]))
+    }))
     const user = userEvent.setup()
     renderPage()
 
@@ -58,10 +59,17 @@ describe('VehicleReceptionPage', () => {
     expect(screen.getByRole('button', { name: /Registrar ingreso/ })).toBeDisabled()
   })
 
-  it('detects a new vehicle and persists its vehicle, customer and work order data', async () => {
+  it('detects a new vehicle and sends one registration request', async () => {
     vi.mocked(fetch).mockImplementation(async (_url, options) => {
-      if (!options?.method) return jsonResponse([])
-      return jsonResponse(JSON.parse(String(options.body)), 201)
+      if (!options?.method) return jsonResponse({}, 404)
+      return jsonResponse({
+        id: 'work-order-1',
+        vehicle_id: 'vehicle-1',
+        customer_id: 'customer-1',
+        status: 'OPEN',
+        initial_complaint: 'Ruido al frenar',
+        created_at: '2026-08-19T12:00:00.000Z',
+      }, 201)
     })
     const user = userEvent.setup()
     renderPage()
@@ -78,8 +86,9 @@ describe('VehicleReceptionPage', () => {
 
     expect(await screen.findByText('Orden de Trabajo creada')).toBeInTheDocument()
     expect(screen.getByText('OPEN')).toBeInTheDocument()
-    expect(fetch).toHaveBeenCalledWith('/api/v1/vehicles', expect.objectContaining({ method: 'POST' }))
-    expect(fetch).toHaveBeenCalledWith('/api/v1/workOrders', expect.objectContaining({ method: 'POST' }))
+    expect(fetch).toHaveBeenCalledWith('http://localhost:3000/api/v1/work-orders', expect.objectContaining({
+      method: 'POST',
+    }))
   })
 })
 

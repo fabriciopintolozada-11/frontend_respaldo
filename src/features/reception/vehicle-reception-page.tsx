@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { FormField, TextAreaField } from '../../components/ui/form-field'
-import { ApiError, errorMessage } from '../../lib/api-error'
+import { ApiError } from '../../shared/api/http-client'
 import { useCreateWorkOrder, useVehicleHistory } from './api/reception-api'
 import type {
   CreatedWorkOrderResponse,
@@ -118,8 +118,8 @@ export function VehicleReceptionPage() {
       setCreatedOrder(order)
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
-      if (error instanceof ApiError && error.details.length > 1) {
-        setSubmitError(error.details.join(' '))
+      if (error instanceof ApiError && Array.isArray(error.body?.message)) {
+        setSubmitError(error.body.message.join(' '))
       } else {
         setSubmitError(errorMessage(error))
       }
@@ -270,4 +270,8 @@ export function VehicleReceptionPage() {
       </form>
     </div>
   )
+}
+
+function errorMessage(error: unknown) {
+  return error instanceof Error ? error.message : 'Ocurrió un error inesperado.'
 }
