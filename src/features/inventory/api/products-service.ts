@@ -1,5 +1,5 @@
-import { apiClient, ApiResponse } from '../../../shared/api/api-client';
-import { InventoryItem, PartCategory } from '../../../shared/types/openapi';
+import { apiClient, type ApiResponse } from '../../../shared/api/api-client';
+import type { InventoryItem, PartCategory } from '../../../shared/types/openapi';
 
 export interface InventoryStats {
   totalItems: number;

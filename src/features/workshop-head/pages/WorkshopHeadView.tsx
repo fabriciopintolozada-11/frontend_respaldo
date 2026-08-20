@@ -25,10 +25,10 @@ import { Modal } from '../../../shared/components/Modal';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
-import { baysService, WorkshopMetrics } from '../api/bays-service';
+import { baysService, type WorkshopMetrics } from '../api/bays-service';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
 import { isBackendMode } from '../../../shared/api/api-client';
-import { Bay, WorkOrder, Mechanic, BayStatus } from '../../../shared/types/openapi';
+import type { Bay, WorkOrder, Mechanic, BayStatus } from '../../../shared/types/openapi';
 
 export const WorkshopHeadView: React.FC<{
   onSelectOrder?: (orderId: string) => void;

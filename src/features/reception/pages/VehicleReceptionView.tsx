@@ -26,7 +26,7 @@ import { FuelTypeBadge, Badge } from '../../../shared/components/Badge';
 import { useToast } from '../../../shared/components/ToastContext';
 import { vehiclesService } from '../api/vehicles-service';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { Vehicle, FuelType } from '../../../shared/types/openapi';
+import type { Vehicle, FuelType } from '../../../shared/types/openapi';
 
 const receptionSchema = z.object({
   plate: z

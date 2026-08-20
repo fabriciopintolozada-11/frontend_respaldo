@@ -3,7 +3,7 @@
  * Persists changes in browser localStorage for a seamless experience.
  */
 
-import {
+import type {
   Vehicle,
   Bay,
   Mechanic,

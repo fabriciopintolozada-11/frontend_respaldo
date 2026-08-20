@@ -23,7 +23,7 @@ import { StatusPipeline } from '../../../shared/components/StatusPipeline';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { workOrdersService } from '../api/work-orders-service';
-import { WorkOrder, WorkOrderStatus } from '../../../shared/types/openapi';
+import type { WorkOrder, WorkOrderStatus } from '../../../shared/types/openapi';
 
 export interface WorkOrdersListViewProps {
   onSelectOrder: (orderId: string) => void;

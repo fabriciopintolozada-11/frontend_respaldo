@@ -24,9 +24,9 @@ import { Input } from '../../../shared/components/Input';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
-import { billingService, BillingAccount } from '../api/billing-service';
+import { billingService, type BillingAccount } from '../api/billing-service';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-import { WorkOrder } from '../../../shared/types/openapi';
+import type { WorkOrder } from '../../../shared/types/openapi';
 
 export const WorkshopSettlementView: React.FC<{
   initialOrderId?: string;
@@ -73,19 +73,19 @@ export const WorkshopSettlementView: React.FC<{
   // Filter bills
   const filteredBills = bills.filter((b) => {
     return (
-      b.otCode.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      b.workOrderId.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.vehiclePlate.toLowerCase().includes(searchTerm.toLowerCase()) ||
       b.clientName.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
 
   const totalCollectedBOB = bills
-    .filter((b) => b.isSettled)
-    .reduce((acc, curr) => acc + curr.totalGeneralBOB, 0);
+    .filter((b) => b.paymentStatus === 'CANCELADO_TOTAL')
+    .reduce((acc, curr) => acc + curr.totalAmountBOB, 0);
 
   const totalPendingBOB = bills
-    .filter((b) => !b.isSettled)
-    .reduce((acc, curr) => acc + curr.totalGeneralBOB, 0);
+    .filter((b) => b.paymentStatus !== 'CANCELADO_TOTAL')
+    .reduce((acc, curr) => acc + curr.totalAmountBOB, 0);
 
   const handleProcessPayment = async () => {
     if (!selectedBillForPay) return;
@@ -95,13 +95,13 @@ export const WorkshopSettlementView: React.FC<{
         paymentMethod,
         transactionReference: transactionRef || undefined,
         documentType,
-        nit: nitFactura || selectedBillForPay.clientDocument,
+        nit: nitFactura || selectedBillForPay.clientNitCI,
         businessName: razonSocial || selectedBillForPay.clientName,
       });
 
       toast.success(
         'Cuenta Liquidada y Vehículo Entregado (RN-21, RN-22)',
-        `Se emitió ${documentType === 'FACTURA_COMPUTARIZADA' ? 'Factura Computarizada' : 'Recibo'} por ${selectedBillForPay.totalGeneralBOB} BOB.`
+        `Se emitió ${documentType === 'FACTURA_COMPUTARIZADA' ? 'Factura Computarizada' : 'Recibo'} por ${selectedBillForPay.totalAmountBOB} BOB.`
       );
       setSelectedBillForPay(null);
       await loadData();
@@ -182,7 +182,7 @@ export const WorkshopSettlementView: React.FC<{
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           {filteredBills.map((b) => {
-            const isPaid = b.isSettled;
+            const isPaid = b.paymentStatus === 'CANCELADO_TOTAL';
 
             return (
               <Card
@@ -197,7 +197,7 @@ export const WorkshopSettlementView: React.FC<{
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-xs font-bold text-[#F97316] bg-[#F9731615] border border-[#F9731630] px-2 py-0.5 rounded-md">
-                          {b.otCode}
+                          {b.workOrderId}
                         </span>
                         <span className="font-mono font-extrabold text-sm text-white">
                           {b.vehiclePlate}
@@ -206,7 +206,7 @@ export const WorkshopSettlementView: React.FC<{
                       <h3 className="font-bold text-xs text-white mt-1">
                         {b.clientName}
                       </h3>
-                      <p className="text-[11px] text-[#8E949F]">CI/NIT: {b.clientDocument}</p>
+                      <p className="text-[11px] text-[#8E949F]">CI/NIT: {b.clientNitCI}</p>
                     </div>
 
                     <div className="flex flex-col items-end gap-1">
@@ -220,7 +220,7 @@ export const WorkshopSettlementView: React.FC<{
                         </Badge>
                       )}
                       <span className="text-[10px] text-[#8E949F] font-mono">
-                        {new Date(b.createdAt).toLocaleDateString('es-BO')}
+                        {new Date(b.issueDate).toLocaleDateString('es-BO')}
                       </span>
                     </div>
                   </div>
@@ -229,33 +229,33 @@ export const WorkshopSettlementView: React.FC<{
                   <div className="py-2.5 space-y-1.5 text-xs">
                     <div className="flex justify-between text-[#8E949F]">
                       <span>Mano de Obra Certificada:</span>
-                      <span className="font-mono text-white">{b.totalLaborBOB} BOB</span>
+                       <span className="font-mono text-white">{b.laborTotalBOB} BOB</span>
                     </div>
                     <div className="flex justify-between text-[#8E949F]">
                       <span>Repuestos Utilizados:</span>
-                      <span className="font-mono text-white">{b.totalPartsBOB} BOB</span>
+                       <span className="font-mono text-white">{b.partsTotalBOB} BOB</span>
                     </div>
-                    {b.taxesBOB > 0 && (
+                    {b.taxAmountBOB > 0 && (
                       <div className="flex justify-between text-[#8E949F]">
                         <span>IVA (13% Ley 843):</span>
-                        <span className="font-mono text-white">{b.taxesBOB} BOB</span>
+                        <span className="font-mono text-white">{b.taxAmountBOB} BOB</span>
                       </div>
                     )}
                     <div className="pt-2 border-t border-[#2D3139] flex justify-between items-center text-xs font-bold">
                       <span className="text-white">TOTAL GENERAL:</span>
                       <span className="text-base font-mono font-extrabold text-[#F97316]">
-                        {b.totalGeneralBOB.toLocaleString('es-BO')} BOB
+                        {b.totalAmountBOB.toLocaleString('es-BO')} BOB
                       </span>
                     </div>
 
                     {isPaid && (
                       <div className="mt-2 p-2 rounded-xl bg-[#22C55E10] border border-[#22C55E30] text-[10px] text-[#22C55E] space-y-0.5">
                         <p>
-                          <strong>Documento:</strong> {b.invoiceNumber || 'Recibo Oficial #094'} ({b.paymentMethod})
+                          <strong>Documento:</strong> {b.invoiceCode || 'Recibo Oficial #094'} ({b.paymentMethod})
                         </p>
                         <p>
                           <strong>Cobrado:</strong>{' '}
-                          {b.settledAt ? new Date(b.settledAt).toLocaleString('es-BO') : 'Completado'}
+                          {b.paidAt ? new Date(b.paidAt).toLocaleString('es-BO') : 'Completado'}
                         </p>
                       </div>
                     )}
@@ -281,7 +281,7 @@ export const WorkshopSettlementView: React.FC<{
                       leftIcon={<DollarSign className="w-3.5 h-3.5" />}
                       onClick={() => {
                         setSelectedBillForPay(b);
-                        setNitFactura(b.clientDocument);
+                        setNitFactura(b.clientNitCI);
                         setRazonSocial(b.clientName);
                       }}
                       className="text-xs"
@@ -300,7 +300,7 @@ export const WorkshopSettlementView: React.FC<{
       <Modal
         isOpen={!!selectedBillForPay}
         onClose={() => setSelectedBillForPay(null)}
-        title={`Cobro & Liquidación - Orden ${selectedBillForPay?.otCode}`}
+        title={`Cobro & Liquidación - Orden ${selectedBillForPay?.workOrderId}`}
         subtitle="Regla RN-21: Registro formal de pago y entrega física del vehículo liviano"
       >
         <div className="space-y-4">
@@ -308,7 +308,7 @@ export const WorkshopSettlementView: React.FC<{
             <div>
               <span className="text-[10px] font-semibold uppercase tracking-wider text-[#8E949F]">Monto Total a Cobrar:</span>
               <p className="text-xl font-extrabold font-mono text-[#F97316]">
-                {selectedBillForPay?.totalGeneralBOB.toLocaleString('es-BO')} BOB
+                {selectedBillForPay?.totalAmountBOB.toLocaleString('es-BO')} BOB
               </p>
             </div>
             <div className="text-right text-xs">
@@ -435,8 +435,8 @@ export const WorkshopSettlementView: React.FC<{
               </p>
               <p className="text-[10px] text-[#8E949F]">Casa Matriz: Av. Arce #2410, La Paz - Bolivia</p>
               <div className="pt-2 border-t border-[#2D3139] flex justify-between text-xs font-mono font-bold">
-                <span className="text-[#F97316]">{billToPrint.invoiceNumber || 'FACTURA N° 004829'}</span>
-                <span className="text-[#8E949F]">FECHA: {new Date(billToPrint.createdAt).toLocaleDateString('es-BO')}</span>
+                <span className="text-[#F97316]">{billToPrint.invoiceCode || 'FACTURA N° 004829'}</span>
+                <span className="text-[#8E949F]">FECHA: {new Date(billToPrint.issueDate).toLocaleDateString('es-BO')}</span>
               </div>
             </div>
 
@@ -446,10 +446,10 @@ export const WorkshopSettlementView: React.FC<{
                 <strong className="text-white">Señor(es):</strong> {billToPrint.clientName}
               </p>
               <p>
-                <strong className="text-white">NIT/CI:</strong> {billToPrint.clientDocument}
+                <strong className="text-white">NIT/CI:</strong> {billToPrint.clientNitCI}
               </p>
               <p>
-                <strong className="text-white">Vehículo:</strong> {billToPrint.vehiclePlate} (OT: {billToPrint.otCode})
+                <strong className="text-white">Vehículo:</strong> {billToPrint.vehiclePlate} (OT: {billToPrint.workOrderId})
               </p>
             </div>
 
@@ -465,18 +465,18 @@ export const WorkshopSettlementView: React.FC<{
                 <tbody className="divide-y divide-[#2D3139] font-mono text-xs">
                   <tr>
                     <td className="p-2.5 text-white">Servicios Técnicos y Mano de Obra en Bahía</td>
-                    <td className="p-2.5 text-right text-[#F97316]">{billToPrint.totalLaborBOB} Bs.</td>
+                    <td className="p-2.5 text-right text-[#F97316]">{billToPrint.laborTotalBOB} Bs.</td>
                   </tr>
                   <tr>
                     <td className="p-2.5 text-white">Repuestos Originales e Insumos Instalados</td>
-                    <td className="p-2.5 text-right text-[#F97316]">{billToPrint.totalPartsBOB} Bs.</td>
+                    <td className="p-2.5 text-right text-[#F97316]">{billToPrint.partsTotalBOB} Bs.</td>
                   </tr>
                 </tbody>
                 <tfoot className="bg-[#1C2028] font-bold border-t border-[#2D3139]">
                   <tr>
                     <td className="p-2.5 text-right uppercase text-xs text-[#8E949F]">TOTAL PAGADO:</td>
                     <td className="p-2.5 text-right font-mono text-[#F97316] text-sm">
-                      {billToPrint.totalGeneralBOB} BOB
+                      {billToPrint.totalAmountBOB} BOB
                     </td>
                   </tr>
                 </tfoot>

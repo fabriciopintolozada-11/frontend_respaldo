@@ -35,7 +35,7 @@ export class ApiClientError extends Error {
 export const isBackendMode = import.meta.env.VITE_DATA_SOURCE !== 'mock';
 
 class ApiClient {
-  private delayMs = 180; // Fast and smooth simulated delay
+  private delayMs = 180;
 
   private async simulateNetwork(): Promise<void> {
     if (this.delayMs <= 0) return;
