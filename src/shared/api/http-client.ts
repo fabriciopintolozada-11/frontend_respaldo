@@ -49,4 +49,31 @@ async function get<T>(path: string, params?: Record<string, string>): Promise<T>
   return (await response.json()) as T;
 }
 
-export const httpClient = { get };
+export interface RequestConfig {
+  url: string;
+  method: 'GET' | 'POST' | 'PATCH';
+  data?: unknown;
+}
+
+async function request<T>(config: RequestConfig): Promise<{ data: T }> {
+  const response = await fetch(buildUrl(config.url), {
+    method: config.method,
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: config.data === undefined ? undefined : JSON.stringify(config.data),
+  });
+
+  if (!response.ok) {
+    const body = (await response.json().catch(() => undefined)) as ApiErrorBody | undefined;
+    const message = Array.isArray(body?.message)
+      ? body!.message.join(' · ')
+      : (body?.message ?? `HTTP ${response.status}`);
+    throw new ApiError(response.status, message, body);
+  }
+
+  return { data: (await response.json()) as T };
+}
+
+export const httpClient = { get, request };

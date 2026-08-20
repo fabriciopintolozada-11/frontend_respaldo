@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
-import type { BayStatus, WorkOrderStatus } from '../../types/workshop';
+import type { BayStatus, PartRotation, WorkOrderStatus } from '../../types/workshop';
+import type { FuelType } from '../types/openapi';
 
 export interface BadgeProps {
   children?: ReactNode;
@@ -37,13 +38,7 @@ const sizeStyles = {
   lg: 'px-3.5 py-1.5 text-sm font-semibold',
 };
 
-export function Badge({
-  children,
-  variant = 'default',
-  size = 'md',
-  className = '',
-  dot = false,
-}: BadgeProps) {
+export function Badge({ children, variant = 'default', size = 'md', className = '', dot = false }: BadgeProps) {
   return (
     <span
       className={`inline-flex items-center gap-1.5 rounded-lg border tracking-wide whitespace-nowrap ${variantStyles[variant]} ${sizeStyles[size]} ${className}`}
@@ -67,13 +62,7 @@ const WORK_ORDER_CONFIGS: Record<WorkOrderStatus, { label: string; variant: NonN
   CANCELADA: { label: 'Cancelada', variant: 'danger' },
 };
 
-export function WorkOrderStatusBadge({
-  status,
-  size = 'md',
-}: {
-  status: WorkOrderStatus;
-  size?: BadgeProps['size'];
-}) {
+export function WorkOrderStatusBadge({ status, size = 'md' }: { status: WorkOrderStatus; size?: BadgeProps['size'] }) {
   const config = WORK_ORDER_CONFIGS[status] ?? { label: status, variant: 'default' as const };
   return (
     <Badge variant={config.variant} size={size} dot>
@@ -96,4 +85,26 @@ export function BayStatusBadge({ status, size = 'md' }: { status: BayStatus; siz
       {config.label}
     </Badge>
   );
+}
+
+export function RotationBadge({ rotation }: { rotation: PartRotation }) {
+  const configs: Record<PartRotation, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
+    ALTA: { label: 'Alta Rotación', variant: 'success' },
+    MEDIA: { label: 'Media Rotación', variant: 'info' },
+    BAJA: { label: 'Baja Rotación', variant: 'slate' },
+    SIN_ROTACION_ALERTA: { label: '⚠️ Alerta: 2+ Meses Sin Rotar (RN-10)', variant: 'danger' },
+  };
+  const config = configs[rotation] ?? { label: rotation, variant: 'default' as const };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
+}
+
+export function FuelTypeBadge({ fuel }: { fuel: FuelType }) {
+  const configs: Record<FuelType, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
+    GASOLINA: { label: 'Gasolina', variant: 'slate' },
+    DIESEL: { label: 'Diésel', variant: 'amber' },
+    HIBRIDO: { label: 'Híbrido', variant: 'success' },
+    ELECTRICO: { label: '100% Eléctrico (No admitido)', variant: 'danger' },
+  };
+  const config = configs[fuel] ?? { label: fuel, variant: 'default' as const };
+  return <Badge variant={config.variant}>{config.label}</Badge>;
 }

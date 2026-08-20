@@ -1,24 +1,21 @@
 import tailwindcss from '@tailwindcss/vite';
-import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import {defineConfig} from 'vite';
 
-const apiProxyTarget = process.env.VITE_API_PROXY_TARGET ?? 'http://localhost:3000';
-
-export default defineConfig({
-  plugins: [react(), tailwindcss()],
-  server: {
-    host: '127.0.0.1',
-    port: 5173,
-    proxy: {
-      '/api': {
-        target: apiProxyTarget,
-        changeOrigin: true,
+export default defineConfig(() => {
+  return {
+    plugins: [react(), tailwindcss()],
+    resolve: {
+      alias: {
+        '@': import.meta.dirname,
       },
     },
-  },
-  test: {
-    environment: 'jsdom',
-    setupFiles: ['./src/test/setup.ts'],
-    pool: 'threads',
-  },
+    server: {
+      // HMR is disabled in AI Studio via DISABLE_HMR env var.
+      // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
+      hmr: process.env.DISABLE_HMR !== 'true',
+      // Disable file watching when DISABLE_HMR is true to save CPU during agent edits.
+      watch: process.env.DISABLE_HMR === 'true' ? null : {},
+    },
+  };
 });
