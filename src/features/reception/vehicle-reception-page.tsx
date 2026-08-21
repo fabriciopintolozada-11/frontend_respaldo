@@ -21,6 +21,7 @@ import type {
 import { normalizePlate, PLATE_PATTERN, toRegisterRequest } from './reception.validation'
 import { VehicleHistoryPanel } from './components/vehicle-history-panel'
 import { WorkOrderSuccess } from './components/work-order-success'
+import './vehicle-reception-page.css'
 
 const defaultValues: VehicleEntryFormValues = {
   plate: '',
@@ -137,14 +138,14 @@ export function VehicleReceptionPage() {
 
   if (createdOrder) {
     return (
-      <div className="page-container compact-page">
+      <div className="vehicle-reception-page page-container compact-page">
         <WorkOrderSuccess order={createdOrder} onNew={startNewEntry} />
       </div>
     )
   }
 
   return (
-    <div className="page-container">
+    <div className="vehicle-reception-page page-container">
       <section className="page-heading">
         <div>
           <span className="eyebrow">HU-01 · Recepción de taller</span>

@@ -9,7 +9,8 @@ export type VehicleStatusParams = {
 };
 
 export const vehicleStatusApi = {
-  getStatus(params: VehicleStatusParams): Promise<VehicleStatusResponse> {
-    return httpClient.get<VehicleStatusResponse>('/public/vehicle-status', params);
+  async getStatus(params: VehicleStatusParams): Promise<VehicleStatusResponse> {
+    const response = await httpClient.get<VehicleStatusResponse>('/public/vehicle-status', { params });
+    return response.data;
   },
 };

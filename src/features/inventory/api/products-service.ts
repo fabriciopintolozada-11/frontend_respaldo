@@ -12,7 +12,17 @@ export interface InventoryStats {
   categoryBreakdown: Record<PartCategory, number>;
 }
 
-type ProductPayload = Omit<InventoryItem, 'id' | 'daysWithoutMovement'>;
+type ProductPayload = Omit<
+  InventoryItem,
+  'id' | 'daysWithoutMovement' | 'lastMovementDate' | 'stockReserved'
+>;
+
+interface ProductsListResponse {
+  data: InventoryItem[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
 
 const emptyCategoryBreakdown = (): Record<PartCategory, number> => ({
   MOTOR: 0,
@@ -55,11 +65,12 @@ const calculateStats = (products: InventoryItem[]): InventoryStats => {
 
 export const productsService = {
   async getAll(): Promise<ApiResponse<InventoryItem[]>> {
-    return apiClient.getHttp<InventoryItem[]>('/products');
+    const response = await apiClient.getHttp<ProductsListResponse>('/spare-parts?page=1&pageSize=100');
+    return { ...response, data: response.data.data };
   },
 
   async getById(id: string): Promise<ApiResponse<InventoryItem>> {
-    return apiClient.getHttp<InventoryItem>(`/products/${id}`);
+    return apiClient.getHttp<InventoryItem>(`/spare-parts/${id}`);
   },
 
   async getStats(): Promise<ApiResponse<InventoryStats>> {
@@ -71,19 +82,12 @@ export const productsService = {
   },
 
   async registerProduct(payload: ProductPayload): Promise<ApiResponse<InventoryItem>> {
-    return apiClient.postHttp<ProductPayload, InventoryItem>('/products', {
-      ...payload,
-      id: `REP-${Date.now().toString().slice(-6)}`,
-      daysWithoutMovement: 0,
-    } as ProductPayload & { id: string; daysWithoutMovement: number });
+    return apiClient.postHttp<ProductPayload, InventoryItem>('/spare-parts', payload);
   },
 
   async updateStock(id: string, addedStock: number): Promise<ApiResponse<InventoryItem>> {
-    const current = await this.getById(id);
-    return apiClient.patchHttp<Partial<InventoryItem>, InventoryItem>(`/products/${id}`, {
-      stockAvailable: Math.max(0, current.data.stockAvailable + addedStock),
-      lastMovementDate: new Date().toISOString().split('T')[0],
-      daysWithoutMovement: 0,
+    return apiClient.postHttp<{ quantity: number }, InventoryItem>(`/spare-parts/${id}/stock-adjustments`, {
+      quantity: addedStock,
     });
   },
 };

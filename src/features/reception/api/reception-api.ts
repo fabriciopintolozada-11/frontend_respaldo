@@ -12,11 +12,11 @@ export async function getVehicleHistory(
   signal?: AbortSignal,
 ) {
   try {
-    return await httpClient.get<VehicleHistoryResponse>(
+    const response = await httpClient.get<VehicleHistoryResponse>(
       `/vehicles/${encodeURIComponent(normalizePlate(plate))}/history`,
-      undefined,
-      signal,
+      { signal },
     )
+    return response.data
   } catch (error) {
     if (error instanceof ApiError && error.isNotFound) return null
     throw error

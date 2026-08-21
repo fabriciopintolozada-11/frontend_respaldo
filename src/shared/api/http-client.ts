@@ -1,13 +1,6 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
-const API_TOKEN = import.meta.env.MODE === 'test' ? undefined : import.meta.env.VITE_API_TOKEN?.trim();
+import axios from 'axios';
 
-function headers(includeContentType = false): HeadersInit {
-  return {
-    Accept: 'application/json',
-    ...(includeContentType ? { 'Content-Type': 'application/json' } : {}),
-    ...(API_TOKEN ? { Authorization: `Bearer ${API_TOKEN}` } : {}),
-  };
-}
+import { env } from '../config/env';
 
 export interface ApiErrorBody {
   statusCode: number;
@@ -32,59 +25,26 @@ export class ApiError extends Error {
   }
 }
 
-function buildUrl(path: string, params?: Record<string, string>): string {
-  const url = new URL(`${API_BASE_URL}${path}`, window.location.origin);
-  if (params) {
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value);
-    }
-  }
-  return url.toString();
-}
+export const httpClient = axios.create({
+  baseURL: env.apiUrl,
+  timeout: env.apiTimeout,
+  headers: {
+    Accept: 'application/json',
+    ...(env.apiToken ? { Authorization: `Bearer ${env.apiToken}` } : {}),
+  },
+});
 
-async function get<T>(
-  path: string,
-  params?: Record<string, string>,
-  signal?: AbortSignal,
-): Promise<T> {
-  const response = await fetch(buildUrl(path, params), {
-    headers: headers(),
-    signal,
-  });
+httpClient.interceptors.response.use(
+  (response) => response,
+  (error: unknown) => {
+    if (!axios.isAxiosError<ApiErrorBody>(error)) return Promise.reject(error);
 
-  if (!response.ok) {
-    const body = (await response.json().catch(() => undefined)) as ApiErrorBody | undefined;
+    const statusCode = error.response?.status ?? 0;
+    const body = error.response?.data;
     const message = Array.isArray(body?.message)
-      ? body!.message.join(' · ')
-      : (body?.message ?? `HTTP ${response.status}`);
-    throw new ApiError(response.status, message, body);
-  }
+      ? body.message.join(' · ')
+      : (body?.message ?? error.message ?? `HTTP ${statusCode}`);
 
-  return (await response.json()) as T;
-}
-
-export interface RequestConfig {
-  url: string;
-  method: 'GET' | 'POST' | 'PATCH';
-  data?: unknown;
-}
-
-async function request<T>(config: RequestConfig): Promise<{ data: T }> {
-  const response = await fetch(buildUrl(config.url), {
-    method: config.method,
-    headers: headers(true),
-    body: config.data === undefined ? undefined : JSON.stringify(config.data),
-  });
-
-  if (!response.ok) {
-    const body = (await response.json().catch(() => undefined)) as ApiErrorBody | undefined;
-    const message = Array.isArray(body?.message)
-      ? body!.message.join(' · ')
-      : (body?.message ?? `HTTP ${response.status}`);
-    throw new ApiError(response.status, message, body);
-  }
-
-  return { data: (await response.json()) as T };
-}
-
-export const httpClient = { get, request };
+    return Promise.reject(new ApiError(statusCode, message, body));
+  },
+);
