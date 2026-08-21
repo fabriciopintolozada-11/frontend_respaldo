@@ -1,5 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { httpClient } from '../shared/api/http-client';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -10,8 +11,6 @@ const queryClient = new QueryClient({
     },
   },
 });
-
-const API_BASE_URL = import.meta.env.VITE_API_URL ?? '/api/v1';
 
 function BackendUnavailable() {
   return (
@@ -36,8 +35,10 @@ export function AppProviders({ children }: AppProvidersProps) {
 
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${API_BASE_URL}/health`, { cache: 'no-store' });
-        if (mounted) setBackendAvailable(response.ok);
+      await httpClient.get('/health', {
+  headers: { 'Cache-Control': 'no-cache' },
+});
+        if (mounted) setBackendAvailable(true);
       } catch {
         if (mounted) setBackendAvailable(false);
       }

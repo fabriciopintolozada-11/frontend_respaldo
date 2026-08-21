@@ -105,12 +105,10 @@ export const InventoryManagerView: React.FC = () => {
         brand: newItemBrand,
         compatibleModels: newItemModels || 'Universal',
         stockAvailable: Number(newItemStock) || 0,
-        stockReserved: 0,
         stockMinimum: Number(newItemMinStock) || 1,
         unitCostBOB: Number(newItemCost) || 0,
         unitPriceBOB: Number(newItemPrice) || 0,
         locationShelf: newItemShelf,
-        lastMovementDate: new Date().toISOString().split('T')[0],
         rotationCategory: 'MEDIA',
       });
 
@@ -143,7 +141,7 @@ export const InventoryManagerView: React.FC = () => {
       <EmptyState
         icon={<AlertTriangle className="w-8 h-8 text-[#EF4444]" />}
         title="No se pudo conectar con el catálogo"
-        description="Inicia JSON Server y vuelve a intentar la consulta de productos."
+        description="Verifica la conexión con el backend y vuelve a intentar la consulta de repuestos."
         actionLabel="Reintentar"
         onAction={reloadData}
       />

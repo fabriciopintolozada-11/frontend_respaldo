@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { httpClient } from './http-client';
+import { ApiError as HttpApiError, httpClient } from './http-client';
+import { env } from '../config/env';
 
 /**
  * Centralized API Client (Standardized HTTP Client Layer)
@@ -32,7 +32,7 @@ export class ApiClientError extends Error {
   }
 }
 
-export const isBackendMode = import.meta.env.VITE_DATA_SOURCE !== 'mock';
+export const isBackendMode = env.dataSource === 'backend';
 
 class ApiClient {
   private delayMs = 180;
@@ -58,12 +58,12 @@ class ApiClient {
         timestamp: new Date().toISOString(),
       };
     } catch (error) {
-      if (axios.isAxiosError(error)) {
+      if (error instanceof HttpApiError) {
          throw new ApiClientError({
           success: false,
-          errorCode: error.response ? `HTTP_${error.response.status}` : 'NETWORK_ERROR',
-          message: error.response?.data?.message || error.message || 'Error al consultar la API',
-          details: error.response?.data,
+          errorCode: error.statusCode ? `HTTP_${error.statusCode}` : 'NETWORK_ERROR',
+          message: error.message,
+          details: error.body,
          });
       }
 

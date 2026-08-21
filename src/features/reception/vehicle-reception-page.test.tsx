@@ -1,13 +1,17 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '../../app/providers/AppProviders'
+import { server } from '../../test/msw-handlers'
 import type { VehicleHistoryResponse } from './reception.types'
 import { VehicleReceptionPage } from './vehicle-reception-page'
 
 describe('VehicleReceptionPage', () => {
+  const requestSpy = vi.fn()
+
   beforeEach(() => {
-    vi.stubGlobal('fetch', vi.fn())
+    requestSpy.mockClear()
     vi.spyOn(window, 'scrollTo').mockImplementation(() => undefined)
   })
 
@@ -24,11 +28,11 @@ describe('VehicleReceptionPage', () => {
     expect(screen.getByText('La identificación es obligatoria.')).toBeInTheDocument()
     expect(screen.getByText('El nombre es obligatorio.')).toBeInTheDocument()
     expect(screen.getByText('El reclamo inicial es obligatorio.')).toBeInTheDocument()
-    expect(fetch).not.toHaveBeenCalled()
+    expect(requestSpy).not.toHaveBeenCalled()
   })
 
   it('searches, autocompletes vehicle and customer data, and shows history', async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse(existingVehicle()))
+    server.use(http.get('/api/v1/vehicles/ABC123/history', () => HttpResponse.json(existingVehicle())))
     const user = userEvent.setup()
     renderPage()
 
@@ -44,12 +48,12 @@ describe('VehicleReceptionPage', () => {
   })
 
   it('blocks an existing fully electric vehicle', async () => {
-    vi.mocked(fetch).mockResolvedValue(jsonResponse({
+    server.use(http.get('/api/v1/vehicles/ELE123/history', () => HttpResponse.json({
       ...existingVehicle(),
       id: 'vehicle-electric',
       plate: 'ELE123',
       is_fully_electric: true,
-    }))
+    })))
     const user = userEvent.setup()
     renderPage()
 
@@ -60,17 +64,20 @@ describe('VehicleReceptionPage', () => {
   })
 
   it('detects a new vehicle and sends one registration request', async () => {
-    vi.mocked(fetch).mockImplementation(async (_url, options) => {
-      if (!options?.method) return jsonResponse({}, 404)
-      return jsonResponse({
+    server.use(
+      http.get('/api/v1/vehicles/NEW123/history', () => HttpResponse.json({}, { status: 404 })),
+      http.post('/api/v1/work-orders', async ({ request }) => {
+        requestSpy(await request.json())
+        return HttpResponse.json({
         id: 'work-order-1',
         vehicle_id: 'vehicle-1',
         customer_id: 'customer-1',
         status: 'OPEN',
         initial_complaint: 'Ruido al frenar',
         created_at: '2026-08-19T12:00:00.000Z',
-      }, 201)
-    })
+        }, { status: 201 })
+      }),
+    )
     const user = userEvent.setup()
     renderPage()
 
@@ -86,9 +93,8 @@ describe('VehicleReceptionPage', () => {
 
     expect(await screen.findByText('Orden de Trabajo creada')).toBeInTheDocument()
     expect(screen.getByText('OPEN')).toBeInTheDocument()
-    expect(fetch).toHaveBeenCalledWith('http://localhost:3000/api/v1/work-orders', expect.objectContaining({
-      method: 'POST',
-    }))
+    expect(requestSpy).toHaveBeenCalledOnce()
+    expect(requestSpy).toHaveBeenCalledWith(expect.objectContaining({ plate: 'NEW123' }))
   })
 })
 
@@ -120,9 +126,3 @@ function existingVehicle(): VehicleHistoryResponse {
   }
 }
 
-function jsonResponse(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: { 'Content-Type': 'application/json' },
-  })
-}
