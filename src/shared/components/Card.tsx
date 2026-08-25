@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from 'react';
 
 export interface CardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'flat' | 'bordered' | 'accent' | 'warning' | 'danger' | 'success';
+  variant?: 'default' | 'flat' | 'bordered' | 'accent' | 'warning' | 'danger' | 'success' | 'public';
   padding?: 'none' | 'sm' | 'md' | 'lg';
 }
 
@@ -20,6 +20,7 @@ const variantStyles = {
   warning: 'bg-[#F59E0B10] border border-[#F59E0B30] rounded-2xl text-[#E0E2E6]',
   danger: 'bg-[#EF444410] border border-[#EF444430] rounded-2xl text-[#E0E2E6]',
   success: 'bg-[#22C55E10] border border-[#22C55E30] rounded-2xl text-[#E0E2E6]',
+  public: 'bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-900',
 };
 
 export function Card({ children, variant = 'default', padding = 'md', className = '', ...props }: CardProps) {

@@ -24,14 +24,14 @@ export function Button({
     'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed select-none active:scale-[0.98] min-h-[44px] min-w-[44px]';
 
   const sizeStyles = {
-    sm: 'px-3 py-2 text-xs gap-1.5 min-h-[38px]',
+    sm: 'px-3 py-2 text-xs gap-1.5 min-h-[44px]',
     md: 'px-4 py-2.5 text-sm gap-2 min-h-[44px]',
     lg: 'px-6 py-3.5 text-base gap-2.5 min-h-[50px]',
   };
 
   const variantStyles = {
     primary:
-      'bg-[#F97316] hover:bg-[#EA580C] text-white shadow-xs shadow-orange-950/40 focus:ring-[#F97316] active:bg-[#C2410C]',
+      'bg-lime-400 hover:bg-lime-300 text-lime-950 shadow-sm shadow-lime-950/10 focus:ring-lime-400 active:bg-lime-500',
     secondary: 'bg-[#2D3139] text-[#E0E2E6] hover:bg-[#3D4149] hover:text-white focus:ring-[#2D3139]',
     outline:
       'border border-[#2D3139] bg-[#1C2028] text-[#E0E2E6] hover:bg-[#2D3139] hover:text-white focus:ring-[#F97316]',

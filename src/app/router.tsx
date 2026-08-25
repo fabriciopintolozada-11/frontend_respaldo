@@ -1,12 +1,6 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 
-import { TrackingPublicPage } from '../features/tracking-public/pages/TrackingPublicPage';
 import { WorkshopLayout } from './workshop-layout';
-import { WorkshopHeadView } from '../features/workshop/WorkshopHeadView';
-import { MechanicConsoleView } from '../features/mechanic/pages/MechanicConsoleView';
-import { WorkOrdersListView } from '../features/workshop/WorkOrdersListView';
-import { WorkOrderDetailView } from '../features/workshop/WorkOrderDetailView';
-import { VehicleReceptionPage } from '../features/reception/vehicle-reception-page';
 
 export const router = createBrowserRouter([
   {
@@ -19,28 +13,40 @@ export const router = createBrowserRouter([
       },
       {
         path: 'taller',
-        element: <WorkshopHeadView />,
+        lazy: async () => ({
+          Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
+        }),
       },
       {
         path: 'recepcion',
-        element: <VehicleReceptionPage />,
+        lazy: async () => ({
+          Component: (await import('../features/reception/vehicle-reception-page')).VehicleReceptionPage,
+        }),
       },
       {
         path: 'mecanico',
-        element: <MechanicConsoleView />,
+        lazy: async () => ({
+          Component: (await import('../features/mechanic/pages/MechanicConsoleView')).MechanicConsoleView,
+        }),
       },
       {
         path: 'ots',
-        element: <WorkOrdersListView />,
+        lazy: async () => ({
+          Component: (await import('../features/workshop/WorkOrdersListView')).WorkOrdersListView,
+        }),
       },
       {
         path: 'ots/:orderId',
-        element: <WorkOrderDetailView />,
-      },
-      {
-        path: 'consulta',
-        element: <TrackingPublicPage />,
+        lazy: async () => ({
+          Component: (await import('../features/workshop/WorkOrderDetailView')).WorkOrderDetailView,
+        }),
       },
     ],
+  },
+  {
+    path: '/consulta',
+    lazy: async () => ({
+      Component: (await import('../features/tracking-public/pages/PublicTrackingPage')).PublicTrackingPage,
+    }),
   },
 ]);

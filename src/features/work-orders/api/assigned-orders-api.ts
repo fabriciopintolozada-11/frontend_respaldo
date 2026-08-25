@@ -1,4 +1,4 @@
-import { httpClient } from '@/shared/api/http-client'
+import { httpClient } from '@/shared/api/httpClient'
 
 export interface AssignedWorkOrderSummary {
   id: string

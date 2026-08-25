@@ -1,10 +1,10 @@
-import axios from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
 
 import { env } from '../config/env';
 
 export interface ApiErrorBody {
-  statusCode: number;
-  message: string | string[];
+  statusCode?: number;
+  message?: string | string[];
   path?: string;
   timestamp?: string;
 }
@@ -30,21 +30,34 @@ export const httpClient = axios.create({
   timeout: env.apiTimeout,
   headers: {
     Accept: 'application/json',
+    'Content-Type': 'application/json',
     ...(env.apiToken ? { Authorization: `Bearer ${env.apiToken}` } : {}),
   },
 });
 
+httpClient.interceptors.request.use((config) => {
+  config.headers.set('X-Requested-With', 'XMLHttpRequest');
+  return config;
+});
+
 httpClient.interceptors.response.use(
   (response) => response,
-  (error: unknown) => {
-    if (!axios.isAxiosError<ApiErrorBody>(error)) return Promise.reject(error);
+  (error: AxiosError<ApiErrorBody>) => {
+    if (!axios.isAxiosError(error)) {
+      return Promise.reject(error);
+    }
 
     const statusCode = error.response?.status ?? 0;
     const body = error.response?.data;
     const message = Array.isArray(body?.message)
       ? body.message.join(' · ')
-      : (body?.message ?? error.message ?? `HTTP ${statusCode}`);
+      : body?.message ?? error.message ?? `HTTP ${statusCode}`;
 
     return Promise.reject(new ApiError(statusCode, message, body));
   },
 );
+
+export async function request<T>(config: AxiosRequestConfig): Promise<T> {
+  const response = await httpClient.request<T>(config);
+  return response.data;
+}

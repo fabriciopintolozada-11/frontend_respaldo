@@ -1,4 +1,4 @@
-import { httpClient } from '../../../shared/api/http-client';
+import { httpClient } from '../../../shared/api/httpClient';
 import type { components } from '../../../shared/api/schema.gen';
 
 export type VehicleStatusResponse = components['schemas']['VehicleStatusResponseDto'];
