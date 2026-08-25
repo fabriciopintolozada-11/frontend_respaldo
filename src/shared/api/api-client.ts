@@ -1,4 +1,4 @@
-import { ApiError as HttpApiError, httpClient } from './http-client';
+import { ApiError as HttpApiError, httpClient } from './httpClient';
 import { env } from '../config/env';
 
 /**

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { ApiError, httpClient } from '../../../shared/api/http-client'
+import { ApiError, httpClient } from '../../../shared/api/httpClient'
 import type {
   CreatedWorkOrderResponse,
   RegisterVehicleEntryRequest,

@@ -11,7 +11,7 @@ import {
 import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { FormField, TextAreaField } from '../../components/ui/form-field'
-import { ApiError } from '../../shared/api/http-client'
+import { ApiError } from '../../shared/api/httpClient'
 import { useCreateWorkOrder, useVehicleHistory } from './api/reception-api'
 import type {
   CreatedWorkOrderResponse,
