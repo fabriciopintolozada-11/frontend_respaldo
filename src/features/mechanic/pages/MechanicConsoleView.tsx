@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import {
   Wrench,
   CheckCircle2,
@@ -26,11 +26,12 @@ import { EmptyState } from '../../../shared/components/EmptyState';
 import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
 import type { WorkOrder } from '../../../shared/types/openapi';
+import { useMechanicOrders } from '../api/useMechanicOrders';
 
 export const MechanicConsoleView: React.FC = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const assignedOrdersQuery = useQuery({ queryKey: ['work-orders', 'assigned'], queryFn: () => workOrdersService.getAssigned() });
+  const assignedOrdersQuery = useMechanicOrders();
   const workOrders: WorkOrder[] = assignedOrdersQuery.data?.data ?? [];
 
   // Additional work reporting modal (RN-03)

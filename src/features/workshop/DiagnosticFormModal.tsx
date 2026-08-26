@@ -233,7 +233,7 @@ export function DiagnosticFormModal({
               <Package className="w-4 h-4 text-[#F97316]" />
               Repuestos Preliminares Requeridos (Inventario Mock)
             </h4>
-            <span className="text-[10px] text-[#8E949F]">Selección desde catálogo · Reserva RN-07</span>
+            <span className="text-[10px] text-[#8E949F]">Selección desde catálogo · reserva de repuestos</span>
           </div>
 
           <div className="p-3 rounded-xl bg-[#1C2028] border border-[#2D3139]">

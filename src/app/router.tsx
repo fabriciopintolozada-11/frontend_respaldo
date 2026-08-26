@@ -41,6 +41,18 @@ export const router = createBrowserRouter([
           Component: (await import('../features/workshop/WorkOrderDetailView')).WorkOrderDetailView,
         }),
       },
+      {
+        path: 'presupuestos',
+        lazy: async () => ({
+          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+        }),
+      },
+      {
+        path: 'presupuestos/:orderId',
+        lazy: async () => ({
+          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+        }),
+      },
     ],
   },
   {

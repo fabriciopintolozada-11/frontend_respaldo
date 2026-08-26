@@ -79,7 +79,7 @@ export function WorkshopHeadView() {
     try {
       assignBayAndMechanic(selectedOtCode, selectedBayForAssign.id, selectedPrimaryMechanic, selectedAssistantMechanic || undefined);
       toast.success(
-        'OT Asignada con Éxito (HU-02, RN-14)',
+        'OT Asignada con Éxito',
         `Orden ${selectedOtCode} asignada a ${selectedBayForAssign.name}.`,
       );
       setSelectedBayForAssign(null);
@@ -108,16 +108,16 @@ export function WorkshopHeadView() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-[#F9731615] border border-[#F9731630] flex items-center justify-center text-[#F97316]">
+            <div className="w-9 h-9 rounded-xl bg-lime-50 border border-lime-200 flex items-center justify-center text-lime-700">
               <LayoutDashboard className="w-5 h-5" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Panel del Jefe de Taller (HU-02)</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">Panel del Jefe de Taller</h1>
           </div>
-          <p className="text-xs text-[#8E949F] mt-1.5">
+          <p className="text-xs text-slate-600 mt-1.5">
             Gestión de bahías, asignación de OTs y mecánicos, y diagnóstico técnico inicial.
           </p>
         </div>
-        <Button variant="outline" size="sm" onClick={refresh} leftIcon={<RefreshCw className="w-4 h-4" />}>
+        <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={refresh} leftIcon={<RefreshCw className="w-4 h-4" />}>
           Actualizar Tablero
         </Button>
       </div>
@@ -127,17 +127,17 @@ export function WorkshopHeadView() {
           {rn06Alert.map((ot) => (
             <div
               key={ot.id}
-              className="p-4 rounded-2xl bg-[#EF444410] border border-[#EF444430] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+              className="p-4 rounded-2xl bg-red-50 border border-red-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
             >
               <div className="flex items-start gap-3">
-                <div className="w-1.5 h-10 bg-[#EF4444] rounded-full shrink-0 mt-0.5" />
+                <div className="w-1.5 h-10 bg-red-500 rounded-full shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-white">
-                    <span className="text-[#EF4444]">ALERTA RN-06:</span> Orden {ot.code} ({ot.vehiclePlate}) superó 15 días sin respuesta
+                  <h4 className="font-bold text-sm text-slate-950">
+                    <span className="text-red-700">ALERTA:</span> Orden {ot.code} ({ot.vehiclePlate}) superó 15 días sin respuesta
                   </h4>
-                  <p className="text-xs text-[#8E949F] mt-0.5">
-                    Presupuesto de <strong className="text-white">{ot.totalGeneralBOB} BOB</strong> ·{' '}
-                    <strong className="text-[#EF4444]">{ot.daysWithoutClientResponse} días</strong>
+                  <p className="text-xs text-slate-600 mt-0.5">
+                    Presupuesto de <strong className="text-slate-950">{ot.totalGeneralBOB} BOB</strong> ·{' '}
+                    <strong className="text-red-700">{ot.daysWithoutClientResponse} días</strong>
                   </p>
                 </div>
               </div>
@@ -149,20 +149,20 @@ export function WorkshopHeadView() {
           {rn03Suspended.map((ot) => (
             <div
               key={ot.id}
-              className="p-4 rounded-2xl bg-[#F59E0B10] border border-[#F59E0B30] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
+              className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-950 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3"
             >
               <div className="flex items-start gap-3">
-                <div className="w-1.5 h-10 bg-[#F59E0B] rounded-full shrink-0 mt-0.5" />
+                <div className="w-1.5 h-10 bg-amber-500 rounded-full shrink-0 mt-0.5" />
                 <div>
-                  <h4 className="font-bold text-sm text-white">
-                    <span className="text-[#F59E0B]">SUSPENSIÓN RN-03:</span> Orden {ot.code} ({ot.vehiclePlate})
+                  <h4 className="font-bold text-sm text-slate-950">
+                    <span className="text-amber-800">ORDEN SUSPENDIDA:</span> Orden {ot.code} ({ot.vehiclePlate})
                   </h4>
-                  <p className="text-xs text-[#8E949F] mt-0.5">
+                  <p className="text-xs text-slate-600 mt-0.5">
                     {ot.additionalWorkDescription} (+{ot.additionalWorkCostBOB} BOB)
                   </p>
                 </div>
               </div>
-              <Button variant="warning" size="sm" onClick={() => navigate(`/ots/${ot.id}`)} className="whitespace-nowrap w-full sm:w-auto">
+              <Button variant="outline" size="sm" onClick={() => navigate(`/ots/${ot.id}`)} className="whitespace-nowrap w-full sm:w-auto min-h-[44px] border-amber-300 bg-white text-amber-800 hover:bg-amber-50 hover:text-amber-950">
                 Revisar
               </Button>
             </div>
@@ -177,35 +177,39 @@ export function WorkshopHeadView() {
             value={`${metrics.bayOccupancyRatePercent}%`}
             subtitle={`${metrics.occupiedBays + metrics.waitingPartsBays} de ${metrics.totalBays} bahías activas`}
             icon={<Layers className="w-5 h-5" />}
+            theme="light"
           />
           <MetricCard
             title="Órdenes Activas"
             value={metrics.activeWorkOrdersCount}
             subtitle="En progreso, espera o aprobadas"
             icon={<Wrench className="w-5 h-5" />}
+            theme="light"
           />
           <MetricCard
             title="Mecánicos en Bahía"
             value={`${metrics.mechanicsActive} / ${metrics.totalMechanics}`}
             subtitle="Personal técnico asignado"
             icon={<Users className="w-5 h-5" />}
+            theme="light"
           />
           <MetricCard
             title="En Diagnóstico"
             value={metrics.enDiagnosticoCount}
             subtitle="OTs con diagnóstico en curso"
             icon={<Stethoscope className="w-5 h-5" />}
+            theme="light"
           />
         </div>
       )}
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#8E949F] flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-[#F97316]" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-lime-500" />
             Estado de las 4 Bahías de Trabajo
           </h2>
-          <span className="text-xs text-[#8E949F] font-mono">Capacidad: 4 puestos</span>
+          <span className="text-xs text-slate-600 font-mono">Capacidad: 4 puestos</span>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -215,69 +219,68 @@ export function WorkshopHeadView() {
             const currentOt = workOrders.find((o) => o.code === bay.currentWorkOrderId);
 
             const isFree = bay.status === 'LIBRE';
-            const isWaitingParts = bay.status === 'ESPERA_REPUESTO';
             const isOccupied = bay.status === 'OCUPADA';
 
             return (
               <Card
                 key={bay.id}
-                variant={isOccupied ? 'accent' : isWaitingParts ? 'warning' : 'default'}
+                variant="public"
                 padding="md"
                 className="flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-[#2D3139]">
+                  <div className="flex items-start justify-between gap-3 pb-3 border-b border-slate-200">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-mono text-[10px] font-bold text-[#F97316] bg-[#F9731615] px-2 py-0.5 rounded border border-[#F9731630]">
+                        <span className="font-mono text-[10px] font-bold text-lime-800 bg-lime-50 px-2 py-0.5 rounded border border-lime-200">
                           {bay.code}
                         </span>
-                        <h3 className="font-extrabold text-base text-white">{bay.name}</h3>
+                        <h3 className="font-extrabold text-base text-slate-950">{bay.name}</h3>
                       </div>
-                      <p className="text-xs text-[#8E949F] mt-1">{bay.type}</p>
+                      <p className="text-xs text-slate-600 mt-1">{bay.type}</p>
                     </div>
                     <BayStatusBadge status={bay.status} />
                   </div>
 
                   <div className="py-4 space-y-3">
                     {isFree ? (
-                      <div className="py-6 text-center text-[#8E949F] bg-[#1C2028]/50 rounded-xl border border-[#2D3139]/50">
-                        <p className="text-sm font-semibold text-[#E0E2E6]">Bahía disponible sin vehículo asignado</p>
-                        <p className="text-xs mt-1 text-[#8E949F]">Listo para recibir órdenes aprobadas en espera.</p>
+                      <div className="py-6 text-center text-slate-600 bg-slate-50 rounded-xl border border-slate-200">
+                        <p className="text-sm font-semibold text-slate-950">Bahía disponible sin vehículo asignado</p>
+                        <p className="text-xs mt-1 text-slate-600">Listo para recibir órdenes aprobadas en espera.</p>
                       </div>
                     ) : (
                       <>
-                        <div className="p-3.5 rounded-xl bg-[#1C2028] border border-[#2D3139] flex items-center justify-between">
+                        <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                           <div>
-                            <span className="text-[10px] text-[#8E949F] uppercase font-bold tracking-wider">Vehículo en Bahía</span>
+                            <span className="text-[10px] text-slate-600 uppercase font-bold tracking-wider">Vehículo en Bahía</span>
                             <div className="flex items-center gap-2 mt-0.5">
-                              <span className="font-mono font-bold text-base text-white">{bay.currentVehiclePlate}</span>
-                              <span className="text-xs text-[#8E949F]">• {bay.currentVehicleModel}</span>
+                              <span className="font-mono font-bold text-base text-slate-950">{bay.currentVehiclePlate}</span>
+                              <span className="text-xs text-slate-600">• {bay.currentVehicleModel}</span>
                             </div>
                           </div>
                           {bay.currentWorkOrderId && (
-                            <span className="font-mono text-xs font-bold text-[#F97316] bg-[#F9731615] border border-[#F9731630] px-2.5 py-1 rounded-lg">
+                            <span className="font-mono text-xs font-bold text-lime-800 bg-lime-50 border border-lime-200 px-2.5 py-1 rounded-lg">
                               {bay.currentWorkOrderId}
                             </span>
                           )}
                         </div>
 
                         <div className="grid grid-cols-2 gap-2 text-xs">
-                          <div className="p-3 rounded-xl bg-[#1C2028] border border-[#2D3139]">
-                            <span className="text-[10px] text-[#8E949F] uppercase tracking-wider block font-bold">Mecánico Principal</span>
-                            <span className="font-bold text-white block mt-0.5 truncate">{primaryMech?.name ?? 'Sin asignar'}</span>
-                            <span className="text-[10px] text-[#F97316] block mt-0.5">{primaryMech?.specialty}</span>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-[10px] text-slate-600 uppercase tracking-wider block font-bold">Mecánico Principal</span>
+                            <span className="font-bold text-slate-950 block mt-0.5 truncate">{primaryMech?.name ?? 'Sin asignar'}</span>
+                            <span className="text-[10px] text-lime-700 block mt-0.5">{primaryMech?.specialty}</span>
                           </div>
-                          <div className="p-3 rounded-xl bg-[#1C2028] border border-[#2D3139]">
-                            <span className="text-[10px] text-[#8E949F] uppercase tracking-wider block font-bold">Ayudante Técnico</span>
-                            <span className="font-bold text-white block mt-0.5 truncate">{assistantMech?.name ?? 'No asignado'}</span>
-                            <span className="text-[10px] text-[#8E949F] block mt-0.5">Apoyo secundario</span>
+                          <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
+                            <span className="text-[10px] text-slate-600 uppercase tracking-wider block font-bold">Ayudante Técnico</span>
+                            <span className="font-bold text-slate-950 block mt-0.5 truncate">{assistantMech?.name ?? 'No asignado'}</span>
+                            <span className="text-[10px] text-slate-600 block mt-0.5">Apoyo secundario</span>
                           </div>
                         </div>
 
                         {bay.notes && (
-                          <div className="text-xs text-[#8E949F] italic bg-[#1C2028]/60 p-2.5 rounded-lg border border-[#2D3139]">
-                            <strong className="text-[#E0E2E6]">Notas:</strong> {bay.notes}
+                          <div className="text-xs text-slate-600 italic bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                            <strong className="text-slate-950">Notas:</strong> {bay.notes}
                           </div>
                         )}
                       </>
@@ -285,10 +288,11 @@ export function WorkshopHeadView() {
                   </div>
                 </div>
 
-                <div className="pt-3 border-t border-[#2D3139] flex items-center justify-between gap-2">
+                <div className="pt-3 border-t border-slate-200 flex items-center justify-between gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
+                    className="text-slate-700 hover:bg-slate-100 hover:text-slate-950"
                     onClick={() => {
                       setBayToEditStatus(bay);
                       setNewBayStatus(bay.status);
@@ -307,7 +311,7 @@ export function WorkshopHeadView() {
                     </Button>
                   ) : (
                     currentOt && (
-                      <Button variant="secondary" size="sm" leftIcon={<Eye className="w-4 h-4" />} onClick={() => navigate(`/ots/${currentOt.id}`)}>
+                      <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" leftIcon={<Eye className="w-4 h-4" />} onClick={() => navigate(`/ots/${currentOt.id}`)}>
                         Ver Detalle OT
                       </Button>
                     )
@@ -319,20 +323,20 @@ export function WorkshopHeadView() {
         </div>
       </div>
 
-      <Card padding="md">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#2D3139]">
+      <Card variant="public" padding="md">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <Stethoscope className="w-4 h-4 text-[#F97316]" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#8E949F]">
+            <Stethoscope className="w-4 h-4 text-lime-700" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600">
               Órdenes en Espera de Diagnóstico o Asignación
             </h2>
           </div>
-          <span className="text-xs text-[#8E949F] font-mono">{unassignedOrders.length} pendientes</span>
+          <span className="text-xs text-slate-600 font-mono">{unassignedOrders.length} pendientes</span>
         </div>
 
         {unassignedOrders.length === 0 ? (
           <EmptyState
-            icon={<Wrench className="w-8 h-8 text-[#8E949F]" />}
+            icon={<Wrench className="w-8 h-8 text-slate-400" />}
             title="Sin órdenes pendientes"
             description="Todas las órdenes tienen bahía asignada o diagnóstico completado."
           />
@@ -341,30 +345,30 @@ export function WorkshopHeadView() {
             {unassignedOrders.map((ot) => (
               <div
                 key={ot.id}
-                className="p-3.5 rounded-xl border border-[#2D3139] bg-[#1C2028] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
               >
                 <div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-mono text-xs font-bold text-[#F97316] bg-[#F9731615] border border-[#F9731630] px-2 py-0.5 rounded-lg">
+                    <span className="font-mono text-xs font-bold text-lime-800 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-lg">
                       {ot.code}
                     </span>
-                    <span className="font-mono font-extrabold text-sm text-white">{ot.vehiclePlate}</span>
-                    <span className="text-xs text-[#8E949F]">
+                    <span className="font-mono font-extrabold text-sm text-slate-950">{ot.vehiclePlate}</span>
+                    <span className="text-xs text-slate-600">
                       • {ot.vehicleBrand} {ot.vehicleModel}
                     </span>
                     <WorkOrderStatusBadge status={ot.status} size="sm" />
                   </div>
-                  <p className="text-xs text-[#8E949F] mt-1">
+                  <p className="text-xs text-slate-600 mt-1">
                     {ot.clientName} · {ot.entryReason}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {(ot.status === 'REGISTRADA' || ot.status === 'EN_DIAGNOSTICO') && (
-                    <Button variant="warning" size="sm" leftIcon={<Stethoscope className="w-4 h-4" />} onClick={() => setDiagnosingOrder(ot)}>
+                    <Button variant="primary" size="sm" leftIcon={<Stethoscope className="w-4 h-4" />} onClick={() => setDiagnosingOrder(ot)}>
                       Registrar Diagnóstico
                     </Button>
                   )}
-                  <Button variant="outline" size="sm" onClick={() => navigate(`/ots/${ot.id}`)}>
+                  <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => navigate(`/ots/${ot.id}`)}>
                     Ver OT
                   </Button>
                 </div>
@@ -374,26 +378,26 @@ export function WorkshopHeadView() {
         )}
       </Card>
 
-      <Card padding="md">
-        <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#2D3139]">
+      <Card variant="public" padding="md">
+        <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-200">
           <div className="flex items-center gap-2">
-            <Users className="w-4 h-4 text-[#F97316]" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-[#8E949F]">Personal Técnico del Taller</h2>
+            <Users className="w-4 h-4 text-lime-700" />
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-600">Personal Técnico del Taller</h2>
           </div>
-          <span className="text-xs text-[#8E949F] font-mono">{mechanics.length} técnicos</span>
+          <span className="text-xs text-slate-600 font-mono">{mechanics.length} técnicos</span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           {mechanics.map((mech) => (
-            <div key={mech.id} className="p-3.5 rounded-xl border border-[#2D3139] bg-[#1C2028] flex items-center justify-between">
+            <div key={mech.id} className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
               <div>
-                <h4 className="font-bold text-sm text-white">{mech.name}</h4>
-                <p className="text-xs text-[#F97316] font-medium">{mech.specialty}</p>
-                <p className="text-[11px] text-[#8E949F] mt-1 font-mono">Tel: {mech.phone}</p>
+                <h4 className="font-bold text-sm text-slate-950">{mech.name}</h4>
+                <p className="text-xs text-lime-700 font-medium">{mech.specialty}</p>
+                <p className="text-[11px] text-slate-600 mt-1 font-mono">Tel: {mech.phone}</p>
               </div>
               <div className="text-right">
-                <span className="text-xs font-bold text-[#E0E2E6] block">{mech.activeOtCount} OTs</span>
-                <span className="text-[10px] text-[#8E949F] font-mono">{mech.currentBayId ? `Bahía ${mech.currentBayId}` : 'En espera'}</span>
+                <span className="text-xs font-bold text-slate-950 block">{mech.activeOtCount} OTs</span>
+                <span className="text-[10px] text-slate-600 font-mono">{mech.currentBayId ? `Bahía ${mech.currentBayId}` : 'En espera'}</span>
               </div>
             </div>
           ))}
@@ -401,21 +405,22 @@ export function WorkshopHeadView() {
       </Card>
 
       <Modal
+        variant="light"
         isOpen={!!selectedBayForAssign}
         onClose={() => setSelectedBayForAssign(null)}
         title={`Asignar Orden de Trabajo a ${selectedBayForAssign?.name}`}
-        subtitle="Regla RN-14: Asignación de mecánico principal y ayudante con estimación de tiempo"
+        subtitle="Asigna un mecánico principal y un ayudante a la orden de trabajo."
       >
         <div className="space-y-4">
           <div>
             <label
               htmlFor="assign-order-select"
-              className="block text-sm font-medium text-[#E0E2E6] mb-1.5"
+              className="block text-sm font-medium text-slate-700 mb-1.5"
             >
-              Seleccionar Orden de Trabajo en Espera <span className="text-[#EF4444]">*</span>
+              Seleccionar Orden de Trabajo en Espera <span className="text-red-600">*</span>
             </label>
             {unassignedOrders.length === 0 ? (
-              <p className="text-xs text-[#8E949F] italic p-3 bg-[#1C2028] rounded-xl border border-[#2D3139]">
+              <p className="text-xs text-slate-600 italic p-3 bg-slate-50 rounded-xl border border-slate-200">
                 No hay órdenes pendientes de asignación en este momento.
               </p>
             ) : (
@@ -423,7 +428,7 @@ export function WorkshopHeadView() {
                 id="assign-order-select"
                 value={selectedOtCode}
                 onChange={(e) => setSelectedOtCode(e.target.value)}
-                className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] text-[#E0E2E6] px-3.5 py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus:border-[#F97316]"
+                className="w-full rounded-xl border border-slate-300 bg-white text-slate-900 px-3.5 py-2.5 text-sm font-semibold min-h-[44px] focus:outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
               >
                 {unassignedOrders.map((o) => (
                   <option key={o.id} value={o.code}>
@@ -438,15 +443,15 @@ export function WorkshopHeadView() {
             <div>
               <label
                 htmlFor="assign-primary-mechanic"
-                className="block text-xs font-semibold text-[#8E949F] uppercase tracking-wider mb-1.5"
+                className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5"
               >
-                Mecánico Principal (RN-14) <span className="text-[#EF4444]">*</span>
+                Mecánico Principal <span className="text-red-600">*</span>
               </label>
               <select
                 id="assign-primary-mechanic"
                 value={selectedPrimaryMechanic}
                 onChange={(e) => setSelectedPrimaryMechanic(e.target.value)}
-                className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] text-[#E0E2E6] px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-[#F97316]"
+                className="w-full rounded-xl border border-slate-300 bg-white text-slate-900 px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
               >
                 {mechanics.map((m) => (
                   <option key={m.id} value={m.id}>
@@ -458,7 +463,7 @@ export function WorkshopHeadView() {
             <div>
               <label
                 htmlFor="assign-assistant-mechanic"
-                className="block text-xs font-semibold text-[#8E949F] uppercase tracking-wider mb-1.5"
+                className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5"
               >
                 Ayudante Técnico (Opcional)
               </label>
@@ -466,7 +471,7 @@ export function WorkshopHeadView() {
                 id="assign-assistant-mechanic"
                 value={selectedAssistantMechanic}
                 onChange={(e) => setSelectedAssistantMechanic(e.target.value)}
-                className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] text-[#E0E2E6] px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-[#F97316]"
+                className="w-full rounded-xl border border-slate-300 bg-white text-slate-900 px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
               >
                 <option value="">Sin ayudante adicional</option>
                 {mechanics.map((m) => (
@@ -478,8 +483,8 @@ export function WorkshopHeadView() {
             </div>
           </div>
 
-          <div className="pt-4 flex justify-end gap-2.5 border-t border-[#2D3139]">
-            <Button variant="outline" onClick={() => setSelectedBayForAssign(null)}>
+          <div className="pt-4 flex justify-end gap-2.5 border-t border-slate-200">
+            <Button variant="outline" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => setSelectedBayForAssign(null)}>
               Cancelar
             </Button>
             <Button variant="primary" isLoading={isAssigning} disabled={unassignedOrders.length === 0} onClick={handleConfirmAssignment}>
@@ -490,17 +495,18 @@ export function WorkshopHeadView() {
       </Modal>
 
       <Modal
+        variant="light"
         isOpen={!!bayToEditStatus}
         onClose={() => setBayToEditStatus(null)}
         title={`Cambiar Estado de ${bayToEditStatus?.name}`}
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold text-[#8E949F] uppercase tracking-wider mb-1.5">Nuevo Estado Operativo:</label>
+            <label className="block text-xs font-semibold text-slate-600 uppercase tracking-wider mb-1.5">Nuevo Estado Operativo:</label>
             <select
               value={newBayStatus}
               onChange={(e) => setNewBayStatus(e.target.value as BayStatus)}
-              className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] text-[#E0E2E6] px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-[#F97316]"
+              className="w-full rounded-xl border border-slate-300 bg-white text-slate-900 px-3.5 py-2.5 text-sm min-h-[44px] focus:outline-none focus:border-lime-500 focus:ring-2 focus:ring-lime-200"
             >
               <option value="LIBRE">Libre (Disponible para recibir vehículos)</option>
               <option value="OCUPADA">Ocupada (Vehículo en elevador/fosa)</option>
@@ -508,8 +514,8 @@ export function WorkshopHeadView() {
               <option value="MANTENIMIENTO">En Mantenimiento de Equipamiento Taller</option>
             </select>
           </div>
-          <div className="pt-4 flex justify-end gap-2.5 border-t border-[#2D3139]">
-            <Button variant="outline" onClick={() => setBayToEditStatus(null)}>
+          <div className="pt-4 flex justify-end gap-2.5 border-t border-slate-200">
+            <Button variant="outline" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => setBayToEditStatus(null)}>
               Cancelar
             </Button>
             <Button variant="primary" onClick={handleUpdateBayStatus}>
@@ -551,14 +557,14 @@ export function WorkshopHeadView() {
       )}
 
       {pendingDiagnosis.length > 0 && (
-        <div className="p-3 rounded-xl bg-[#3B82F610] border border-[#3B82F630] text-xs text-[#8E949F] flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4 text-[#3B82F6] shrink-0" />
+        <div className="p-3 rounded-xl bg-sky-50 border border-sky-200 text-xs text-slate-600 flex items-center gap-2">
+          <AlertTriangle className="w-4 h-4 text-sky-700 shrink-0" />
           <span>
-            <strong className="text-[#3B82F6]">{pendingDiagnosis.length} OT(s)</strong> en espera de diagnóstico técnico inicial. Use
+            <strong className="text-sky-700">{pendingDiagnosis.length} OT(s)</strong> en espera de diagnóstico técnico inicial. Use
             "Registrar Diagnóstico".
           </span>
           {pendingDiagnosis.length > 0 && (
-            <ShieldAlert className="w-4 h-4 text-[#8E949F] shrink-0" />
+            <ShieldAlert className="w-4 h-4 text-slate-500 shrink-0" />
           )}
         </div>
       )}
