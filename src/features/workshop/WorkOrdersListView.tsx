@@ -35,7 +35,7 @@ export function WorkOrdersListView() {
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Órdenes de Trabajo</h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
-            Todas las OTs del taller con su estado, bahía y mecánico asignado (HU-02).
+            Todas las OTs del taller con su estado, bahía y mecánico asignado.
           </p>
         </div>
         <div className="w-full sm:w-80">

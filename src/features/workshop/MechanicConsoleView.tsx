@@ -75,10 +75,10 @@ export function MechanicConsoleView() {
             <div className="w-9 h-9 rounded-xl bg-[#F9731615] border border-[#F9731630] flex items-center justify-center text-[#F97316]">
               <Wrench className="w-5 h-5" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Consola del Mecánico (RN-16)</h1>
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">Consola del Mecánico</h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
-            Tareas en bahía, diagnóstico técnico y registro de repuestos. Asignaciones visibles desde el Jefe de Taller (HU-02).
+            Tareas en bahía, diagnóstico técnico y registro de repuestos. Asignaciones visibles desde el Jefe de Taller.
           </p>
         </div>
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#16191F] border border-[#2D3139] text-xs font-semibold text-[#8E949F]">
@@ -99,11 +99,10 @@ export function MechanicConsoleView() {
                 key={m.id}
                 type="button"
                 onClick={() => setSelectedMechanicId(m.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] cursor-pointer ${
-                  selectedMechanicId === m.id
+                className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all min-h-[40px] cursor-pointer ${selectedMechanicId === m.id
                     ? 'bg-[#F97316] text-white shadow-xs'
                     : 'bg-[#0F1115] border border-[#2D3139] text-[#8E949F] hover:text-white hover:border-[#3D4149]'
-                }`}
+                  }`}
               >
                 {m.name} ({m.specialty})
               </button>
@@ -193,11 +192,10 @@ export function MechanicConsoleView() {
                         <div
                           key={lab.id}
                           onClick={() => handleToggleLabor(ot.id, lab.id)}
-                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all min-h-[44px] ${
-                            lab.isCompleted
+                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all min-h-[44px] ${lab.isCompleted
                               ? 'bg-[#22C55E10] border-[#22C55E30] text-[#22C55E]'
                               : 'bg-[#1C2028] border-[#2D3139] hover:border-[#3D4149] text-[#E0E2E6]'
-                          }`}
+                            }`}
                         >
                           <div className="flex items-center gap-3">
                             {lab.isCompleted ? (

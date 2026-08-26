@@ -9,6 +9,7 @@ export interface ModalProps {
   subtitle?: string;
   children: ReactNode;
   maxWidth?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '4xl';
+  variant?: 'dark' | 'light';
 }
 
 const maxStyles = {
@@ -20,7 +21,7 @@ const maxStyles = {
   '4xl': 'max-w-5xl',
 };
 
-export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'lg' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = 'lg', variant = 'dark' }: ModalProps) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -39,23 +40,23 @@ export function Modal({ isOpen, onClose, title, subtitle, children, maxWidth = '
 
   return createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
-      <div onClick={onClose} className="fixed inset-0 bg-[#0F1115]/85 backdrop-blur-xs transition-opacity" />
+      <div onClick={onClose} className={`fixed inset-0 backdrop-blur-xs transition-opacity ${variant === 'light' ? 'bg-slate-300/60' : 'bg-[#0F1115]/85'}`} />
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`relative w-full ${maxStyles[maxWidth]} bg-[#16191F] rounded-2xl shadow-2xl border border-[#2D3139] text-[#E0E2E6] overflow-hidden z-10 my-auto`}
+        className={`relative z-10 my-auto w-full ${maxStyles[maxWidth]} overflow-hidden rounded-2xl border shadow-2xl ${variant === 'light' ? 'border-slate-200 bg-white text-slate-900' : 'border-[#2D3139] bg-[#16191F] text-[#E0E2E6]'}`}
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b border-[#2D3139] bg-[#1C2028]/80">
+        <div className={`flex items-center justify-between border-b px-6 py-4 ${variant === 'light' ? 'border-slate-200 bg-slate-50' : 'border-[#2D3139] bg-[#1C2028]/80'}`}>
           <div>
-            <h3 className="text-lg font-bold text-white tracking-tight">{title}</h3>
-            {subtitle && <p className="text-xs text-[#8E949F] mt-0.5">{subtitle}</p>}
+            <h3 className={`text-lg font-bold tracking-tight ${variant === 'light' ? 'text-slate-950' : 'text-white'}`}>{title}</h3>
+            {subtitle && <p className={`mt-0.5 text-xs ${variant === 'light' ? 'text-slate-500' : 'text-[#8E949F]'}`}>{subtitle}</p>}
           </div>
           <button
             type="button"
             onClick={onClose}
             aria-label="Cerrar modal"
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-[#8E949F] hover:text-white hover:bg-[#2D3139] transition-colors"
+             className={`flex min-h-[44px] min-w-[44px] items-center justify-center rounded-xl transition-colors ${variant === 'light' ? 'text-slate-500 hover:bg-slate-200 hover:text-slate-950' : 'text-[#8E949F] hover:bg-[#2D3139] hover:text-white'}`}
           >
             <X className="w-5 h-5" />
           </button>
