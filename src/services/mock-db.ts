@@ -803,7 +803,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
     hasPendingAdditionalWork: false,
     isSuspendedForAdditionalWork: false,
     statusHistory: [
-      { status: 'REGISTRADA', timestamp: '2025-05-12T09:00:00Z', changedBy: 'Recepción (HU-01)' },
+      { status: 'REGISTRADA', timestamp: '2025-05-12T09:00:00Z', changedBy: 'Recepción' },
     ],
     internalNotes: 'En espera de asignación de bahía y diagnóstico técnico inicial.',
   },

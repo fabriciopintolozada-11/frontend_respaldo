@@ -83,7 +83,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
 
         <div className="flex items-center gap-2">
           <Button variant="primary" size="md" leftIcon={<PlusCircle className="w-4 h-4" />} onClick={onNewOrder}>
-            Nueva Recepción (HU-01)
+            Nueva recepción
           </Button>
         </div>
       </div>
@@ -185,7 +185,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
           icon={<FileText className="w-8 h-8 text-[#8E949F]" />}
           title="No se encontraron órdenes de trabajo"
           description="Ajusta los filtros de búsqueda o registra un nuevo vehículo en el taller."
-          actionLabel="Registrar Vehículo (HU-01)"
+          actionLabel="Registrar vehículo"
           onAction={onNewOrder}
         />
       ) : (

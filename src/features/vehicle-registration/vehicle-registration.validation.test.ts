@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
-import { normalizePlate, PLATE_PATTERN, toRegisterRequest } from './reception.validation'
+import { normalizePlate, PLATE_PATTERN, toRegisterRequest } from './vehicle-registration.validation'
 
-describe('reception validation and mapping', () => {
+describe('vehicle registration validation and mapping', () => {
   it('normalizes plates using the same rule as the backend', () => {
     expect(normalizePlate('  ab-c123 ')).toBe('AB-C123')
     expect(PLATE_PATTERN.test(normalizePlate('ab-c123'))).toBe(true)

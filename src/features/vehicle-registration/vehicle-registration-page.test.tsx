@@ -4,10 +4,10 @@ import { http, HttpResponse } from 'msw'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppProviders } from '../../app/providers/AppProviders'
 import { server } from '../../test/msw-handlers'
-import type { VehicleHistoryResponse } from './reception.types'
-import { VehicleReceptionPage } from './vehicle-reception-page'
+import { VehicleRegistrationPage } from './pages/VehicleRegistrationPage'
+import type { VehicleHistoryResponse } from './vehicle-registration.types'
 
-describe('VehicleReceptionPage', () => {
+describe('VehicleRegistrationPage', () => {
   const requestSpy = vi.fn()
 
   beforeEach(() => {
@@ -21,7 +21,9 @@ describe('VehicleReceptionPage', () => {
 
     await user.click(screen.getByRole('button', { name: /Registrar ingreso/ }))
 
-    expect(await screen.findByText('La placa es obligatoria.')).toBeInTheDocument()
+    const plateError = await screen.findByText('La placa es obligatoria.')
+    expect(plateError).toBeInTheDocument()
+    expect(screen.getByLabelText(/Placa del vehículo/)).toHaveAttribute('aria-describedby', plateError.id)
     expect(screen.getByText('La marca es obligatoria.')).toBeInTheDocument()
     expect(screen.getByText('El modelo es obligatorio.')).toBeInTheDocument()
     expect(screen.getByText('El año es obligatorio.')).toBeInTheDocument()
@@ -36,14 +38,14 @@ describe('VehicleReceptionPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.type(screen.getByLabelText('Placa del vehículo *'), 'abc123')
+    await user.type(screen.getByLabelText(/Placa del vehículo/), 'abc123')
 
     expect(await screen.findByText('Cambio de pastillas')).toBeInTheDocument()
-    expect(screen.getByLabelText('Nombre completo *')).toHaveValue('María Flores')
-    expect(screen.getByLabelText('Identificación *')).toHaveValue('7845123')
-    expect(screen.getByLabelText('Marca *')).toHaveValue('Toyota')
-    expect(screen.getByLabelText('Modelo *')).toHaveValue('Corolla')
-    expect(screen.getByLabelText('Año *')).toHaveValue('2022')
+    expect(screen.getByLabelText(/Nombre completo/)).toHaveValue('María Flores')
+    expect(screen.getByLabelText(/Identificación/)).toHaveValue('7845123')
+    expect(screen.getByLabelText(/Marca/)).toHaveValue('Toyota')
+    expect(screen.getByLabelText(/Modelo/)).toHaveValue('Corolla')
+    expect(screen.getByLabelText(/Año/)).toHaveValue('2022')
     expect(screen.getByText('Recepción permitida')).toBeInTheDocument()
   })
 
@@ -57,7 +59,7 @@ describe('VehicleReceptionPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.type(screen.getByLabelText('Placa del vehículo *'), 'ELE123')
+    await user.type(screen.getByLabelText(/Placa del vehículo/), 'ELE123')
 
     expect(await screen.findByText('Recepción bloqueada')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Registrar ingreso/ })).toBeDisabled()
@@ -81,13 +83,13 @@ describe('VehicleReceptionPage', () => {
     const user = userEvent.setup()
     renderPage()
 
-    await user.type(screen.getByLabelText('Placa del vehículo *'), 'NEW123')
+    await user.type(screen.getByLabelText(/Placa del vehículo/), 'NEW123')
     expect(await screen.findByText('Vehículo nuevo')).toBeInTheDocument()
-    await user.type(screen.getByLabelText('Identificación *'), '123456')
-    await user.type(screen.getByLabelText('Nombre completo *'), 'Ana Pérez')
-    await user.type(screen.getByLabelText('Marca *'), 'Toyota')
-    await user.type(screen.getByLabelText('Modelo *'), 'Corolla')
-    await user.type(screen.getByLabelText('Año *'), '2022')
+    await user.type(screen.getByLabelText(/Identificación/), '123456')
+    await user.type(screen.getByLabelText(/Nombre completo/), 'Ana Pérez')
+    await user.type(screen.getByLabelText(/Marca/), 'Toyota')
+    await user.type(screen.getByLabelText(/Modelo/), 'Corolla')
+    await user.type(screen.getByLabelText(/Año/), '2022')
     await user.type(screen.getByLabelText('Síntomas o solicitud del cliente *'), 'Ruido al frenar')
     await user.click(screen.getByRole('button', { name: /Registrar ingreso/ }))
 
@@ -101,7 +103,7 @@ describe('VehicleReceptionPage', () => {
 function renderPage() {
   return render(
     <AppProviders>
-      <VehicleReceptionPage />
+      <VehicleRegistrationPage />
     </AppProviders>,
   )
 }

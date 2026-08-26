@@ -15,6 +15,8 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ label, error, helperText, icon, leftIcon, rightIcon, id, tone = 'dark', className = '', ...props }, ref) => {
     const inputId = id || (label ? `input-${label.toLowerCase().replace(/\s+/g, '-')}` : undefined);
     const leadingIcon = icon ?? leftIcon;
+    const descriptionId = inputId && (error || helperText) ? `${inputId}-${error ? 'error' : 'help'}` : undefined;
+    const describedBy = [props['aria-describedby'], descriptionId].filter(Boolean).join(' ') || undefined;
 
     return (
       <div className="w-full">
@@ -50,6 +52,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   : 'border-[#2D3139] hover:border-[#3D4149]'
             } ${className}`}
             {...props}
+            aria-describedby={describedBy}
           />
           {rightIcon && (
             <div className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#8E949F]">
@@ -57,9 +60,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             </div>
           )}
         </div>
-        {error && <p role="alert" className="mt-1 text-xs font-medium text-[#EF4444]">{error}</p>}
+        {error && <p id={descriptionId} role="alert" className="mt-1 text-xs font-medium text-[#EF4444]">{error}</p>}
         {!error && helperText && (
-          <p className="mt-1 text-xs text-[#8E949F]">{helperText}</p>
+          <p id={descriptionId} className={`mt-1 text-xs ${tone === 'light' ? 'text-slate-500' : 'text-[#8E949F]'}`}>{helperText}</p>
         )}
       </div>
     );
