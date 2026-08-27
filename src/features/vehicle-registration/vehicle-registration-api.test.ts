@@ -1,8 +1,8 @@
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it, vi } from 'vitest'
 import { server } from '../../test/msw-handlers'
-import { createWorkOrder, getVehicleHistory } from './api/reception-api'
-import type { RegisterVehicleEntryRequest } from './reception.types'
+import { createWorkOrder, getVehicleHistory } from './api/vehicle-registration-api'
+import type { RegisterVehicleEntryRequest } from './vehicle-registration.types'
 
 const request: RegisterVehicleEntryRequest = {
   plate: 'ABC123',
@@ -11,7 +11,7 @@ const request: RegisterVehicleEntryRequest = {
   initialComplaint: 'Ruido al frenar',
 }
 
-describe('reception API', () => {
+describe('vehicle registration API', () => {
   it('searches a normalized plate using the vehicle history endpoint', async () => {
     const requestSpy = vi.fn()
     server.use(http.get('/api/v1/vehicles/AB-123/history', ({ request }) => {

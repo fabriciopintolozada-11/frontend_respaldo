@@ -162,7 +162,7 @@ export const workOrdersService = {
           {
             status: 'REGISTRADA',
             timestamp: new Date().toISOString(),
-            changedBy: 'Recepción - Formulario de Ingreso HU-01',
+            changedBy: 'Recepción - Registro de ingreso',
           },
         ],
       };

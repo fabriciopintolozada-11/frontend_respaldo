@@ -1,4 +1,4 @@
-import type { RegisterVehicleEntryRequest, VehicleEntryFormValues } from './reception.types'
+import type { RegisterVehicleEntryRequest, VehicleEntryFormValues } from './vehicle-registration.types'
 
 export const PLATE_PATTERN = /^[A-Z0-9-]{3,10}$/i
 

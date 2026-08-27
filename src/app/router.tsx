@@ -20,7 +20,7 @@ export const router = createBrowserRouter([
       {
         path: 'recepcion',
         lazy: async () => ({
-          Component: (await import('../features/reception/vehicle-reception-page')).VehicleReceptionPage,
+          Component: (await import('../features/vehicle-registration/pages/VehicleRegistrationPage')).VehicleRegistrationPage,
         }),
       },
       {
