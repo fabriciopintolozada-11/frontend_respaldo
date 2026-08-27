@@ -13,13 +13,13 @@ const paddingStyles = {
 };
 
 const variantStyles = {
-  default: 'bg-[#16191F] border border-[#2D3139] rounded-2xl shadow-xs transition-all text-[#E0E2E6]',
-  flat: 'bg-[#1C2028] border border-[#2D3139] rounded-xl text-[#E0E2E6]',
-  bordered: 'bg-[#16191F] border-2 border-[#2D3139] rounded-2xl text-[#E0E2E6]',
-  accent: 'bg-[#16191F] border border-[#F97316]/50 shadow-xs shadow-orange-950/20 rounded-2xl text-[#E0E2E6]',
-  warning: 'bg-[#F59E0B10] border border-[#F59E0B30] rounded-2xl text-[#E0E2E6]',
-  danger: 'bg-[#EF444410] border border-[#EF444430] rounded-2xl text-[#E0E2E6]',
-  success: 'bg-[#22C55E10] border border-[#22C55E30] rounded-2xl text-[#E0E2E6]',
+  default: 'bg-white border border-slate-200 rounded-2xl shadow-xs transition-all text-slate-900',
+  flat: 'bg-white border border-slate-200 rounded-xl text-slate-900',
+  bordered: 'bg-white border-2 border-slate-200 rounded-2xl text-slate-900',
+  accent: 'bg-white border border-slate-200 shadow-xs rounded-2xl text-slate-900',
+  warning: 'bg-white border border-slate-200 rounded-2xl text-slate-900',
+  danger: 'bg-white border border-slate-200 rounded-2xl text-slate-900',
+  success: 'bg-white border border-slate-200 rounded-2xl text-slate-900',
   public: 'bg-white border border-slate-200 rounded-2xl shadow-sm text-slate-900',
 };
 
