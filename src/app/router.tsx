@@ -26,7 +26,7 @@ export const router = createBrowserRouter([
       {
         path: 'mecanico',
         lazy: async () => ({
-          Component: (await import('../features/mechanic/pages/MechanicConsoleView')).MechanicConsoleView,
+          Component: (await import('../features/mechanic-view/pages/MechanicConsoleView')).MechanicConsoleView,
         }),
       },
       {

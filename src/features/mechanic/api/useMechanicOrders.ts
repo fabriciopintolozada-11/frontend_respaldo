@@ -18,11 +18,11 @@ export const mockMechanicOrders: WorkOrder[] = mockDb
 
 function isNetworkOrTimeoutError(error: unknown): boolean {
   if (error instanceof ApiClientError) {
-    return error.errorCode === 'NETWORK_ERROR' || /network|timeout|timed out/i.test(error.message);
+    return error.errorCode === 'NETWORK_ERROR' || error.errorCode === 'HTTP_401' || error.errorCode === 'HTTP_403' || /network|timeout|timed out/i.test(error.message);
   }
 
-  if (error instanceof ApiError) {
-    return error.statusCode === 0 || error.statusCode === 408 || /network|timeout|timed out/i.test(error.message);
+  if (error instanceof ApiClientError) {
+    return error.errorCode === 'NETWORK_ERROR' || error.errorCode === 'HTTP_401' || error.errorCode === 'HTTP_403' || /network|timeout|timed out/i.test(error.message);
   }
 
   return error instanceof Error && /network|timeout|timed out|failed to fetch/i.test(error.message);

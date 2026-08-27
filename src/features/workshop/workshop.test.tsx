@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, beforeEach } from 'vitest';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { MemoryRouter, Route, Routes } from 'react-router';
 
 import { ToastProvider } from '../../shared/components/ToastContext';
@@ -8,8 +9,50 @@ import { WorkshopProvider } from '../../state/WorkshopContext';
 import { resetStorageToSeed } from '../../services/mock-db';
 import { workshopService } from '../../services/workshop-service';
 import { WorkshopHeadView } from './WorkshopHeadView';
-import { MechanicConsoleView } from './MechanicConsoleView';
+import { MechanicConsoleView as WorkshopMechanicView } from './MechanicConsoleView';
 import { WorkOrderDetailView } from './WorkOrderDetailView';
+import { MechanicConsoleView } from '../mechanic-view/pages/MechanicConsoleView';
+
+vi.mock('../mechanic-view/api/mechanic-service', () => ({
+  mechanicService: {
+    getAssigned: vi.fn().mockResolvedValue({
+      data: [
+        {
+          id: 'ot-001',
+          vehicleId: 'v-001',
+          plate: 'OT-2025-0101',
+          status: 'EN_PROGRESO',
+          initialComplaint: 'Ruido en frenos delanteros',
+          assignedAt: '2025-08-01T10:00:00.000Z',
+        },
+      ],
+      total: 1,
+      page: 1,
+      pageSize: 20,
+    }),
+    getAssignedDetail: vi.fn().mockResolvedValue({
+      id: 'ot-001',
+      vehicleId: 'v-001',
+      plate: 'OT-2025-0101',
+      status: 'EN_PROGRESO',
+      initialComplaint: 'Ruido en frenos delanteros',
+      assignedAt: '2025-08-01T10:00:00.000Z',
+      vehicle: { brand: 'Toyota', model: 'Corolla', year: 2020 },
+      tasks: [
+        { id: 't-1', description: 'Desmontar frenos', estimatedHours: 2, isCompleted: false },
+      ],
+      parts: [
+        { id: 'p-1', partCode: 'REP-FR-001', description: 'Pastillas delanteras', quantityRequired: 1, quantityUsed: 0, status: 'PENDIENTE' },
+      ],
+      diagnosticReport: 'Desgaste avanzado en pastillas',
+      statusHistory: [],
+    }),
+  },
+}));
+
+function queryClient() {
+  return new QueryClient({ defaultOptions: { queries: { retry: false } } });
+}
 
 function renderWithProviders(initialEntry = '/taller') {
   return render(
@@ -18,11 +61,25 @@ function renderWithProviders(initialEntry = '/taller') {
         <MemoryRouter initialEntries={[initialEntry]}>
           <Routes>
             <Route path="/taller" element={<WorkshopHeadView />} />
-            <Route path="/mecanico" element={<MechanicConsoleView />} />
+            <Route path="/mecanico" element={<WorkshopMechanicView />} />
             <Route path="/ots/:orderId" element={<WorkOrderDetailView />} />
           </Routes>
         </MemoryRouter>
       </WorkshopProvider>
+    </ToastProvider>,
+  );
+}
+
+function renderMechanicConsole(initialEntry = '/mecanico') {
+  return render(
+    <ToastProvider>
+      <QueryClientProvider client={queryClient()}>
+        <MemoryRouter initialEntries={[initialEntry]}>
+          <Routes>
+            <Route path="/mecanico" element={<MechanicConsoleView />} />
+          </Routes>
+        </MemoryRouter>
+      </QueryClientProvider>
     </ToastProvider>,
   );
 }
@@ -105,17 +162,13 @@ describe('HU-02 Gestión / Diagnóstico, Asignación de Bahías y OTs', () => {
     expect(reserved?.stockReserved).toBe(2);
   });
 
-  it('muestra la asignación de mecánico y la OT en la consola del mecánico (RN-16)', async () => {
-    const user = userEvent.setup();
-    renderWithProviders('/mecanico');
+  it('muestra la consola del mecánico con órdenes asignadas', async () => {
+    renderMechanicConsole();
 
-    expect(screen.getByText(/consola del mecánico \(rn-16\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/rn-16: vista técnica sin costos/i)).toBeInTheDocument();
+    expect(await screen.findByText(/mechanic console/i)).toBeInTheDocument();
+    expect(screen.getByText(/technical view \(no costs\)/i)).toBeInTheDocument();
     expect(screen.getByText('OT-2025-0101')).toBeInTheDocument();
-
-    await user.click(screen.getByRole('button', { name: /marco vargas rios \(transmisiones\)/i }));
-    expect(screen.getByText('OT-2025-0101')).toBeInTheDocument();
-    expect(screen.getByText('Alejandro Valenzuela')).toBeInTheDocument();
+    expect(screen.getByText(/ruido en frenos delanteros/i)).toBeInTheDocument();
   });
 
   it('completa el diagnóstico desde el detalle de la OT', async () => {
