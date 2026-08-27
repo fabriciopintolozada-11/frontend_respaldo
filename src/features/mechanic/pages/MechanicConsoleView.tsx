@@ -225,7 +225,7 @@ export const MechanicConsoleView: React.FC = () => {
                   <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
                     <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
                     <div className="text-xs">
-                      <span className="font-bold text-amber-800">ORDEN SUSPENDIDA POR DAÑO ADICIONAL (RN-03):</span>{' '}
+                      <span className="font-bold text-amber-800">ORDEN SUSPENDIDA POR DAÑO ADICIONAL:</span>{' '}
                       {ot.additionalWorkDescription}. <em className="text-slate-600">Pausado hasta autorización del cliente.</em>
                     </div>
                   </div>
@@ -399,7 +399,7 @@ export const MechanicConsoleView: React.FC = () => {
         isOpen={!!reportingOt}
         onClose={() => setReportingOt(null)}
         title={`Reportar Daño Oculto en ${reportingOt?.vehiclePlate}`}
-        subtitle="Regla RN-03: Suspende automáticamente el avance en bahía y genera cotización adicional para el cliente"
+        subtitle="Suspende automáticamente el avance en bahía y genera cotización adicional para el cliente"
         variant="light"
       >
         <div className="space-y-4">

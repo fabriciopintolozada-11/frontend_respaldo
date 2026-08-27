@@ -77,7 +77,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
-            Máquina de estados visual, bitácora de auditoría, control de alertas (RN-06) y suspensiones (RN-03).
+            Máquina de estados visual, bitácora de auditoría, control de alertas y suspensiones .
           </p>
         </div>
 
@@ -102,7 +102,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta RN-06</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta</h4>
                   <p className="text-[11px] text-[#8E949F]">&gt;15 días sin respuesta tras presupuesto</p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <div className="flex items-center gap-3">
                 <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas RN-03</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas</h4>
                   <p className="text-[11px] text-[#8E949F]">Trabajos adicionales pendientes de aprobación</p>
                 </div>
               </div>
@@ -162,11 +162,10 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             <button
               type="button"
               onClick={() => setOnlyAlertsFilter(!onlyAlertsFilter)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 cursor-pointer ${
-                onlyAlertsFilter
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 cursor-pointer ${onlyAlertsFilter
                   ? 'bg-[#F97316] text-white border-[#F97316]'
                   : 'bg-[#0F1115] border-[#2D3139] text-[#8E949F] hover:text-white hover:border-[#3D4149]'
-              }`}
+                }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>Solo Alertas</span>
