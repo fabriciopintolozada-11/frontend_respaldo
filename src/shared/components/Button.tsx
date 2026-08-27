@@ -32,13 +32,13 @@ export function Button({
   const variantStyles = {
     primary:
       'bg-lime-400 hover:bg-lime-300 text-lime-950 shadow-sm shadow-lime-950/10 focus:ring-lime-400 active:bg-lime-500',
-    secondary: 'bg-[#2D3139] text-[#E0E2E6] hover:bg-[#3D4149] hover:text-white focus:ring-[#2D3139]',
+    secondary: 'bg-slate-200 text-slate-900 hover:bg-slate-300 hover:text-slate-950 focus:ring-slate-300',
     outline:
-      'border border-[#2D3139] bg-[#1C2028] text-[#E0E2E6] hover:bg-[#2D3139] hover:text-white focus:ring-[#F97316]',
-    danger: 'bg-[#EF4444] text-white hover:bg-[#DC2626] focus:ring-[#EF4444]',
-    success: 'bg-[#22C55E] text-white hover:bg-[#16A34A] focus:ring-[#22C55E]',
-    warning: 'bg-[#F59E0B15] text-[#F59E0B] border border-[#F59E0B30] hover:bg-[#F59E0B25] focus:ring-[#F59E0B]',
-    ghost: 'text-[#8E949F] hover:text-[#E0E2E6] hover:bg-[#2D3139] focus:ring-[#2D3139]',
+      'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950 focus:ring-lime-400',
+    danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
+    success: 'bg-lime-400 text-lime-900 hover:bg-lime-500 focus:ring-lime-400',
+    warning: 'bg-amber-50 text-amber-800 border border-amber-200 hover:bg-amber-100 hover:text-amber-950 focus:ring-amber-300',
+    ghost: 'text-slate-700 hover:text-slate-950 hover:bg-slate-100 focus:ring-slate-300',
   };
 
   return (
