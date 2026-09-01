@@ -25,18 +25,40 @@ export class ApiError extends Error {
   }
 }
 
+export const ACCESS_TOKEN_KEY = 'auth.accessToken';
+
+export function getAccessToken(): string | undefined {
+  if (typeof window === 'undefined') return env.apiToken;
+  return window.localStorage.getItem(ACCESS_TOKEN_KEY) ?? env.apiToken;
+}
+
+export function setAccessToken(token: string): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem(ACCESS_TOKEN_KEY, token);
+  }
+}
+
+export function clearAccessToken(): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.removeItem(ACCESS_TOKEN_KEY);
+  }
+}
+
 export const httpClient = axios.create({
   baseURL: env.apiUrl,
   timeout: env.apiTimeout,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    ...(env.apiToken ? { Authorization: `Bearer ${env.apiToken}` } : {}),
   },
 });
 
 httpClient.interceptors.request.use((config) => {
   config.headers.set('X-Requested-With', 'XMLHttpRequest');
+  const token = getAccessToken();
+  if (token) {
+    config.headers.set('Authorization', `Bearer ${token}`);
+  }
   return config;
 });
 

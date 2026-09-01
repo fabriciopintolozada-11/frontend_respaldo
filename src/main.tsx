@@ -6,6 +6,7 @@ import { AppProviders } from './app/providers';
 import { router } from './app/router';
 import { ToastProvider } from './shared/components/ToastContext';
 import { WorkshopProvider } from './state/WorkshopContext';
+import { AuthProvider } from './features/auth/context/AuthContext';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -17,11 +18,13 @@ if (!rootElement) {
 createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
-      <ToastProvider>
-        <WorkshopProvider>
-          <RouterProvider router={router} />
-        </WorkshopProvider>
-      </ToastProvider>
+      <AuthProvider>
+        <ToastProvider>
+          <WorkshopProvider>
+            <RouterProvider router={router} />
+          </WorkshopProvider>
+        </ToastProvider>
+      </AuthProvider>
     </AppProviders>
   </StrictMode>,
 );
