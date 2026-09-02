@@ -16,9 +16,10 @@ export const HOURLY_RATE_BOB = 120;
 const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   REGISTRADA: ['EN_DIAGNOSTICO', 'CANCELADA'],
   EN_DIAGNOSTICO: ['DIAGNOSTICADA', 'CANCELADA'],
-  DIAGNOSTICADA: ['PRESUPUESTADA', 'CANCELADA'],
-  PRESUPUESTADA: ['APROBADA', 'CANCELADA'],
-  APROBADA: ['EN_PROGRESO', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+    DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
+    PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
+    APROBADO: ['EN_PROGRESO', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+    RECHAZADO: [],
   EN_PROGRESO: ['EN_ESPERA_REPUESTO', 'FINALIZADA', 'CANCELADA'],
   EN_ESPERA_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
   FINALIZADA: ['ENTREGADA'],
@@ -86,7 +87,7 @@ export const workshopService = {
       (o) =>
         o.status === 'EN_PROGRESO' ||
         o.status === 'EN_ESPERA_REPUESTO' ||
-        o.status === 'APROBADA' ||
+        o.status === 'APROBADO' ||
         o.status === 'EN_DIAGNOSTICO',
     ).length;
     const enDiagnosticoCount = orders.filter((o) => o.status === 'EN_DIAGNOSTICO').length;
@@ -199,7 +200,7 @@ export const workshopService = {
       );
     }
 
-    if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADA' && order.status !== 'EN_ESPERA_REPUESTO') {
+    if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_REPUESTO') {
       throw new Error('Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
     }
 
@@ -308,19 +309,11 @@ export const workshopService = {
         quantityUsed: 0,
         unitPriceBOB: inv.unitPriceBOB,
         totalBOB: inv.unitPriceBOB * p.quantityRequired,
-        isReserved: true,
+        isReserved: false,
         isDeliveredToBay: false,
-        status: 'RESERVADO',
+        status: 'PENDIENTE',
       };
     });
-
-    inventory.forEach((inv) => {
-      const selected = payload.partsItems.find((p) => p.partId === inv.id || p.partId === inv.code);
-      if (selected) {
-        inv.stockReserved += selected.quantityRequired;
-      }
-    });
-    mockDb.saveInventory(inventory);
 
     const newLabor: WorkOrderLaborItem[] = payload.laborItems.map((l, i) => ({
       id: `lab-dg-${Date.now()}-${i}`,
@@ -379,6 +372,12 @@ export const workshopService = {
 
     const partItem = order.partsItems.find((p) => p.id === partItemId);
     if (!partItem) throw new Error('Repuesto en OT no encontrado');
+    if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(order.status)) {
+      throw new Error('Regla RN-02: no se puede consumir un repuesto sin aprobación del presupuesto.');
+    }
+    if (!partItem.isReserved) {
+      throw new Error('Regla RN-07: el repuesto no está reservado para esta OT.');
+    }
 
     const inventory = mockDb.getInventory();
     const invIdx = inventory.findIndex((i) => i.id === partItem.partId || i.code === partItem.partCode);
@@ -386,7 +385,6 @@ export const workshopService = {
       const inv = inventory[invIdx];
       inventory[invIdx] = {
         ...inv,
-        stockAvailable: Math.max(0, inv.stockAvailable - partItem.quantityRequired),
         stockReserved: Math.max(0, inv.stockReserved - partItem.quantityRequired),
         lastMovementDate: new Date().toISOString().split('T')[0],
         daysWithoutMovement: 0,

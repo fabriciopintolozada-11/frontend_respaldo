@@ -5,9 +5,10 @@ import type { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleS
 
 const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   REGISTRADA: ['DIAGNOSTICADA', 'CANCELADA'],
-  DIAGNOSTICADA: ['PRESUPUESTADA', 'CANCELADA'],
-  PRESUPUESTADA: ['APROBADA', 'CANCELADA'],
-  APROBADA: ['EN_PROGRESO', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+  DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
+  PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
+  APROBADO: ['EN_PROGRESO', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+  RECHAZADO: [],
   EN_PROGRESO: ['EN_ESPERA_REPUESTO', 'FINALIZADA', 'CANCELADA'],
   EN_ESPERA_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
   FINALIZADA: ['ENTREGADA'],
@@ -194,8 +195,8 @@ export const workOrdersService = {
         );
       }
 
-      // Check RN-02: Para pasar a EN_PROGRESO debe estar APROBADA
-      if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADA' && order.status !== 'EN_ESPERA_REPUESTO') {
+      // Check RN-02: Para pasar a EN_PROGRESO debe estar APROBADO
+      if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_REPUESTO') {
         throw new Error('Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
       }
 
@@ -325,7 +326,7 @@ export const workOrdersService = {
           if (!affectedMechanicIds.has(mechanic.id)) return mechanic;
           const activeOtCount = orders.filter(
             (candidate) =>
-              ['REGISTRADA', 'DIAGNOSTICADA', 'PRESUPUESTADA', 'APROBADA', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(
+              ['REGISTRADA', 'DIAGNOSTICADA', 'PRESUPUESTO_ENVIADO', 'APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(
                 candidate.status
               ) &&
               (candidate.primaryMechanicId === mechanic.id || candidate.assistantMechanicId === mechanic.id)
@@ -334,7 +335,7 @@ export const workOrdersService = {
             (candidate) =>
               candidate.assignedBayId &&
               candidate.primaryMechanicId === mechanic.id &&
-              ['APROBADA', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(candidate.status)
+              ['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(candidate.status)
           );
           return {
             ...mechanic,
@@ -372,7 +373,7 @@ export const workOrdersService = {
         ...p,
         id: `pot-add-${Date.now()}-${i}`,
         quantityUsed: 0,
-        isReserved: true,
+        isReserved: false,
         isDeliveredToBay: false,
         status: 'PENDIENTE',
       }));
@@ -471,6 +472,12 @@ export const workOrdersService = {
       const order = orders[idx];
       const partItem = order.partsItems.find((p) => p.id === partItemId);
       if (!partItem) throw new Error('Repuesto en OT no encontrado');
+      if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(order.status)) {
+        throw new Error('Regla RN-02: no se puede consumir un repuesto sin aprobación del presupuesto.');
+      }
+      if (!partItem.isReserved) {
+        throw new Error('Regla RN-07: el repuesto no está reservado para esta OT.');
+      }
 
       // RN-07, RN-08: Descontar de inventario y liberar reserva
       const inventory = mockDb.getInventory();
@@ -479,7 +486,6 @@ export const workOrdersService = {
         const inv = inventory[invIdx];
         const updatedInv = {
           ...inv,
-          stockAvailable: Math.max(0, inv.stockAvailable - partItem.quantityRequired),
           stockReserved: Math.max(0, inv.stockReserved - partItem.quantityRequired),
           lastMovementDate: new Date().toISOString().split('T')[0],
           daysWithoutMovement: 0,

@@ -45,7 +45,7 @@ export function WorkshopHeadView() {
     () =>
       workOrders.filter(
         (o) =>
-          (o.status === 'REGISTRADA' || o.status === 'EN_DIAGNOSTICO' || o.status === 'DIAGNOSTICADA' || o.status === 'APROBADA') &&
+          (o.status === 'REGISTRADA' || o.status === 'EN_DIAGNOSTICO' || o.status === 'DIAGNOSTICADA' || o.status === 'APROBADO') &&
           !o.assignedBayId,
       ),
     [workOrders],
@@ -58,7 +58,7 @@ export function WorkshopHeadView() {
 
   const rn03Suspended = useMemo(() => workOrders.filter((o) => o.isSuspendedForAdditionalWork), [workOrders]);
   const rn06Alert = useMemo(
-    () => workOrders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTADA'),
+    () => workOrders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTO_ENVIADO'),
     [workOrders],
   );
 
