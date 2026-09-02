@@ -27,12 +27,19 @@ import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
 import type { WorkOrder } from '../../../shared/types/openapi';
 import { useMechanicOrders } from '../api/useMechanicOrders';
+import { DiagnosticForm } from '../../work-orders/components/DiagnosticForm';
+
+export function isDiagnosticEligible(status: string): boolean {
+  const normalizedStatus = status.trim().toUpperCase();
+  return normalizedStatus === 'RECIBIDO' || normalizedStatus === 'EN_DIAGNOSTICO';
+}
 
 export const MechanicConsoleView: React.FC = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const assignedOrdersQuery = useMechanicOrders();
   const workOrders: WorkOrder[] = assignedOrdersQuery.data?.data ?? [];
+  const [diagnosingOrder, setDiagnosingOrder] = useState<WorkOrder | null>(null);
 
   // Additional work reporting modal (RN-03)
   const [reportingOt, setReportingOt] = useState<WorkOrder | null>(null);
@@ -60,8 +67,8 @@ export const MechanicConsoleView: React.FC = () => {
     try {
       await workOrdersService.confirmPartInstalled(orderId, partItemId);
       toast.success(
-        'Repuesto Instalado (RN-07, RN-08)',
-        'Stock descontado automáticamente del inventario.'
+        'Repuesto instalado',
+        'El uso del repuesto quedó registrado.'
       );
       await loadData();
     } catch (err) {
@@ -85,7 +92,7 @@ export const MechanicConsoleView: React.FC = () => {
         750, // Cost calculated by system/Jefe de Taller
         [
           {
-            description: `[ADICIONAL RN-03] ${additionalDesc}`,
+            description: additionalDesc,
             estimatedHours: Number(additionalHours) || 2,
             hourlyRateBOB: 120,
             totalBOB: (Number(additionalHours) || 2) * 120,
@@ -97,7 +104,7 @@ export const MechanicConsoleView: React.FC = () => {
               {
                 partId: 'REP-ADD-001',
                 partCode: 'REP-ADD',
-                description: `[ADICIONAL RN-03] ${additionalPartDesc}`,
+                description: additionalPartDesc,
                 quantityRequired: 1,
                 unitPriceBOB: 200,
                 totalBOB: 200,
@@ -107,7 +114,7 @@ export const MechanicConsoleView: React.FC = () => {
       );
 
       toast.warning(
-        'Trabajo Suspendido por RN-03',
+        'Trabajo suspendido',
         'Se notificó al Jefe de Taller y al cliente. La orden queda pausada hasta confirmación explícita.'
       );
       setReportingOt(null);
@@ -140,7 +147,7 @@ export const MechanicConsoleView: React.FC = () => {
               <Wrench className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              Consola del Mecánico (HU-03, RN-04)
+              Consola del mecánico
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
@@ -151,7 +158,7 @@ export const MechanicConsoleView: React.FC = () => {
         {/* RN-16 Privacy Notice */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#16191F] border border-[#2D3139] text-xs font-semibold text-[#8E949F]">
           <Lock className="w-3.5 h-3.5 text-[#F97316]" />
-          <span>RN-16: Vista técnica sin costos</span>
+          <span>Vista técnica sin costos</span>
         </div>
       </div>
 
@@ -225,7 +232,7 @@ export const MechanicConsoleView: React.FC = () => {
                   <div className="p-3 rounded-xl bg-[#F9731610] border border-[#F9731630] text-[#E0E2E6] flex items-start gap-3">
                     <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
                     <div className="text-xs">
-                      <span className="font-bold text-[#F97316]">ORDEN SUSPENDIDA POR DAÑO ADICIONAL (RN-03):</span>{' '}
+                      <span className="font-bold text-[#F97316]">ORDEN SUSPENDIDA POR DAÑO ADICIONAL:</span>{' '}
                       {ot.additionalWorkDescription}. <em className="text-[#8E949F]">Pausado hasta autorización del cliente.</em>
                     </div>
                   </div>
@@ -344,7 +351,7 @@ export const MechanicConsoleView: React.FC = () => {
                                 onClick={() => handleConfirmPartInstalled(ot.id, part.id)}
                                 className="text-xs min-h-[36px]"
                               >
-                                Confirmar Uso (RN-08)
+                                Confirmar uso
                               </Button>
                             )}
                           </div>
@@ -356,14 +363,26 @@ export const MechanicConsoleView: React.FC = () => {
 
                 {/* Mechanic Actions Footer */}
                 <div className="pt-3 border-t border-[#2D3139] flex flex-wrap items-center justify-between gap-3">
-                  <Button
-                    variant="warning"
-                    size="sm"
-                    leftIcon={<AlertTriangle className="w-4 h-4" />}
-                    onClick={() => setReportingOt(ot)}
-                  >
-                    Reportar Daño Adicional (RN-03)
-                  </Button>
+                  <div className="flex flex-wrap gap-2">
+                    {isDiagnosticEligible(ot.status) && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        leftIcon={<FileText className="w-4 h-4" />}
+                        onClick={() => setDiagnosingOrder(ot)}
+                      >
+                        Registrar diagnóstico
+                      </Button>
+                    )}
+                    <Button
+                      variant="warning"
+                      size="sm"
+                      leftIcon={<AlertTriangle className="w-4 h-4" />}
+                      onClick={() => setReportingOt(ot)}
+                    >
+                      Reportar daño adicional
+                    </Button>
+                  </div>
 
                   {ot.status === 'EN_PROGRESO' && (
                     <Button
@@ -398,8 +417,8 @@ export const MechanicConsoleView: React.FC = () => {
       <Modal
         isOpen={!!reportingOt}
         onClose={() => setReportingOt(null)}
-        title={`Reportar Daño Oculto en ${reportingOt?.vehiclePlate} (RN-03)`}
-        subtitle="Regla RN-03: Suspende automáticamente el avance en bahía y genera cotización adicional para el cliente"
+        title={`Reportar daño oculto en ${reportingOt?.vehiclePlate}`}
+        subtitle="El avance se suspenderá hasta contar con una nueva aprobación del cliente."
       >
         <div className="space-y-4">
           <div>
@@ -438,7 +457,7 @@ export const MechanicConsoleView: React.FC = () => {
           </div>
 
           <div className="p-3 rounded-xl bg-[#F9731610] border border-[#F9731630] text-[#E0E2E6] text-xs">
-            ⚠️ <strong className="text-white">Efecto Inmediato:</strong> La orden cambiará a estado <em className="text-[#F97316]">Suspendido por RN-03</em>. Se notificará al cliente para aprobación formal.
+            <strong className="text-white">Efecto inmediato:</strong> La orden quedará suspendida y se notificará al cliente para solicitar una aprobación formal.
           </div>
 
           <div className="pt-4 flex justify-end gap-2.5 border-t border-[#2D3139]">
@@ -451,10 +470,34 @@ export const MechanicConsoleView: React.FC = () => {
               onClick={handleReportAdditionalWork}
               leftIcon={<ShieldAlert className="w-4 h-4" />}
             >
-              Aplicar Suspensión (RN-03)
+              Aplicar suspensión
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(diagnosingOrder)}
+        onClose={() => setDiagnosingOrder(null)}
+        title="Registrar diagnóstico técnico"
+        subtitle="Documenta los hallazgos y las necesidades preliminares de la orden."
+        maxWidth="2xl"
+        variant="light"
+      >
+        {diagnosingOrder && (
+          <DiagnosticForm
+            order={{
+              id: diagnosingOrder.id,
+              code: diagnosingOrder.code,
+              plate: diagnosingOrder.vehiclePlate,
+              status: diagnosingOrder.status,
+              initialComplaint: diagnosingOrder.entryReason,
+              vehicleDescription: [diagnosingOrder.vehicleBrand, diagnosingOrder.vehicleModel].filter(Boolean).join(' ') || undefined,
+            }}
+            parts={[]}
+            onCancel={() => setDiagnosingOrder(null)}
+          />
+        )}
       </Modal>
     </div>
   );
