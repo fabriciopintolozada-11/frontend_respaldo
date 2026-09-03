@@ -1,14 +1,21 @@
-import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { AlertTriangle, CheckCircle2, FileText, ShieldAlert } from 'lucide-react';
 import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 import { LaborChecklist } from './LaborChecklist';
 import { PartsList } from './PartsList';
 import type { AssignedWorkOrderDetail } from '../api/types';
 
+const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
+
+function isDiagnosticEligible(status: string): boolean {
+  return DIAGNOSTIC_ELIGIBLE.includes(status.toUpperCase());
+}
+
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderDetail;
   onToggleLabor: (taskId: string) => void;
   onConfirmPart: (partId: string) => void;
+  onDiagnose: () => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
   isMutating: boolean;
@@ -22,12 +29,13 @@ export function AssignedOrderCard({
   order,
   onToggleLabor,
   onConfirmPart,
+  onDiagnose,
   onFinalize,
   onReportAdditional,
   isMutating,
 }: AssignedOrderCardProps) {
   const isSuspended =
-    order.status === 'EN_PROGRESO' &&
+    (order.status === 'EN_PROGRESO' || order.status === 'EN_REPARACION') &&
     order.statusHistory.some((h) => h.reason?.includes('RN-03'));
 
   return (
@@ -111,16 +119,31 @@ export function AssignedOrderCard({
 
       {/* Footer Actions */}
       <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="warning"
-          size="md"
-          leftIcon={<AlertTriangle className="w-5 h-5" />}
-          onClick={onReportAdditional}
-        >
-          Reportar daño adicional
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {isDiagnosticEligible(order.status) && (
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<FileText className="w-5 h-5" />}
+              onClick={onDiagnose}
+              disabled={isMutating}
+            >
+              Registrar diagnóstico
+            </Button>
+          )}
+          <Button
+            variant="warning"
+            size="md"
+            leftIcon={<AlertTriangle className="w-5 h-5" />}
+            onClick={onReportAdditional}
+          >
+            Reportar daño adicional
+          </Button>
+        </div>
 
-        {(order.status === 'EN_PROGRESO' || order.status === 'APROBADO') && (
+        {(order.status === 'EN_PROGRESO' ||
+          order.status === 'EN_REPARACION' ||
+          order.status === 'APROBADO') && (
           <Button
             variant="primary"
             size="md"

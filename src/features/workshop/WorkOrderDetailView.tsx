@@ -26,15 +26,22 @@ import { DiagnosticFormModal } from './DiagnosticFormModal';
 
 const NEXT_STEP_LABEL: Record<WorkOrderStatus, string> = {
   REGISTRADA: 'Iniciar Diagnóstico',
+  RECIBIDO: 'Iniciar Diagnóstico',
+  ASIGNADA: 'Registrar Diagnóstico',
   EN_DIAGNOSTICO: 'Completar Diagnóstico',
   DIAGNOSTICADA: 'Generar Presupuesto',
   PRESUPUESTO_ENVIADO: 'Registrar Aprobación',
   APROBADO: 'Asignar a Bahía',
   RECHAZADO: '',
   EN_PROGRESO: 'Finalizar Trabajo',
+  EN_REPARACION: 'Finalizar Trabajo',
   EN_ESPERA_REPUESTO: 'Reanudar (En Progreso)',
+  ESPERANDO_REPUESTO: 'Reanudar (En Reparación)',
   FINALIZADA: 'Marcar Entregada',
+  FINALIZADO: 'Marcar Entregado',
+  LISTO_ENTREGA: 'Marcar Entregado',
   ENTREGADA: '',
+  ENTREGADO: '',
   CANCELADA: '',
 };
 
