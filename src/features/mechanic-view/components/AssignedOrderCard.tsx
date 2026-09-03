@@ -1,8 +1,15 @@
-import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  PackageX,
+} from 'lucide-react';
+
 import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
+
 import { LaborChecklist } from './LaborChecklist';
 import { PartsList } from './PartsList';
+
 import type { AssignedWorkOrderDetail } from '../api/types';
 
 interface AssignedOrderCardProps {
@@ -11,6 +18,7 @@ interface AssignedOrderCardProps {
   onConfirmPart: (partId: string) => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
+  onSetAwaitingPart: () => void;
   isMutating: boolean;
 }
 
@@ -24,50 +32,66 @@ export function AssignedOrderCard({
   onConfirmPart,
   onFinalize,
   onReportAdditional,
+  onSetAwaitingPart,
   isMutating,
 }: AssignedOrderCardProps) {
   const isSuspended =
     order.status === 'EN_PROGRESO' &&
-    order.statusHistory.some((h) => h.reason?.includes('RN-03'));
+    order.statusHistory.some((historyEntry) =>
+      historyEntry.reason?.includes('RN-03'),
+    );
+
+  const canSetAwaitingPart =
+    order.status === 'EN_REPARACION';
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="font-mono text-xs font-bold text-lime-800 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-lg">
               {formatCode(order.id)}
             </span>
+
             <span className="font-mono font-extrabold text-base text-slate-950 break-all">
               {order.plate}
             </span>
+
             <span className="text-xs font-semibold text-slate-600 break-words">
-              {order.vehicle.brand} {order.vehicle.model} (
-              {order.vehicle.year})
+              {order.vehicle.brand}{' '}
+              {order.vehicle.model} ({order.vehicle.year})
             </span>
           </div>
+
           {order.assignedAt && (
             <p className="text-xs text-slate-600 mt-1">
               Assigned:{' '}
               <strong className="text-slate-950">
-                {new Date(order.assignedAt).toLocaleDateString()}
+                {new Date(
+                  order.assignedAt,
+                ).toLocaleDateString()}
               </strong>
             </p>
           )}
         </div>
-        <WorkOrderStatusBadge status={order.status as never} />
+
+        <WorkOrderStatusBadge
+          status={order.status as never}
+        />
       </div>
 
-      {/* Suspension Alert */}
       {isSuspended && (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
           <div className="w-1.5 h-10 bg-amber-500 rounded-full shrink-0 mt-0.5" />
+
           <div>
             <h4 className="font-bold text-sm text-slate-950">
-              <span className="text-amber-800">ORDER SUSPENDED - ADDITIONAL DAMAGE:</span>{' '}
+              <span className="text-amber-800">
+                ORDER SUSPENDED - ADDITIONAL DAMAGE:
+              </span>{' '}
               {order.initialComplaint}
             </h4>
+
             <p className="text-xs text-slate-600 mt-0.5">
               Paused until client authorization.
             </p>
@@ -75,56 +99,78 @@ export function AssignedOrderCard({
         </div>
       )}
 
-      {/* Entry Reason & Diagnostic */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
             Entry Reason:
           </span>
+
           <p className="text-slate-950 font-medium">
             {order.initialComplaint}
           </p>
         </div>
+
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
             Technical Diagnostic:
           </span>
+
           <p className="text-slate-950 font-medium">
-            {order.diagnosticReport || 'Pending bay evaluation.'}
+            {order.diagnosticReport ||
+              'Pending bay evaluation.'}
           </p>
         </div>
       </div>
 
-      {/* Labor Checklist */}
       <LaborChecklist
         tasks={order.tasks}
         onToggle={onToggleLabor}
         isPending={isMutating}
       />
 
-      {/* Parts List */}
       <PartsList
         parts={order.parts}
         onConfirmInstalled={onConfirmPart}
         isPending={isMutating}
       />
 
-      {/* Footer Actions */}
       <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="warning"
-          size="md"
-          leftIcon={<AlertTriangle className="w-5 h-5" />}
-          onClick={onReportAdditional}
-        >
-          Report Additional Damage
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button
+            variant="warning"
+            size="md"
+            leftIcon={
+              <AlertTriangle className="w-5 h-5" />
+            }
+            onClick={onReportAdditional}
+            disabled={isMutating}
+          >
+            Report Additional Damage
+          </Button>
 
-        {(order.status === 'EN_PROGRESO' || order.status === 'APROBADA') && (
+          {canSetAwaitingPart && (
+            <Button
+              variant="warning"
+              size="md"
+              leftIcon={
+                <PackageX className="w-5 h-5" />
+              }
+              onClick={onSetAwaitingPart}
+              disabled={isMutating}
+            >
+              En espera de repuesto
+            </Button>
+          )}
+        </div>
+
+        {(order.status === 'EN_PROGRESO' ||
+          order.status === 'APROBADA') && (
           <Button
             variant="primary"
             size="md"
-            leftIcon={<CheckCircle2 className="w-5 h-5" />}
+            leftIcon={
+              <CheckCircle2 className="w-5 h-5" />
+            }
             onClick={onFinalize}
             disabled={isMutating}
           >
