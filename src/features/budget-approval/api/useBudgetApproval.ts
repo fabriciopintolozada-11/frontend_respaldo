@@ -38,9 +38,29 @@ export interface BudgetApprovalListItem {
   isFullyElectric: boolean;
 }
 
+export type BudgetApprovalChannel = 'CALL' | 'WHATSAPP' | 'IN_PERSON';
+export type BudgetDecision = 'APROBADO' | 'RECHAZADO';
+
 export interface BudgetApprovalPayload {
   approvedItemIds: string[];
   rejectedItemIds: string[];
+  decision: BudgetDecision;
+  channel: BudgetApprovalChannel;
+  customerName: string;
+  notes: string;
+  rejectionReason?: string;
+}
+
+interface QuoteDecisionResponse {
+  id: string;
+  quoteId: string;
+  workOrderId: string;
+  decision: 'APPROVED' | 'REJECTED';
+  channel?: BudgetApprovalChannel;
+  customerName?: string;
+  notes?: string;
+  reason?: string;
+  createdAt: string;
 }
 
 const decisionsStorageKey = 'fratelli_budget_approval_decisions_v1';
@@ -56,7 +76,7 @@ const CONTINGENCY_ORDER: WorkOrder = {
   clientDocument: '8092441 LP',
   clientPhone: '+591 70000000',
   clientEmail: 'laura.quiroga@example.com',
-  status: 'PRESUPUESTADA',
+  status: 'PRESUPUESTO_ENVIADO',
   entryDate: new Date().toISOString(),
   entryReason: 'Revisión preventiva y alerta en el sistema de frenado.',
   diagnosticReport: 'Se requiere inspección de frenos y diagnóstico de alto voltaje por personal certificado.',
@@ -143,10 +163,20 @@ function isNetworkError(error: unknown): boolean {
   );
 }
 
-function getStoredDecisions(): Record<string, { approved: string[]; rejected: string[] }> {
+interface StoredDecision {
+  approved: string[];
+  rejected: string[];
+  decision?: BudgetDecision;
+  channel?: BudgetApprovalChannel;
+  notes?: string;
+  rejectionReason?: string;
+  recordedAt?: string;
+}
+
+function getStoredDecisions(): Record<string, StoredDecision> {
   try {
     const stored = localStorage.getItem(decisionsStorageKey);
-    return stored ? JSON.parse(stored) as Record<string, { approved: string[]; rejected: string[] }> : {};
+    return stored ? JSON.parse(stored) as Record<string, StoredDecision> : {};
   } catch {
     return {};
   }
@@ -155,7 +185,15 @@ function getStoredDecisions(): Record<string, { approved: string[]; rejected: st
 function storeDecisions(orderId: string, payload: BudgetApprovalPayload): void {
   try {
     const decisions = getStoredDecisions();
-    decisions[orderId] = { approved: payload.approvedItemIds, rejected: payload.rejectedItemIds };
+    decisions[orderId] = {
+      approved: payload.approvedItemIds,
+      rejected: payload.rejectedItemIds,
+      decision: payload.decision,
+      channel: payload.channel,
+      notes: payload.notes,
+      rejectionReason: payload.rejectionReason,
+      recordedAt: new Date().toISOString(),
+    };
     localStorage.setItem(decisionsStorageKey, JSON.stringify(decisions));
   } catch {
     // Persistence is best effort in mock mode.
@@ -226,15 +264,27 @@ function createItems(order: WorkOrder, isFullyElectric: boolean): BudgetItem[] {
 }
 
 function getMockBudgetApproval(orderId: string): BudgetApprovalData {
-  const order = mockDb.getWorkOrders().find((item) => item.id === orderId || item.code === orderId)
+  const baseOrder = mockDb.getWorkOrders().find((item) => item.id === orderId || item.code === orderId)
     ?? (orderId === CONTINGENCY_ORDER.id || orderId === CONTINGENCY_ORDER.code ? CONTINGENCY_ORDER : undefined);
-  if (!order) throw new Error('Orden de trabajo no encontrada');
+  if (!baseOrder) throw new Error('Orden de trabajo no encontrada');
+
+  const storedDecision = getStoredDecisions()[baseOrder.id];
+  const order = storedDecision?.decision
+    ? {
+        ...baseOrder,
+        status: storedDecision.decision === 'APROBADO' ? 'APROBADO' as const : 'RECHAZADO' as const,
+        clientApprovedAt: storedDecision.decision === 'APROBADO' ? storedDecision.recordedAt : undefined,
+      }
+    : baseOrder;
 
   const vehicle = mockDb.getVehicles().find((item) => item.plate === order.vehiclePlate);
   const isFullyElectric = order.id === CONTINGENCY_ORDER.id || vehicle?.fuelType === 'ELECTRICO';
-  const budget = mockDb.getBudgets().find((item) => item.workOrderId === order.id || item.otCode === order.code)
+  const baseBudget = mockDb.getBudgets().find((item) => item.workOrderId === order.id || item.otCode === order.code)
     ?? (order.id === CONTINGENCY_ORDER.id ? CONTINGENCY_BUDGET : undefined)
     ?? createBudgetFromOrder(order);
+  const budget = storedDecision?.decision
+    ? { ...baseBudget, status: storedDecision.decision, approvalDate: storedDecision.recordedAt }
+    : baseBudget;
 
   return { workOrder: order, budget, items: createItems(order, isFullyElectric), isFullyElectric };
 }
@@ -246,26 +296,28 @@ function getMockApprovalList(): BudgetApprovalListItem[] {
   const list = budgets.map((budget) => {
     const order = orders.find((item) => item.id === budget.workOrderId || item.code === budget.otCode);
     const vehicle = order ? mockDb.getVehicles().find((item) => item.plate === order.vehiclePlate) : undefined;
+    const storedDecision = getStoredDecisions()[budget.workOrderId];
     return {
       orderId: budget.workOrderId,
       orderCode: budget.otCode,
       vehiclePlate: budget.vehiclePlate,
       vehicleDescription: order ? `${order.vehicleBrand} ${order.vehicleModel} (${order.vehicleYear})` : 'Vehículo no disponible',
       clientName: budget.clientName,
-      status: budget.status,
+      status: storedDecision?.decision ?? budget.status,
       totalBOB: budget.totalBOB,
       isFullyElectric: vehicle?.fuelType === 'ELECTRICO',
     };
   });
 
   if (!list.some((item) => item.orderId === CONTINGENCY_ORDER.id)) {
+    const storedDecision = getStoredDecisions()[CONTINGENCY_ORDER.id];
     list.push({
       orderId: CONTINGENCY_ORDER.id,
       orderCode: CONTINGENCY_ORDER.code,
       vehiclePlate: CONTINGENCY_ORDER.vehiclePlate,
       vehicleDescription: `${CONTINGENCY_ORDER.vehicleBrand} ${CONTINGENCY_ORDER.vehicleModel} (${CONTINGENCY_ORDER.vehicleYear})`,
       clientName: CONTINGENCY_ORDER.clientName,
-      status: CONTINGENCY_BUDGET.status,
+      status: storedDecision?.decision ?? CONTINGENCY_BUDGET.status,
       totalBOB: CONTINGENCY_BUDGET.totalBOB,
       isFullyElectric: true,
     });
@@ -299,13 +351,52 @@ async function fetchApprovalList(): Promise<BudgetApprovalListItem[]> {
   }
 }
 
-async function submitBudgetApproval(orderId: string, payload: BudgetApprovalPayload): Promise<BudgetApprovalData> {
+function updateMockInventory(order: WorkOrder, payload: BudgetApprovalPayload): void {
+  const inventory = mockDb.getInventory();
+  const approvedPartIds = new Set(
+    payload.decision === 'APROBADO'
+      ? payload.approvedItemIds
+      : [],
+  );
+
+  for (const part of order.partsItems) {
+    if (!approvedPartIds.has(part.id) || part.isReserved) continue;
+    const inventoryItem = inventory.find((item) => item.id === part.partId);
+    if (inventoryItem && inventoryItem.stockAvailable < part.quantityRequired) {
+      throw new Error(`Stock insuficiente para ${inventoryItem.name}.`);
+    }
+  }
+
+  for (const part of order.partsItems) {
+    const inventoryItem = inventory.find((item) => item.id === part.partId);
+    if (!inventoryItem) continue;
+
+    const shouldReserve = approvedPartIds.has(part.id);
+    if (shouldReserve && !part.isReserved) {
+      inventoryItem.stockAvailable = Math.max(0, inventoryItem.stockAvailable - part.quantityRequired);
+      inventoryItem.stockReserved += part.quantityRequired;
+      part.isReserved = true;
+      part.status = 'RESERVADO';
+    } else if (!shouldReserve && part.isReserved) {
+      inventoryItem.stockAvailable += part.quantityRequired;
+      inventoryItem.stockReserved = Math.max(0, inventoryItem.stockReserved - part.quantityRequired);
+      part.isReserved = false;
+      part.status = 'PENDIENTE';
+    }
+  }
+
+  mockDb.saveInventory(inventory);
+}
+
+async function submitBudgetApproval(orderId: string, payload: BudgetApprovalPayload): Promise<QuoteDecisionResponse> {
   if (isBackendSource()) {
     try {
-      return await request<BudgetApprovalData>({
-        url: `/work-orders/${encodeURIComponent(orderId)}/budget-approval`,
-        method: 'PATCH',
-        data: payload,
+      return await request<QuoteDecisionResponse>({
+        url: `/work-orders/${encodeURIComponent(orderId)}/${payload.decision === 'APROBADO' ? 'approve-quote' : 'reject-quote'}`,
+        method: 'POST',
+        data: payload.decision === 'APROBADO'
+          ? { channel: payload.channel, customerName: payload.customerName, notes: payload.notes }
+          : { reason: payload.rejectionReason },
       });
     } catch (error) {
       if (!isNetworkError(error)) throw error;
@@ -320,10 +411,14 @@ async function submitBudgetApproval(orderId: string, payload: BudgetApprovalPayl
 
   if (orderIndex === -1 && isContingencyOrder) {
     storeDecisions(CONTINGENCY_ORDER.id, payload);
-    return getMockBudgetApproval(CONTINGENCY_ORDER.id);
+    return createMockDecisionResponse(CONTINGENCY_ORDER, payload, new Date().toISOString());
   }
 
   const order = orders[orderIndex];
+  if (order.status !== 'PRESUPUESTO_ENVIADO' && order.status !== 'RECHAZADO') {
+    throw new Error('La OT no está pendiente de aprobación de presupuesto');
+  }
+  updateMockInventory(order, payload);
   storeDecisions(order.id, payload);
 
   const budgets = mockDb.getBudgets();
@@ -331,23 +426,45 @@ async function submitBudgetApproval(orderId: string, payload: BudgetApprovalPayl
   if (budgetIndex >= 0) {
     budgets[budgetIndex] = {
       ...budgets[budgetIndex],
-      status: payload.approvedItemIds.length > 0 ? 'APROBADO' : 'RECHAZADO',
-      approvalDate: payload.approvedItemIds.length > 0 ? new Date().toISOString() : undefined,
+      status: payload.decision,
+      approvalDate: new Date().toISOString(),
     };
     mockDb.saveBudgets(budgets);
   }
 
-  if (payload.approvedItemIds.length > 0 && ['PRESUPUESTADA', 'DIAGNOSTICADA'].includes(order.status)) {
-    orders[orderIndex] = {
-      ...order,
-      status: 'APROBADA',
-      clientApprovedAt: new Date().toISOString(),
-      clientApprovalMethod: 'PORTAL_WEB',
-    };
-    mockDb.saveWorkOrders(orders);
-  }
+  const decisionTimestamp = new Date().toISOString();
+  orders[orderIndex] = {
+    ...order,
+    status: payload.decision === 'APROBADO' ? 'APROBADO' : 'RECHAZADO',
+    clientApprovedAt: payload.decision === 'APROBADO' ? new Date().toISOString() : undefined,
+    clientApprovalMethod: payload.channel === 'WHATSAPP' ? 'WHATSAPP_CONFIRMADO' : payload.channel === 'IN_PERSON' ? 'PRESENCIAL' : 'PORTAL_WEB',
+    statusHistory: [
+      ...order.statusHistory,
+      {
+        status: payload.decision === 'APROBADO' ? 'APROBADO' : 'RECHAZADO',
+        timestamp: decisionTimestamp,
+        changedBy: `Recepción (${payload.channel})`,
+        reason: payload.decision === 'RECHAZADO' ? payload.rejectionReason : payload.notes,
+      },
+    ],
+  };
+  mockDb.saveWorkOrders(orders);
 
-  return getMockBudgetApproval(order.id);
+  return createMockDecisionResponse(order, payload, decisionTimestamp);
+}
+
+function createMockDecisionResponse(order: WorkOrder, payload: BudgetApprovalPayload, createdAt: string): QuoteDecisionResponse {
+  return {
+    id: `decision-${order.id}-${Date.now()}`,
+    quoteId: `budget-${order.id}`,
+    workOrderId: order.id,
+    decision: payload.decision === 'APROBADO' ? 'APPROVED' : 'REJECTED',
+    channel: payload.decision === 'APROBADO' ? payload.channel : undefined,
+    customerName: payload.customerName,
+    notes: payload.decision === 'APROBADO' ? payload.notes : undefined,
+    reason: payload.decision === 'RECHAZADO' ? payload.rejectionReason : undefined,
+    createdAt,
+  };
 }
 
 export function useBudgetApproval(orderId?: string) {
@@ -374,6 +491,11 @@ export function useSubmitBudgetApproval(orderId: string) {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['budget-approval', orderId] }),
         queryClient.invalidateQueries({ queryKey: ['budget-approval-list'] }),
+        queryClient.invalidateQueries({ queryKey: ['work-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['work-orders', 'assigned'] }),
+        queryClient.invalidateQueries({ queryKey: ['mechanic', 'assigned-orders'] }),
+        queryClient.invalidateQueries({ queryKey: ['bays'] }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
       ]);
     },
   });

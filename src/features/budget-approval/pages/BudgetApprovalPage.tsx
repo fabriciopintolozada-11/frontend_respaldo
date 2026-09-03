@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, CheckCircle2, ChevronRight, FileCheck, RefreshCw, User, WalletCards } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, ChevronRight, FileCheck, RefreshCw, User, WalletCards, XCircle } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router';
 
 import { Badge } from '../../../shared/components/Badge';
@@ -13,7 +13,8 @@ import {
   useBudgetApprovalList,
   useSubmitBudgetApproval,
 } from '../api/useBudgetApproval';
-import { ApprovalSummaryModal } from '../components/ApprovalSummaryModal';
+import type { BudgetDecision } from '../api/useBudgetApproval';
+import { ApprovalSummaryModal, type DecisionFormValues } from '../components/ApprovalSummaryModal';
 import { BudgetItemsTable } from '../components/BudgetItemsTable';
 import { EVWarningBanner } from '../components/EVWarningBanner';
 
@@ -30,6 +31,7 @@ function BudgetApprovalIndex() {
 
   if (listQuery.isLoading) return <LoadingSpinner message="Cargando presupuestos pendientes..." />;
   if (listQuery.isError) return <ErrorState message={listQuery.error instanceof Error ? listQuery.error.message : 'No se pudo cargar la lista de presupuestos.'} onRetry={() => void listQuery.refetch()} />;
+  const budgets = listQuery.data ?? [];
 
   return (
     <div className="space-y-6 rounded-3xl bg-slate-50 p-4 sm:p-6">
@@ -44,7 +46,7 @@ function BudgetApprovalIndex() {
         <p className="mt-2 max-w-2xl text-sm text-slate-600">Selecciona una orden de trabajo para revisar y aprobar repuestos y servicios por separado.</p>
       </div>
 
-      {listQuery.data.length === 0 ? (
+      {budgets.length === 0 ? (
         <Card variant="public" className="text-center">
           <FileCheck className="mx-auto h-8 w-8 text-slate-400" />
           <h2 className="mt-3 font-bold text-slate-900">No hay presupuestos para revisar</h2>
@@ -52,7 +54,7 @@ function BudgetApprovalIndex() {
         </Card>
       ) : (
         <div className="grid gap-4 md:grid-cols-2">
-          {listQuery.data.map((item) => (
+          {budgets.map((item) => (
             <Card key={item.orderId} variant="public" className="flex flex-col justify-between gap-4">
               <div>
                 <div className="flex items-start justify-between gap-3">
@@ -85,6 +87,7 @@ export function BudgetApprovalPage() {
   const submitApproval = useSubmitBudgetApproval(orderId ?? '');
   const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
   const [isSummaryOpen, setIsSummaryOpen] = useState(false);
+  const [decision, setDecision] = useState<BudgetDecision>('APROBADO');
 
   useEffect(() => {
     if (approvalQuery.data) {
@@ -106,6 +109,7 @@ export function BudgetApprovalPage() {
   const totalBOB = Math.max(0, subtotalBOB - discountBOB + taxBOB);
   const blockedItemCount = items.filter((item) => item.isElectricRestricted).length;
   const hasSelection = selectedItemIds.length > 0;
+  const canRegisterDecision = workOrder.status === 'PRESUPUESTO_ENVIADO' && !['APROBADO', 'RECHAZADO'].includes(budget.status);
 
   const toggleItem = (itemId: string) => {
     const item = items.find((candidate) => candidate.id === itemId);
@@ -118,16 +122,25 @@ export function BudgetApprovalPage() {
     setSelectedItemIds((current) => selectableIds.every((id) => current.includes(id)) ? [] : selectableIds);
   };
 
-  const handleConfirmApproval = async () => {
+  const handleConfirmDecision = async (values: DecisionFormValues) => {
+    const isApproval = values.decision === 'APROBADO';
     try {
       await submitApproval.mutateAsync({
-        approvedItemIds: selectedItemIds,
-        rejectedItemIds: items.filter((item) => !selectedItemIds.includes(item.id)).map((item) => item.id),
+        approvedItemIds: isApproval ? selectedItemIds : [],
+        rejectedItemIds: isApproval ? items.filter((item) => !selectedItemIds.includes(item.id)).map((item) => item.id) : items.map((item) => item.id),
+        decision: values.decision,
+        channel: values.channel,
+        customerName: workOrder.clientName,
+        notes: values.notes.trim(),
+        rejectionReason: values.rejectionReason?.trim() || undefined,
       });
       setIsSummaryOpen(false);
-      toast.success('Aprobación registrada', `La OT ${workOrder.code} fue actualizada correctamente.`);
+      toast.success(
+        isApproval ? 'Aprobación registrada' : 'Rechazo registrado',
+        `La OT ${workOrder.code} fue actualizada correctamente.`,
+      );
     } catch (error) {
-      toast.danger('No se pudo registrar la aprobación', error instanceof Error ? error.message : 'Intenta nuevamente.');
+      toast.danger('No se pudo registrar la decisión', error instanceof Error ? error.message : 'Intenta nuevamente.');
     }
   };
 
@@ -138,7 +151,6 @@ export function BudgetApprovalPage() {
           <Button variant="ghost" size="sm" className="text-slate-700 hover:bg-slate-200 hover:text-slate-950" onClick={() => navigate('/presupuestos')} leftIcon={<ArrowLeft className="h-4 w-4" />}>Presupuestos</Button>
           <div className="hidden h-6 w-px bg-slate-300 sm:block" />
           <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-lime-700">NEONVOLT · Revisión interna</p>
             <h1 className="text-xl font-extrabold tracking-tight text-slate-950 sm:text-2xl">Aprobación de OT</h1>
           </div>
         </div>
@@ -179,8 +191,35 @@ export function BudgetApprovalPage() {
             </div>
           </div>
           <div className="flex flex-col items-stretch gap-2 sm:flex-row lg:flex-col">
-            <Button variant="primary" size="lg" disabled={!hasSelection} onClick={() => setIsSummaryOpen(true)} leftIcon={<CheckCircle2 className="h-5 w-5" />}>Revisar y aprobar</Button>
-            <p className="text-center text-[11px] text-slate-500">Los ítems bloqueados por RN-18 no pueden aprobarse.</p>
+            <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
+              <Button
+                variant="primary"
+                size="lg"
+                disabled={!hasSelection || !canRegisterDecision}
+                onClick={() => {
+                  setDecision('APROBADO');
+                  setIsSummaryOpen(true);
+                }}
+                leftIcon={<CheckCircle2 className="h-5 w-5" />}
+              >
+                Revisar y aprobar
+              </Button>
+              <Button
+                variant="danger"
+                size="lg"
+                disabled={!canRegisterDecision}
+                onClick={() => {
+                  setDecision('RECHAZADO');
+                  setIsSummaryOpen(true);
+                }}
+                leftIcon={<XCircle className="h-5 w-5" />}
+              >
+                Rechazar presupuesto
+              </Button>
+            </div>
+            <p className="text-center text-[11px] text-slate-500">
+              {canRegisterDecision ? 'Los ítems bloqueados por RN-18 no pueden aprobarse.' : 'Esta OT ya tiene una decisión registrada.'}
+            </p>
           </div>
         </div>
       </Card>
@@ -188,7 +227,7 @@ export function BudgetApprovalPage() {
       <ApprovalSummaryModal
         isOpen={isSummaryOpen}
         onClose={() => setIsSummaryOpen(false)}
-        onConfirm={() => void handleConfirmApproval()}
+        onConfirm={(values) => void handleConfirmDecision(values)}
         items={items}
         approvedItemIds={selectedItemIds}
         subtotalBOB={subtotalBOB}
@@ -196,6 +235,7 @@ export function BudgetApprovalPage() {
         discountBOB={discountBOB}
         totalBOB={totalBOB}
         isSubmitting={submitApproval.isPending}
+        decision={decision}
       />
     </div>
   );

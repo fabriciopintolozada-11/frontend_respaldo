@@ -8,8 +8,9 @@ export type FuelType = 'GASOLINA' | 'DIESEL' | 'HIBRIDO' | 'ELECTRICO';
 export type WorkOrderStatus =
   | 'REGISTRADA'
   | 'DIAGNOSTICADA'
-  | 'PRESUPUESTADA'
-  | 'APROBADA'
+  | 'PRESUPUESTO_ENVIADO'
+  | 'APROBADO'
+  | 'RECHAZADO'
   | 'EN_PROGRESO'
   | 'EN_ESPERA_REPUESTO'
   | 'FINALIZADA'

@@ -53,8 +53,9 @@ const WORK_ORDER_CONFIGS: Record<WorkOrderStatus, { label: string; variant: NonN
   REGISTRADA: { label: '1. Registrada', variant: 'slate' },
   EN_DIAGNOSTICO: { label: '2. En Diagnóstico', variant: 'amber' },
   DIAGNOSTICADA: { label: '3. Diagnóstico Completado', variant: 'info' },
-  PRESUPUESTADA: { label: '4. Presupuestada', variant: 'amber' },
-  APROBADA: { label: '5. Aprobada x Cliente', variant: 'success' },
+  PRESUPUESTO_ENVIADO: { label: '4. Presupuesto enviado', variant: 'amber' },
+  APROBADO: { label: '5. Aprobado por Cliente', variant: 'success' },
+  RECHAZADO: { label: 'Rechazado por Cliente', variant: 'danger' },
   EN_PROGRESO: { label: '6. En Progreso', variant: 'purple' },
   EN_ESPERA_REPUESTO: { label: '7. Espera Repuesto', variant: 'warning' },
   FINALIZADA: { label: '8. Finalizada / Calidad', variant: 'success' },
@@ -62,10 +63,10 @@ const WORK_ORDER_CONFIGS: Record<WorkOrderStatus, { label: string; variant: NonN
   CANCELADA: { label: 'Cancelada', variant: 'danger' },
 };
 
-export function WorkOrderStatusBadge({ status, size = 'md' }: { status: WorkOrderStatus; size?: BadgeProps['size'] }) {
+export function WorkOrderStatusBadge({ status, size = 'md', className = '' }: { status: WorkOrderStatus; size?: BadgeProps['size']; className?: string }) {
   const config = WORK_ORDER_CONFIGS[status] ?? { label: status, variant: 'default' as const };
   return (
-    <Badge variant={config.variant} size={size} dot>
+    <Badge variant={config.variant} size={size} className={className} dot>
       {config.label}
     </Badge>
   );

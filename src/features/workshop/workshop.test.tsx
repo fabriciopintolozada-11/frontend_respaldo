@@ -140,6 +140,7 @@ describe('HU-02 Gestión / Diagnóstico, Asignación de Bahías y OTs', () => {
   });
 
   it('registra el diagnóstico técnico inicial y actualiza el estado a Diagnóstico Completado', () => {
+    const inventoryBefore = workshopService.getAllInventory().find((item) => item.id === 'REP-MOT-004');
     const result = workshopService.completeDiagnostic(
       'ot-007',
       {
@@ -156,17 +157,19 @@ describe('HU-02 Gestión / Diagnóstico, Asignación de Bahías y OTs', () => {
     expect(result.totalLaborBOB).toBe(540);
     expect(result.partsItems).toHaveLength(1);
     expect(result.statusHistory[0].status).toBe('DIAGNOSTICADA');
+    expect(result.partsItems[0].isReserved).toBe(false);
 
     const inventory = workshopService.getAllInventory();
     const reserved = inventory.find((i) => i.id === 'REP-MOT-004');
-    expect(reserved?.stockReserved).toBe(2);
+    expect(reserved?.stockReserved).toBe(inventoryBefore?.stockReserved);
+    expect(() => workshopService.confirmPartInstalled('ot-007', result.partsItems[0].id)).toThrow(/RN-02/);
   });
 
   it('muestra la consola del mecánico con órdenes asignadas', async () => {
     renderMechanicConsole();
 
-    expect(await screen.findByText(/mechanic console/i)).toBeInTheDocument();
-    expect(screen.getByText(/technical view \(no costs\)/i)).toBeInTheDocument();
+    expect(await screen.findByText(/consola de mecánico/i)).toBeInTheDocument();
+    expect(screen.getByText(/vista técnica \(sin costos\)/i)).toBeInTheDocument();
     expect(screen.getByText('OT-2025-0101')).toBeInTheDocument();
     expect(screen.getByText(/ruido en frenos delanteros/i)).toBeInTheDocument();
   });
