@@ -10,12 +10,14 @@ export type VehicleHistoryResponse = {
   brand: string
   model: string
   year: number
-  is_fully_electric: boolean
-  customer_id: string
-  customer_identification: string
-  customer_name: string
-  customer_phone?: string
-  history: TechnicalHistoryItem[]
+  isFullyElectric: boolean
+  customer: {
+    id: string
+    identification: string
+    name: string
+    phone?: string
+  }
+  technicalHistory: TechnicalHistoryItem[]
 }
 
 export type RegisterVehicleEntryRequest = {
@@ -36,11 +38,11 @@ export type RegisterVehicleEntryRequest = {
 
 export type CreatedWorkOrderResponse = {
   id: string
-  vehicle_id: string
-  customer_id: string
+  vehicleId: string
+  customerId: string
   status: string
-  initial_complaint: string
-  created_at: string
+  initialComplaint: string
+  createdAt: string
 }
 
 export type VehicleEntryFormValues = {

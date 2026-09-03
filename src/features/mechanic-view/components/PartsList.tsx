@@ -19,13 +19,13 @@ export function PartsList({
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
           <Package className="w-4 h-4 text-lime-700" />
-          Required Parts
+          Repuestos y materiales requeridos
         </h3>
       </div>
 
       {parts.length === 0 ? (
         <p className="text-xs text-slate-600 italic">
-          No parts requested for this order.
+          No se solicitaron repuestos para esta orden.
         </p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -53,7 +53,7 @@ export function PartsList({
 
                 {isInstalled ? (
                   <Badge variant="success" size="md">
-                    Installed
+                    Instalado
                   </Badge>
                 ) : (
                   <Button
@@ -62,7 +62,7 @@ export function PartsList({
                     onClick={() => onConfirmInstalled(part.id)}
                     disabled={isPending}
                   >
-                    Confirm Use
+                    Confirmar uso
                   </Button>
                 )}
               </div>

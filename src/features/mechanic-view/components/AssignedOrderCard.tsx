@@ -65,7 +65,7 @@ export function AssignedOrderCard({
 
           {order.assignedAt && (
             <p className="text-xs text-slate-600 mt-1">
-              Assigned:{' '}
+              Asignada:{' '}
               <strong className="text-slate-950">
                 {new Date(
                   order.assignedAt,
@@ -86,14 +86,12 @@ export function AssignedOrderCard({
 
           <div>
             <h4 className="font-bold text-sm text-slate-950">
-              <span className="text-amber-800">
-                ORDER SUSPENDED - ADDITIONAL DAMAGE:
-              </span>{' '}
+              <span className="text-amber-800">ORDEN SUSPENDIDA - DAÑO ADICIONAL:</span>{' '}
               {order.initialComplaint}
             </h4>
 
             <p className="text-xs text-slate-600 mt-0.5">
-              Paused until client authorization.
+              En pausa hasta la autorización del cliente.
             </p>
           </div>
         </div>
@@ -102,7 +100,7 @@ export function AssignedOrderCard({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
-            Entry Reason:
+            Motivo de ingreso:
           </span>
 
           <p className="text-slate-950 font-medium">
@@ -112,12 +110,11 @@ export function AssignedOrderCard({
 
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
-            Technical Diagnostic:
+            Diagnóstico técnico:
           </span>
 
           <p className="text-slate-950 font-medium">
-            {order.diagnosticReport ||
-              'Pending bay evaluation.'}
+            {order.diagnosticReport || 'Evaluación de bahía pendiente.'}
           </p>
         </div>
       </div>
@@ -139,22 +136,17 @@ export function AssignedOrderCard({
           <Button
             variant="warning"
             size="md"
-            leftIcon={
-              <AlertTriangle className="w-5 h-5" />
-            }
+            leftIcon={<AlertTriangle className="w-5 h-5" />}
             onClick={onReportAdditional}
-            disabled={isMutating}
           >
-            Report Additional Damage
+            Reportar daño adicional
           </Button>
 
           {canSetAwaitingPart && (
             <Button
               variant="warning"
               size="md"
-              leftIcon={
-                <PackageX className="w-5 h-5" />
-              }
+              leftIcon={<PackageX className="w-5 h-5" />}
               onClick={onSetAwaitingPart}
               disabled={isMutating}
             >
@@ -163,18 +155,15 @@ export function AssignedOrderCard({
           )}
         </div>
 
-        {(order.status === 'EN_PROGRESO' ||
-          order.status === 'APROBADA') && (
+        {(order.status === 'EN_PROGRESO' || order.status === 'APROBADO') && (
           <Button
             variant="primary"
             size="md"
-            leftIcon={
-              <CheckCircle2 className="w-5 h-5" />
-            }
+            leftIcon={<CheckCircle2 className="w-5 h-5" />}
             onClick={onFinalize}
             disabled={isMutating}
           >
-            Complete & Send to Quality
+            Completar y enviar a control de calidad
           </Button>
         )}
       </div>

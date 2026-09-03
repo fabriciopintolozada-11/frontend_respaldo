@@ -75,7 +75,7 @@ export const BudgetsAndApprovalsView: React.FC<{
       await budgetsService.recordClientApproval(budgetToApprove.id, approvalToken || undefined);
       toast.success(
         'Presupuesto Aprobado Explícitamente (RN-02)',
-        `Orden vinculada pasó a estado APROBADA. Se habilitó el inicio de trabajos en bahía.`
+        `Orden vinculada pasó a estado APROBADO. Se habilitó el inicio de trabajos en bahía.`
       );
       setBudgetToApprove(null);
       await loadData();

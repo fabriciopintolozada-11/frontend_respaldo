@@ -120,7 +120,7 @@ export const WorkOrderDetailView: React.FC<WorkOrderDetailViewProps> = ({
   }
 
   const isSuspended = order.isSuspendedForAdditionalWork;
-  const isRN06Alert = order.daysWithoutClientResponse >= 15 && order.status === 'PRESUPUESTADA';
+  const isRN06Alert = order.daysWithoutClientResponse >= 15 && order.status === 'PRESUPUESTO_ENVIADO';
 
   return (
     <div className="space-y-6">
