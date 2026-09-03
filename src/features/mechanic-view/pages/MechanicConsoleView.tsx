@@ -40,9 +40,9 @@ export function MechanicConsoleView() {
   const handleToggleLabor = async (orderId: string, taskId: string) => {
     try {
       await toggleLabor.mutateAsync({ orderId, laborId: taskId });
-      toast.success('Task status updated');
+      toast.success('Estado de tarea actualizado');
     } catch {
-      toast.danger('Could not update task');
+      toast.danger('No se pudo actualizar la tarea');
     }
   };
 
@@ -50,13 +50,13 @@ export function MechanicConsoleView() {
     try {
       await confirmPart.mutateAsync({ orderId, partItemId: partId });
       toast.success(
-        'Part Installed',
-        'Inventory stock automatically deducted.',
+        'Repuesto instalado',
+        'El stock del inventario se descontó automáticamente.',
       );
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Error registering part';
-      toast.danger('Part Failed', msg);
+        err instanceof Error ? err.message : 'Error al registrar el repuesto';
+      toast.danger('Fallo del repuesto', msg);
     }
   };
 
@@ -65,21 +65,21 @@ export function MechanicConsoleView() {
       await updateStatus.mutateAsync({
         orderId,
         status: 'FINALIZADA',
-        changedBy: 'Authenticated Mechanic (Work completed)',
+        changedBy: 'Mecánico autenticado (Trabajo completado)',
       });
       toast.success(
-        'Order Finalized',
-        'Order ready for quality control and settlement.',
+        'Orden finalizada',
+        'Orden lista para control de calidad y liquidación.',
       );
     } catch {
-      toast.danger('Could not finalize the order');
+      toast.danger('No se pudo finalizar la orden');
     }
   };
 
   const handleReportAdditional = async () => {
     if (!reportingOrder || !additionalDesc.trim()) {
       toast.warning(
-        'Enter the description of the additional damage or work detected.',
+        'Ingrese la descripción del daño o trabajo adicional detectado.',
       );
       return;
     }
@@ -92,7 +92,7 @@ export function MechanicConsoleView() {
         750,
         [
           {
-            description: `[ADDITIONAL] ${additionalDesc}`,
+            description: `[ADICIONAL] ${additionalDesc}`,
             estimatedHours: Number(additionalHours) || 2,
             hourlyRateBOB: 120,
             totalBOB: (Number(additionalHours) || 2) * 120,
@@ -104,7 +104,7 @@ export function MechanicConsoleView() {
               {
                 partId: 'REP-ADD-001',
                 partCode: 'REP-ADD',
-                description: `[ADDITIONAL] ${additionalPartDesc}`,
+                description: `[ADICIONAL] ${additionalPartDesc}`,
                 quantityRequired: 1,
                 unitPriceBOB: 200,
                 totalBOB: 200,
@@ -114,8 +114,8 @@ export function MechanicConsoleView() {
       );
 
       toast.warning(
-        'Work Order Suspended',
-        'Workshop lead and client notified. Order paused until explicit confirmation.',
+        'Orden de trabajo suspendida',
+        'El jefe de taller y el cliente fueron notificados. La orden queda pausada hasta la aprobación explícita.',
       );
       setReportingOrder(null);
       setAdditionalDesc('');
@@ -123,8 +123,8 @@ export function MechanicConsoleView() {
       refresh();
     } catch (err) {
       const msg =
-        err instanceof Error ? err.message : 'Error reporting damage';
-      toast.danger('Report failed', msg);
+        err instanceof Error ? err.message : 'Error al reportar el daño';
+      toast.danger('Falló el reporte', msg);
     } finally {
       setIsSubmittingReport(false);
     }
@@ -138,9 +138,9 @@ export function MechanicConsoleView() {
     return (
       <EmptyState
         icon={<Wrench className="w-8 h-8 text-slate-400" />}
-        title="Could not load your orders"
-        description="Verify that the session corresponds to a mechanic."
-        actionLabel="Retry"
+        title="No se pudieron cargar tus órdenes"
+        description="Verifica que la sesión corresponda a un mecánico."
+        actionLabel="Reintentar"
         onAction={refresh}
       />
     );
@@ -156,36 +156,35 @@ export function MechanicConsoleView() {
               <Wrench className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">
-              Mechanic Console
+              Consola de Mecánico
             </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Touch panel for bay tasks, diagnostic, part installation and
-            incident reporting.
+            Panel táctil para tareas en bahía, diagnóstico, instalación de repuestos y reporte de incidentes.
           </p>
         </div>
 
         {/* RN-16 Privacy Notice */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
           <Lock className="w-3.5 h-3.5 text-lime-700" />
-          <span>Technical view (no costs)</span>
+          <span>Vista técnica (sin costos)</span>
         </div>
       </div>
 
-      {/* Authenticated Session */}
+      {/* Sesión autenticada */}
       <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
           <Wrench className="w-4 h-4 text-lime-700" />
-          <span>Authenticated mechanic session</span>
+          <span>Sesión de mecánico autenticada</span>
         </div>
       </div>
 
-      {/* Assigned Orders Feed */}
+      {/* Órdenes asignadas */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-lime-500" />
-            Assigned Orders ({orders.length})
+            Órdenes asignadas ({orders.length})
           </h2>
           <Button
             variant="outline"
@@ -194,15 +193,15 @@ export function MechanicConsoleView() {
             className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950"
             leftIcon={<RefreshCw className="w-4 h-4" />}
           >
-            Refresh
+            Actualizar
           </Button>
         </div>
 
         {orders.length === 0 ? (
           <EmptyState
             icon={<Wrench className="w-8 h-8 text-slate-400" />}
-            title="No assigned orders currently"
-            description="No vehicles in queue for your workstation. The Workshop Lead will assign the next available order."
+            title="No hay órdenes asignadas actualmente"
+            description="No hay vehículos en espera para tu puesto de trabajo. El jefe de taller asignará la siguiente orden disponible."
           />
         ) : (
           orders.map((order) => (
@@ -227,7 +226,7 @@ export function MechanicConsoleView() {
         )}
       </div>
 
-      {/* Additional Work Modal (RN-03) */}
+      {/* Modal de trabajo adicional (RN-03) */}
       <AdditionalWorkModal
         isOpen={!!reportingOrder}
         vehiclePlate={reportingOrder?.plate ?? ''}

@@ -52,7 +52,7 @@ describe('VehicleReceptionPage', () => {
       ...existingVehicle(),
       id: 'vehicle-electric',
       plate: 'ELE123',
-      is_fully_electric: true,
+      isFullyElectric: true,
     })))
     const user = userEvent.setup()
     renderPage()
@@ -70,11 +70,11 @@ describe('VehicleReceptionPage', () => {
         requestSpy(await request.json())
         return HttpResponse.json({
         id: 'work-order-1',
-        vehicle_id: 'vehicle-1',
-        customer_id: 'customer-1',
+        vehicleId: 'vehicle-1',
+        customerId: 'customer-1',
         status: 'OPEN',
-        initial_complaint: 'Ruido al frenar',
-        created_at: '2026-08-19T12:00:00.000Z',
+        initialComplaint: 'Ruido al frenar',
+        createdAt: '2026-08-19T12:00:00.000Z',
         }, { status: 201 })
       }),
     )
@@ -113,12 +113,14 @@ function existingVehicle(): VehicleHistoryResponse {
     brand: 'Toyota',
     model: 'Corolla',
     year: 2022,
-    is_fully_electric: false,
-    customer_id: 'customer-1',
-    customer_identification: '7845123',
-    customer_name: 'María Flores',
-    customer_phone: '+591 71234567',
-    history: [{
+    isFullyElectric: false,
+    customer: {
+      id: 'customer-1',
+      identification: '7845123',
+      name: 'María Flores',
+      phone: '+591 71234567',
+    },
+    technicalHistory: [{
       id: 'history-1',
       description: 'Cambio de pastillas',
       createdAt: '2026-08-18T10:00:00.000Z',

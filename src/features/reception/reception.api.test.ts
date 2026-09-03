@@ -30,11 +30,11 @@ describe('reception API', () => {
       requestSpy(await apiRequest.json())
       return HttpResponse.json({
         id: 'work-order-1',
-        vehicle_id: 'vehicle-1',
-        customer_id: 'customer-1',
+        vehicleId: 'vehicle-1',
+        customerId: 'customer-1',
         status: 'OPEN',
-        initial_complaint: request.initialComplaint,
-        created_at: '2026-08-19T12:00:00.000Z',
+        initialComplaint: request.initialComplaint,
+        createdAt: '2026-08-19T12:00:00.000Z',
       }, { status: 201 })
     }))
 
@@ -43,10 +43,10 @@ describe('reception API', () => {
     expect(requestSpy).toHaveBeenCalledOnce()
     expect(requestSpy).toHaveBeenCalledWith(request)
     expect(order).toMatchObject({
-      vehicle_id: 'vehicle-1',
-      customer_id: 'customer-1',
+      vehicleId: 'vehicle-1',
+      customerId: 'customer-1',
       status: 'OPEN',
-      initial_complaint: 'Ruido al frenar',
+      initialComplaint: 'Ruido al frenar',
     })
   })
 

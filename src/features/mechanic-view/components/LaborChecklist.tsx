@@ -16,14 +16,14 @@ export function LaborChecklist({
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
           <CheckCircle2 className="w-4 h-4 text-lime-700" />
-          Labor Operations
+          Mano de obra
         </h3>
-        <span className="text-[11px] text-slate-600">Tap to complete</span>
+        <span className="text-[11px] text-slate-600">Toca para completar</span>
       </div>
 
       {tasks.length === 0 ? (
         <p className="text-xs text-slate-600 italic">
-          No labor tasks registered yet.
+          No hay tareas de mano de obra registradas.
         </p>
       ) : (
         <div className="space-y-2">
