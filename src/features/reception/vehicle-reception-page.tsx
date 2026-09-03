@@ -63,7 +63,7 @@ export function VehicleReceptionPage() {
         : historyQuery.data
           ? { status: 'found', data: historyQuery.data }
           : { status: 'new' }
-  const isPersistedElectric = lookup.status === 'found' && lookup.data.is_fully_electric
+  const isPersistedElectric = lookup.status === 'found' && lookup.data.isFullyElectric
   const isElectricBlocked = isFullyElectric || isPersistedElectric
 
   useEffect(() => {
@@ -92,13 +92,13 @@ export function VehicleReceptionPage() {
     if (!data || data.plate !== searchedPlate) return
 
     const values: Partial<VehicleEntryFormValues> = {
-      customerIdentification: data.customer_identification,
-      customerName: data.customer_name,
-      customerPhone: data.customer_phone ?? '',
+      customerIdentification: data.customer.identification,
+      customerName: data.customer.name,
+      customerPhone: data.customer.phone ?? '',
       brand: data.brand,
       model: data.model,
       year: String(data.year),
-      isFullyElectric: data.is_fully_electric,
+      isFullyElectric: data.isFullyElectric,
     }
 
     for (const [field, value] of Object.entries(values)) {
