@@ -1,25 +1,19 @@
 import { NavLink, Outlet } from 'react-router';
-import { Car, ClipboardCheck, ClipboardPlus, FileText, Globe, LogOut, Wrench } from 'lucide-react';
+import { Car, ClipboardCheck, ClipboardPlus, FileEdit, FileText, Globe, RotateCcw, Wrench } from 'lucide-react';
 
 import { useWorkshop } from '../state/WorkshopContext';
 import { useToast } from '../shared/components/ToastContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import type { UserRole } from '../shared/types/openapi';
 
-interface NavItem {
-  to: string;
-  label: string;
-  icon: React.ReactNode;
-  roles: UserRole[];
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { to: '/recepcion', label: 'Recepción', icon: <ClipboardPlus className="w-4 h-4" />, roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'] },
-  { to: '/taller', label: 'Jefe de Taller', icon: <Car className="w-4 h-4" />, roles: ['WORKSHOP_LEAD', 'ADMIN'] },
-  { to: '/mecanico', label: 'Mecánico', icon: <Wrench className="w-4 h-4" />, roles: ['MECHANIC'] },
-  { to: '/ots', label: 'Órdenes de Trabajo', icon: <FileText className="w-4 h-4" />, roles: ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'] },
-  { to: '/presupuestos', label: 'Aprobaciones', icon: <ClipboardCheck className="w-4 h-4" />, roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'] },
-  { to: '/consulta', label: 'Portal Cliente', icon: <Globe className="w-4 h-4" />, roles: ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'] },
+const NAV_ITEMS = [
+  { to: '/recepcion', label: 'Recepción', icon: <ClipboardPlus className="w-4 h-4" /> },
+  { to: '/taller', label: 'Jefe de Taller', icon: <Car className="w-4 h-4" /> },
+  { to: '/mecanico', label: 'Mecánico', icon: <Wrench className="w-4 h-4" /> },
+  { to: '/ots', label: 'Órdenes de Trabajo', icon: <FileText className="w-4 h-4" /> },
+  { to: '/presupuestos/crear', label: 'Presupuestar', icon: <FileEdit className="w-4 h-4" /> },
+  { to: '/presupuestos', label: 'Aprobaciones', icon: <ClipboardCheck className="w-4 h-4" /> },
+  { to: '/consulta', label: 'Portal Cliente', icon: <Globe className="w-4 h-4" /> },
 ];
 
 const ROLE_LABELS: Record<UserRole, string> = {

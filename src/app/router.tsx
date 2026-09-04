@@ -57,33 +57,22 @@ export const router = createBrowserRouter([
         ],
       },
       {
-        element: <ProtectedRoute allowedRoles={ALL_AUTHENTICATED} />,
-        children: [
-          {
-            path: 'ots',
-            lazy: async () => ({
-              Component: (await import('../features/workshop/WorkOrdersListView')).WorkOrdersListView,
-            }),
-          },
-          {
-            path: 'ots/:orderId',
-            lazy: async () => ({
-              Component: (await import('../features/workshop/WorkOrderDetailView')).WorkOrderDetailView,
-            }),
-          },
-          {
-            path: 'presupuestos',
-            lazy: async () => ({
-              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
-            }),
-          },
-          {
-            path: 'presupuestos/:orderId',
-            lazy: async () => ({
-              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
-            }),
-          },
-        ],
+        path: 'presupuestos/crear',
+        lazy: async () => ({
+          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+        }),
+      },
+      {
+        path: 'presupuestos/crear/:orderId',
+        lazy: async () => ({
+          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+        }),
+      },
+      {
+        path: 'presupuestos/:orderId',
+        lazy: async () => ({
+          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+        }),
       },
     ],
   },
