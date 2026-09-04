@@ -28,53 +28,8 @@ export function useMechanicMutations() {
           o.id === orderId
             ? {
                 ...o,
-                tasks: o.tasks.map((t) =>
-                  t.id === laborId
-                    ? { ...t, isCompleted: !t.isCompleted }
-                    : t,
-                ),
-              }
-            : o,
-        ),
-      );
-
-      return { prev };
-    },
-
-    onError: (_err, _vars, ctx) => {
-      if (ctx?.prev) {
-        queryClient.setQueryData(key, ctx.prev);
-      }
-    },
-
-    onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: key });
-    },
-  });
-
-  const confirmPart = useMutation({
-    mutationFn: ({
-      orderId,
-      partItemId,
-    }: {
-      orderId: string;
-      partItemId: string;
-    }) => workOrdersService.confirmPartInstalled(orderId, partItemId),
-
-    onMutate: async ({ orderId, partItemId }) => {
-      await queryClient.cancelQueries({ queryKey: key });
-
-      const prev = queryClient.getQueryData<AssignedWorkOrderDetail[]>(key);
-
-      queryClient.setQueryData<AssignedWorkOrderDetail[]>(key, (old) =>
-        (old ?? []).map((o) =>
-          o.id === orderId
-            ? {
-                ...o,
-                parts: o.parts.map((p) =>
-                  p.id === partItemId
-                    ? { ...p, status: 'INSTALADO' as const }
-                    : p,
+                tasks: (o.tasks ?? []).map((t) =>
+                  t.id === laborId ? { ...t, isCompleted: !t.isCompleted } : t,
                 ),
               }
             : o,
@@ -127,7 +82,6 @@ export function useMechanicMutations() {
 
   return {
     toggleLabor,
-    confirmPart,
     updateStatus,
     setAwaitingPart,
   };

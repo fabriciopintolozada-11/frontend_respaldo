@@ -326,29 +326,19 @@ function getMockApprovalList(): BudgetApprovalListItem[] {
   return list;
 }
 
+// US-09 (client approval). The previous implementation called ghost endpoints
+// (/work-orders/:id/budget-approval and /budgets/approval) that do not exist on
+// the backend and always 404'd. HU-12's quote creation uses
+// POST /work-orders/:id/quote instead. See useQuoteCreation.
+// US-09 approval/creation is handled through the real endpoints
+// POST /work-orders/:id/approve-quote and POST /work-orders/:id/reject-quote
+// (submitBudgetApproval below).
 async function fetchBudgetApproval(orderId: string): Promise<BudgetApprovalData> {
-  if (!isBackendSource()) return getMockBudgetApproval(orderId);
-
-  try {
-    return await request<BudgetApprovalData>({
-      url: `/work-orders/${encodeURIComponent(orderId)}/budget-approval`,
-      method: 'GET',
-    });
-  } catch (error) {
-    if (!isNetworkError(error)) throw error;
-    return getMockBudgetApproval(orderId);
-  }
+  return getMockBudgetApproval(orderId);
 }
 
 async function fetchApprovalList(): Promise<BudgetApprovalListItem[]> {
-  if (!isBackendSource()) return getMockApprovalList();
-
-  try {
-    return await request<BudgetApprovalListItem[]>({ url: '/budgets/approval', method: 'GET' });
-  } catch (error) {
-    if (!isNetworkError(error)) throw error;
-    return getMockApprovalList();
-  }
+  return getMockApprovalList();
 }
 
 function updateMockInventory(order: WorkOrder, payload: BudgetApprovalPayload): void {

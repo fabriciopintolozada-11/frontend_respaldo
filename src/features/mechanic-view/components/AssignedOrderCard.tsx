@@ -1,21 +1,30 @@
 import {
   AlertTriangle,
   CheckCircle2,
+  FileText,
   PackageX,
+  ShieldAlert,
 } from 'lucide-react';
 
 import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 
 import { LaborChecklist } from './LaborChecklist';
-import { PartsList } from './PartsList';
+import { ReservedPartsPanel } from './ReservedPartsPanel';
 
 import type { AssignedWorkOrderDetail } from '../api/types';
+
+const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
+
+function isDiagnosticEligible(status: string): boolean {
+  return DIAGNOSTIC_ELIGIBLE.includes(status.toUpperCase());
+}
 
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderDetail;
   onToggleLabor: (taskId: string) => void;
-  onConfirmPart: (partId: string) => void;
+  onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
+  onDiagnose: () => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
   onSetAwaitingPart: () => void;
@@ -29,20 +38,18 @@ function formatCode(id: string): string {
 export function AssignedOrderCard({
   order,
   onToggleLabor,
-  onConfirmPart,
+  onConsumePart,
+  onDiagnose,
   onFinalize,
   onReportAdditional,
   onSetAwaitingPart,
   isMutating,
 }: AssignedOrderCardProps) {
   const isSuspended =
-    order.status === 'EN_PROGRESO' &&
-    order.statusHistory.some((historyEntry) =>
-      historyEntry.reason?.includes('RN-03'),
-    );
+    (order.status === 'EN_PROGRESO' || order.status === 'EN_REPARACION') &&
+    (order.statusHistory ?? []).some((h) => h.reason?.includes('RN-03'));
 
-  const canSetAwaitingPart =
-    order.status === 'EN_REPARACION';
+  const canSetAwaitingPart = order.status === 'EN_REPARACION';
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
@@ -58,8 +65,8 @@ export function AssignedOrderCard({
             </span>
 
             <span className="text-xs font-semibold text-slate-600 break-words">
-              {order.vehicle.brand}{' '}
-              {order.vehicle.model} ({order.vehicle.year})
+              {order.vehicle?.brand ?? ''} {order.vehicle?.model ?? ''} (
+              {order.vehicle?.year ?? ''})
             </span>
           </div>
 
@@ -125,14 +132,26 @@ export function AssignedOrderCard({
         isPending={isMutating}
       />
 
-      <PartsList
-        parts={order.parts}
-        onConfirmInstalled={onConfirmPart}
+      <ReservedPartsPanel
+        parts={order.reservedParts}
+        workOrderId={order.id}
+        onConsume={onConsumePart}
         isPending={isMutating}
       />
 
       <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-2">
+          {isDiagnosticEligible(order.status) && (
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<FileText className="w-5 h-5" />}
+              onClick={onDiagnose}
+              disabled={isMutating}
+            >
+              Registrar diagnóstico
+            </Button>
+          )}
           <Button
             variant="warning"
             size="md"
@@ -155,7 +174,9 @@ export function AssignedOrderCard({
           )}
         </div>
 
-        {(order.status === 'EN_PROGRESO' || order.status === 'APROBADO') && (
+        {(order.status === 'EN_PROGRESO' ||
+          order.status === 'EN_REPARACION' ||
+          order.status === 'APROBADO') && (
           <Button
             variant="primary"
             size="md"

@@ -9,12 +9,15 @@ import {
 import { Button } from '../../../shared/components/Button';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
+import { Modal } from '../../../shared/components/Modal';
 import { useToast } from '../../../shared/components/ToastContext';
 import { ApiError } from '../../../shared/api/httpClient';
 
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
-
+import { DiagnosticForm, type DiagnosticWorkOrderContext } from '../../work-orders/components/DiagnosticForm';
+import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-schema';
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
+import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
 import { useMechanicMutations } from '../hooks/useMechanicMutations';
 
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
@@ -30,16 +33,20 @@ export function MechanicConsoleView() {
 
   const {
     toggleLabor,
-    confirmPart,
     updateStatus,
     setAwaitingPart,
   } = useMechanicMutations();
+
+  const consumePart = useConsumeSparePart();
 
   const assignedQuery = useAssignedOrders();
   const orders = assignedQuery.data ?? [];
 
   const [reportingOrder, setReportingOrder] =
     useState<AssignedWorkOrderDetail | null>(null);
+  const [diagnosingOrder, setDiagnosingOrder] =
+    useState<DiagnosticWorkOrderContext | null>(null);
+  const [isSubmittingDiagnostic, setIsSubmittingDiagnostic] = useState(false);
 
   const [awaitingPartOrder, setAwaitingPartOrder] =
     useState<AssignedWorkOrderDetail | null>(null);
@@ -55,10 +62,39 @@ export function MechanicConsoleView() {
     });
   };
 
-  const handleToggleLabor = async (
-    orderId: string,
-    taskId: string,
-  ) => {
+  const openDiagnosticForm = (order: AssignedWorkOrderDetail) => {
+    setDiagnosingOrder({
+      id: order.id,
+      code: `OT-${order.id.slice(0, 8).toUpperCase()}`,
+      plate: order.plate,
+      status: order.status,
+      initialComplaint: order.initialComplaint,
+      vehicleDescription: [order.vehicle?.brand ?? '', order.vehicle?.model ?? ''].filter(Boolean).join(' ') || undefined,
+    });
+  };
+
+  const handleSubmitDiagnostic = async (payload: DiagnosticPayload) => {
+    if (!diagnosingOrder) return;
+    setIsSubmittingDiagnostic(true);
+    try {
+      await workOrdersService.createDiagnostic(diagnosingOrder.id, payload);
+      toast.success(
+        'Diagnóstico registrado',
+        'La OT fue actualizada al estado correspondiente.',
+      );
+      setDiagnosingOrder(null);
+      refresh();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'No se pudo registrar el diagnóstico';
+      toast.danger('Fallo del diagnóstico', msg);
+      throw err;
+    } finally {
+      setIsSubmittingDiagnostic(false);
+    }
+  };
+
+  const handleToggleLabor = async (orderId: string, taskId: string) => {
     try {
       await toggleLabor.mutateAsync({ orderId, laborId: taskId });
       toast.success('Estado de tarea actualizado');
@@ -67,14 +103,16 @@ export function MechanicConsoleView() {
     }
   };
 
-  const handleConfirmPart = async (
-    orderId: string,
-    partId: string,
+  const handleConsumePart = async (
+    workOrderId: string,
+    quotePartId: string,
+    quantity: number,
   ) => {
     try {
-      await confirmPart.mutateAsync({
-        orderId,
-        partItemId: partId,
+      await consumePart.mutateAsync({
+        workOrderId,
+        quotePartId,
+        quantity,
       });
 
       toast.success(
@@ -92,7 +130,7 @@ export function MechanicConsoleView() {
     try {
       await updateStatus.mutateAsync({
         orderId,
-        status: 'FINALIZADA',
+        status: 'FINALIZADO',
         changedBy: 'Mecánico autenticado (Trabajo completado)',
       });
 
@@ -302,12 +340,7 @@ export function MechanicConsoleView() {
                   taskId,
                 )
               }
-              onConfirmPart={(partId) =>
-                handleConfirmPart(
-                  order.id,
-                  partId,
-                )
-              }
+              onConsumePart={handleConsumePart}
               onFinalize={() =>
                 handleFinalize(order.id)
               }
@@ -317,10 +350,12 @@ export function MechanicConsoleView() {
               onSetAwaitingPart={() =>
                 setAwaitingPartOrder(order)
               }
+              onDiagnose={() => openDiagnosticForm(order)}
               isMutating={
                 toggleLabor.isPending ||
-                confirmPart.isPending ||
+                consumePart.isPending ||
                 updateStatus.isPending ||
+                isSubmittingDiagnostic ||
                 setAwaitingPart.isPending
               }
             />
@@ -342,6 +377,25 @@ export function MechanicConsoleView() {
         onSubmit={handleReportAdditional}
         onClose={() => setReportingOrder(null)}
       />
+
+      {/* Modal de diagnóstico técnico (US-11) */}
+      <Modal
+        isOpen={Boolean(diagnosingOrder)}
+        onClose={() => setDiagnosingOrder(null)}
+        title="Registrar diagnóstico técnico"
+        subtitle="Documenta los hallazgos y las necesidades preliminares de la orden."
+        maxWidth="2xl"
+        variant="light"
+      >
+        {diagnosingOrder && (
+          <DiagnosticForm
+            order={diagnosingOrder}
+            parts={[]}
+            onCancel={() => setDiagnosingOrder(null)}
+            onSubmit={handleSubmitDiagnostic}
+          />
+        )}
+      </Modal>
 
       <AwaitingPartModal
         isOpen={!!awaitingPartOrder}
