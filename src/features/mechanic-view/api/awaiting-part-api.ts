@@ -6,11 +6,20 @@ export interface SetAwaitingPartPayload {
   reason: string;
 }
 
+export interface AwaitingPartResponse {
+  id: string;
+  status: string;
+  missingPartId: string;
+  quantity: number;
+  reason: string;
+  createdAt: string;
+}
+
 export async function setWorkOrderAwaitingPart(
   workOrderId: string,
   payload: SetAwaitingPartPayload,
-): Promise<void> {
-  await request({
+): Promise<AwaitingPartResponse> {
+  return request<AwaitingPartResponse>({
     method: 'POST',
     url: `/work-orders/${workOrderId}/awaiting-part`,
     data: payload,
