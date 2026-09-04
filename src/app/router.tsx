@@ -5,7 +5,6 @@ import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
 import type { UserRole } from '../shared/types/openapi';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 
-const ALL_AUTHENTICATED: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'];
 const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
 const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
@@ -30,6 +29,12 @@ export const router = createBrowserRouter([
             path: 'taller',
             lazy: async () => ({
               Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
+            }),
+          },
+          {
+            path: 'inventario',
+            lazy: async () => ({
+              Component: (await import('../features/inventory/pages/InventoryManagerView')).InventoryManagerView,
             }),
           },
         ],
