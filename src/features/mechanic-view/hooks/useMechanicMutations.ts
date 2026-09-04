@@ -47,6 +47,8 @@ export function useMechanicMutations() {
 
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: key });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      void queryClient.invalidateQueries({ queryKey: ['alert'] });
     },
   });
 

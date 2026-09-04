@@ -341,9 +341,7 @@ export function MechanicConsoleView() {
                 )
               }
               onConsumePart={handleConsumePart}
-              onFinalize={() =>
-                handleFinalize(order.id)
-              }
+              onFinalize={() => handleFinalize(order.id)}
               onReportAdditional={() =>
                 setReportingOrder(order)
               }

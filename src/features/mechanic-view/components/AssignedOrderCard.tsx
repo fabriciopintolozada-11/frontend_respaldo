@@ -12,7 +12,7 @@ import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 import { LaborChecklist } from './LaborChecklist';
 import { ReservedPartsPanel } from './ReservedPartsPanel';
 
-import type { AssignedWorkOrderDetail } from '../api/types';
+import type { AssignedWorkOrderDetail, ReservedPartDetail } from '../api/types';
 
 const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
 
@@ -35,6 +35,20 @@ function formatCode(id: string): string {
   return `OT-${id.slice(0, 8).toUpperCase()}`;
 }
 
+// HU-07: maps the backend ReservedPartDetail line to the ReservedPartLine the
+// panel expects. quotePartId is the identifier the consume-part endpoint needs.
+function mapToReservedPart(part: ReservedPartDetail) {
+  return {
+    quotePartId: part.quotePartId,
+    id: part.quotePartId,
+    code: part.code,
+    name: part.name,
+    reservedQuantity: part.quantityReserved,
+    usedQuantity: part.quantityUsed,
+    status: part.status,
+  };
+}
+
 export function AssignedOrderCard({
   order,
   onToggleLabor,
@@ -50,6 +64,13 @@ export function AssignedOrderCard({
     (order.statusHistory ?? []).some((h) => h.reason?.includes('RN-03'));
 
   const canSetAwaitingPart = order.status === 'EN_REPARACION';
+
+  // HU-07: the reserved parts are exposed by the backend in `order.reservedParts`
+  // (RN-16: no financial fields). When the backend has none, the panel shows the
+  // informative unavailable state (never live mock data).
+  const reservedParts = order.reservedParts?.length
+    ? order.reservedParts.map(mapToReservedPart)
+    : undefined;
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
@@ -132,13 +153,15 @@ export function AssignedOrderCard({
         isPending={isMutating}
       />
 
+      {/* HU-07: reserved spare parts panel (consumption confirmation) */}
       <ReservedPartsPanel
-        parts={order.reservedParts}
+        parts={reservedParts}
         workOrderId={order.id}
         onConsume={onConsumePart}
         isPending={isMutating}
       />
 
+      {/* Footer Actions */}
       <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap gap-2">
           {isDiagnosticEligible(order.status) && (
