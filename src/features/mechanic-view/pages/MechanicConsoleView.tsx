@@ -17,6 +17,7 @@ import { workOrdersService } from '../../work-orders/api/work-orders-service';
 import { DiagnosticForm, type DiagnosticWorkOrderContext } from '../../work-orders/components/DiagnosticForm';
 import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-schema';
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
+import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
 import { useMechanicMutations } from '../hooks/useMechanicMutations';
 
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
@@ -32,10 +33,11 @@ export function MechanicConsoleView() {
 
   const {
     toggleLabor,
-    confirmPart,
     updateStatus,
     setAwaitingPart,
   } = useMechanicMutations();
+
+  const consumePart = useConsumeSparePart();
 
   const assignedQuery = useAssignedOrders();
   const orders = assignedQuery.data ?? [];
@@ -101,14 +103,16 @@ export function MechanicConsoleView() {
     }
   };
 
-  const handleConfirmPart = async (
-    orderId: string,
-    partId: string,
+  const handleConsumePart = async (
+    workOrderId: string,
+    quotePartId: string,
+    quantity: number,
   ) => {
     try {
-      await confirmPart.mutateAsync({
-        orderId,
-        partItemId: partId,
+      await consumePart.mutateAsync({
+        workOrderId,
+        quotePartId,
+        quantity,
       });
 
       toast.success(
@@ -336,12 +340,7 @@ export function MechanicConsoleView() {
                   taskId,
                 )
               }
-              onConfirmPart={(partId) =>
-                handleConfirmPart(
-                  order.id,
-                  partId,
-                )
-              }
+              onConsumePart={handleConsumePart}
               onFinalize={() =>
                 handleFinalize(order.id)
               }
@@ -354,7 +353,7 @@ export function MechanicConsoleView() {
               onDiagnose={() => openDiagnosticForm(order)}
               isMutating={
                 toggleLabor.isPending ||
-                confirmPart.isPending ||
+                consumePart.isPending ||
                 updateStatus.isPending ||
                 isSubmittingDiagnostic ||
                 setAwaitingPart.isPending

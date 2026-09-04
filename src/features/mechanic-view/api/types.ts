@@ -21,6 +21,7 @@ export interface AssignedWorkOrderDetail {
   };
   tasks: WorkOrderTask[];
   parts: WorkOrderPart[];
+  reservedParts?: ReservedPart[];
   diagnosticReport: string | null;
   statusHistory: StatusHistoryEntry[];
 }
@@ -46,6 +47,15 @@ export interface WorkOrderPart {
   quantityRequired: number;
   quantityUsed: number;
   status: 'PENDIENTE' | 'RESERVADO' | 'INSTALADO' | 'EN_ESPERA_IMPORTACION';
+}
+
+export interface ReservedPart {
+  id: string;
+  code: string;
+  name: string;
+  quantityReserved: number;
+  quantityUsed: number;
+  status: 'RESERVED' | 'INSTALLED';
 }
 
 export interface StatusHistoryEntry {

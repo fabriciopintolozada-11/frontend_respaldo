@@ -10,7 +10,7 @@ import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 
 import { LaborChecklist } from './LaborChecklist';
-import { PartsList } from './PartsList';
+import { ReservedPartsPanel } from './ReservedPartsPanel';
 
 import type { AssignedWorkOrderDetail } from '../api/types';
 
@@ -23,7 +23,7 @@ function isDiagnosticEligible(status: string): boolean {
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderDetail;
   onToggleLabor: (taskId: string) => void;
-  onConfirmPart: (partId: string) => void;
+  onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
   onDiagnose: () => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
@@ -38,7 +38,7 @@ function formatCode(id: string): string {
 export function AssignedOrderCard({
   order,
   onToggleLabor,
-  onConfirmPart,
+  onConsumePart,
   onDiagnose,
   onFinalize,
   onReportAdditional,
@@ -132,9 +132,10 @@ export function AssignedOrderCard({
         isPending={isMutating}
       />
 
-      <PartsList
-        parts={order.parts}
-        onConfirmInstalled={onConfirmPart}
+      <ReservedPartsPanel
+        parts={order.reservedParts}
+        workOrderId={order.id}
+        onConsume={onConsumePart}
         isPending={isMutating}
       />
 
