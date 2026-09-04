@@ -52,7 +52,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
     return matchesSearch && matchesStatus && matchesAlerts;
   });
 
-  const rn06Count = orders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTADA').length;
+  const rn06Count = orders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTO_ENVIADO').length;
   const rn03Count = orders.filter((o) => o.isSuspendedForAdditionalWork).length;
 
   if (ordersQuery.isPending) {
@@ -95,7 +95,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             <div
               onClick={() => {
                 setOnlyAlertsFilter(true);
-                setStatusFilter('PRESUPUESTADA');
+                setStatusFilter('PRESUPUESTO_ENVIADO');
               }}
               className="p-3.5 rounded-2xl bg-[#EF444410] border border-[#EF444430] text-[#E0E2E6] flex items-center justify-between cursor-pointer hover:border-[#EF4444] transition-all"
             >
@@ -151,8 +151,8 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <option value="TODOS">Todos los Estados</option>
               <option value="REGISTRADA">1. Registrada</option>
               <option value="DIAGNOSTICADA">2. Diagnosticada</option>
-              <option value="PRESUPUESTADA">3. Presupuestada</option>
-              <option value="APROBADA">4. Aprobada x Cliente</option>
+              <option value="PRESUPUESTO_ENVIADO">3. Presupuesto enviado</option>
+              <option value="APROBADO">4. Aprobado por Cliente</option>
               <option value="EN_PROGRESO">5. En Progreso</option>
               <option value="EN_ESPERA_REPUESTO">6. Espera Repuesto</option>
               <option value="FINALIZADA">7. Finalizada</option>
@@ -191,7 +191,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
       ) : (
         <div className="space-y-3">
           {filteredOrders.map((ot) => {
-            const hasRN06 = ot.daysWithoutClientResponse >= 15 && ot.status === 'PRESUPUESTADA';
+            const hasRN06 = ot.daysWithoutClientResponse >= 15 && ot.status === 'PRESUPUESTO_ENVIADO';
             const hasRN03 = ot.isSuspendedForAdditionalWork;
 
             return (

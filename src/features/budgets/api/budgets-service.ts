@@ -73,18 +73,18 @@ export const budgetsService = {
       budgets[idx] = updated;
       mockDb.saveBudgets(budgets);
 
-      // Auto update the linked Work Order to APROBADA
+      // Auto update the linked Work Order to APROBADO
       const orders = mockDb.getWorkOrders();
       const oIdx = orders.findIndex((o) => o.id === updated.workOrderId || o.code === updated.otCode);
-      if (oIdx >= 0 && orders[oIdx].status === 'PRESUPUESTADA') {
+      if (oIdx >= 0 && orders[oIdx].status === 'PRESUPUESTO_ENVIADO') {
         orders[oIdx] = {
           ...orders[oIdx],
-          status: 'APROBADA',
+          status: 'APROBADO',
           clientApprovedAt: updated.approvalDate,
           clientApprovalMethod: 'PORTAL_WEB',
           statusHistory: [
             {
-              status: 'APROBADA',
+              status: 'APROBADO',
               timestamp: new Date().toISOString(),
               changedBy: 'Cliente (Aprobación explícita RN-02)',
               reason: `Presupuesto ${updated.totalBOB} BOB aprobado con token ${updated.approvalToken}`,

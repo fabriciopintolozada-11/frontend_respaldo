@@ -20,8 +20,8 @@ export function WorkOrderSuccess({ order, onNew }: {
         <span className="status-pill is-open">{order.status}</span>
       </div>
       <dl className="success-details">
-        <div><dt>Fecha de creación</dt><dd>{formatDate(order.created_at)}</dd></div>
-        <div><dt>Reclamo inicial</dt><dd>{order.initial_complaint}</dd></div>
+        <div><dt>Fecha de creación</dt><dd>{formatDate(order.createdAt)}</dd></div>
+        <div><dt>Reclamo inicial</dt><dd>{order.initialComplaint}</dd></div>
       </dl>
       <button className="button button-secondary" type="button" onClick={onNew}>
         Registrar otro ingreso

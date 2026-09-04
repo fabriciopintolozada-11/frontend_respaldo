@@ -54,27 +54,27 @@ export function VehicleHistoryPanel({ lookup }: { lookup: LookupState }) {
           <span className="eyebrow">Expediente encontrado</span>
           <h3>{data.plate}</h3>
         </div>
-        <span className={`status-pill ${data.is_fully_electric ? 'is-electric' : 'is-accepted'}`}>
-          {data.is_fully_electric ? <BatteryWarning size={15} /> : <CheckCircle2 size={15} />}
-          {data.is_fully_electric ? '100% eléctrico' : 'Recepción permitida'}
+        <span className={`status-pill ${data.isFullyElectric ? 'is-electric' : 'is-accepted'}`}>
+          {data.isFullyElectric ? <BatteryWarning size={15} /> : <CheckCircle2 size={15} />}
+          {data.isFullyElectric ? '100% eléctrico' : 'Recepción permitida'}
         </span>
       </div>
 
       <dl className="record-details">
-        <div><dt>Cliente registrado</dt><dd>{data.customer_name}</dd></div>
+        <div><dt>Cliente registrado</dt><dd>{data.customer.name}</dd></div>
         <div><dt>ID de expediente</dt><dd className="mono truncate">{data.id}</dd></div>
       </dl>
 
       <div className="history-heading">
         <span><Wrench size={17} /> Historial técnico</span>
-        <strong>{data.history.length} {data.history.length === 1 ? 'registro' : 'registros'}</strong>
+        <strong>{data.technicalHistory.length} {data.technicalHistory.length === 1 ? 'registro' : 'registros'}</strong>
       </div>
 
-      {data.history.length === 0 ? (
+      {data.technicalHistory.length === 0 ? (
         <p className="history-empty">Este vehículo todavía no tiene registros técnicos.</p>
       ) : (
         <ol className="timeline">
-          {data.history.map((item) => (
+          {data.technicalHistory.map((item) => (
             <li key={item.id}>
               <span className="timeline-dot" />
               <div>
