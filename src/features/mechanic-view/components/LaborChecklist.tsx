@@ -7,7 +7,7 @@ interface LaborChecklistProps {
 }
 
 export function LaborChecklist({
-  tasks,
+  tasks = [], 
   onToggle,
   isPending,
 }: LaborChecklistProps) {

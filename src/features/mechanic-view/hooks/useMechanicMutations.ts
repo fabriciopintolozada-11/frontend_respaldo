@@ -18,7 +18,7 @@ export function useMechanicMutations() {
           o.id === orderId
             ? {
                 ...o,
-                tasks: o.tasks.map((t) =>
+                tasks: (o.tasks ?? []).map((t) =>
                   t.id === laborId ? { ...t, isCompleted: !t.isCompleted } : t,
                 ),
               }
@@ -51,7 +51,7 @@ export function useMechanicMutations() {
           o.id === orderId
             ? {
                 ...o,
-                parts: o.parts.map((p) =>
+                parts: (o.parts ?? []).map((p) =>
                   p.id === partItemId ? { ...p, status: 'INSTALADO' as const } : p,
                 ),
               }

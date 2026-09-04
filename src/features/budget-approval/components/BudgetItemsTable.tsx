@@ -17,7 +17,7 @@ function formatMoney(amount: number): string {
   return `${moneyFormatter.format(amount)} BOB`;
 }
 
-export function BudgetItemsTable({ items, selectedItemIds, onToggleItem, onToggleAll }: BudgetItemsTableProps) {
+export function BudgetItemsTable({ items = [], selectedItemIds = [], onToggleItem, onToggleAll }: BudgetItemsTableProps) {
   const selectableItems = items.filter((item) => !item.isElectricRestricted);
   const allSelected = selectableItems.length > 0 && selectableItems.every((item) => selectedItemIds.includes(item.id));
 

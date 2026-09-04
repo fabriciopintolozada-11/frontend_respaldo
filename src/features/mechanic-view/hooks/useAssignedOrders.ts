@@ -1,6 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { ApiError } from '../../../shared/api/httpClient';
-import { mockDb } from '../../../shared/api/mock-db';
 import { mechanicService } from '../api/mechanic-service';
 import type { AssignedWorkOrderDetail, WorkOrderTask, WorkOrderPart } from '../api/types';
 import type { WorkOrder } from '../../../shared/types/openapi';
@@ -58,20 +56,15 @@ export function useAssignedOrders() {
   return useQuery<AssignedWorkOrderDetail[]>({
     queryKey: ['mechanic', 'assigned-orders'],
     queryFn: async () => {
-      try {
-        const list = await mechanicService.getAssigned(1, 100);
-        const details = await Promise.allSettled(
-          list.data.map((o) => mechanicService.getAssignedDetail(o.id)),
-        );
-        return details
-          .filter((r): r is PromiseFulfilledResult<AssignedWorkOrderDetail> =>
-            r.status === 'fulfilled',
-          )
-          .map((r) => r.value);
-      } catch (error) {
-        if (!isAuthOrNetworkError(error)) throw error;
-        return mockMechanicOrders;
-      }
+      const list = await mechanicService.getAssigned(1, 100);
+      const details = await Promise.allSettled(
+        list.data.map((o) => mechanicService.getAssignedDetail(o.id)),
+      );
+      return details
+        .filter((r): r is PromiseFulfilledResult<AssignedWorkOrderDetail> =>
+          r.status === 'fulfilled',
+        )
+        .map((r) => r.value);
     },
     staleTime: 30_000,
     retry: 1,
