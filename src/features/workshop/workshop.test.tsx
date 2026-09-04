@@ -58,13 +58,15 @@ function renderWithProviders(initialEntry = '/taller') {
   return render(
     <ToastProvider>
       <WorkshopProvider>
-        <MemoryRouter initialEntries={[initialEntry]}>
-          <Routes>
-            <Route path="/taller" element={<WorkshopHeadView />} />
-            <Route path="/mecanico" element={<WorkshopMechanicView />} />
-            <Route path="/ots/:orderId" element={<WorkOrderDetailView />} />
-          </Routes>
-        </MemoryRouter>
+        <QueryClientProvider client={queryClient()}>
+          <MemoryRouter initialEntries={[initialEntry]}>
+            <Routes>
+              <Route path="/taller" element={<WorkshopHeadView />} />
+              <Route path="/mecanico" element={<WorkshopMechanicView />} />
+              <Route path="/ots/:orderId" element={<WorkOrderDetailView />} />
+            </Routes>
+          </MemoryRouter>
+        </QueryClientProvider>
       </WorkshopProvider>
     </ToastProvider>,
   );
