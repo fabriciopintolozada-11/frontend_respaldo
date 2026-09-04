@@ -22,6 +22,7 @@ function mapMockOrderToDetail(order: WorkOrder): AssignedWorkOrderDetail {
 
   const parts: WorkOrderPart[] = order.partsItems.map((p) => ({
     id: p.id,
+    quotePartId: p.quotePartId ?? p.id,
     partCode: p.partCode,
     description: p.description,
     quantityRequired: p.quantityRequired,
