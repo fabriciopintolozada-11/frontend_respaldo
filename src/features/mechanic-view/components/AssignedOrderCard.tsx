@@ -36,7 +36,7 @@ export function AssignedOrderCard({
 }: AssignedOrderCardProps) {
   const isSuspended =
     (order.status === 'EN_PROGRESO' || order.status === 'EN_REPARACION') &&
-    order.statusHistory.some((h) => h.reason?.includes('RN-03'));
+    (order.statusHistory ?? []).some((h) => h.reason?.includes('RN-03'));
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
@@ -51,8 +51,8 @@ export function AssignedOrderCard({
               {order.plate}
             </span>
             <span className="text-xs font-semibold text-slate-600 break-words">
-              {order.vehicle.brand} {order.vehicle.model} (
-              {order.vehicle.year})
+              {order.vehicle?.brand ?? ''} {order.vehicle?.model ?? ''} (
+              {order.vehicle?.year ?? ''})
             </span>
           </div>
           {order.assignedAt && (

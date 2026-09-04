@@ -225,7 +225,7 @@ export function WorkOrderDetailView() {
               <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">Bitácora de Auditoría de Estados</h2>
             </div>
             <div className="space-y-3">
-              {order.statusHistory.map((hist, idx) => (
+              {(order.statusHistory ?? []).map((hist, idx) => (
                 <div key={idx} className="flex items-start gap-3 text-xs">
                   <div className="w-2 h-2 rounded-full bg-[#F97316] shrink-0 mt-1.5" />
                   <div className="flex-1">
@@ -251,11 +251,11 @@ export function WorkOrderDetailView() {
               </div>
               <span className="text-[10px] text-slate-600">Tarifa: 120 Bs./h</span>
             </div>
-            {order.laborItems.length === 0 ? (
+            {(order.laborItems ?? []).length === 0 ? (
               <p className="text-xs text-slate-600 italic">No hay ítems de mano de obra registrados.</p>
             ) : (
               <div className="space-y-2">
-                {order.laborItems.map((lab) => (
+                {(order.laborItems ?? []).map((lab) => (
                   <div key={lab.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-2">
@@ -283,13 +283,13 @@ export function WorkOrderDetailView() {
                 <Package className="w-4 h-4 text-[#F97316]" />
                 <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-700">Repuestos & Materiales ({order.totalPartsBOB} BOB)</h2>
               </div>
-              <span className="text-[10px] text-slate-600">{order.partsItems.length} ítems</span>
+              <span className="text-[10px] text-slate-600">{(order.partsItems ?? []).length} ítems</span>
             </div>
-            {order.partsItems.length === 0 ? (
+            {(order.partsItems ?? []).length === 0 ? (
               <p className="text-xs text-slate-600 italic">No se requirieron repuestos para esta orden.</p>
             ) : (
               <div className="space-y-2">
-                {order.partsItems.map((part) => (
+                {(order.partsItems ?? []).map((part) => (
                   <div key={part.id} className="p-3 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between">
                     <div>
                       <div className="flex items-center gap-1.5">

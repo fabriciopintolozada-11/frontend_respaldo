@@ -184,11 +184,11 @@ export function MechanicConsoleView() {
                     <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E949F]">Operaciones de Mano de Obra</h3>
                     <span className="text-[10px] text-[#8E949F]">Toque para completar</span>
                   </div>
-                  {ot.laborItems.length === 0 ? (
+                  {(ot.laborItems ?? []).length === 0 ? (
                     <p className="text-xs text-[#8E949F] italic">No hay tareas de mano de obra registradas aún.</p>
                   ) : (
                     <div className="space-y-2">
-                      {ot.laborItems.map((lab) => (
+                      {(ot.laborItems ?? []).map((lab) => (
                         <div
                           key={lab.id}
                           onClick={() => handleToggleLabor(ot.id, lab.id)}
@@ -221,11 +221,11 @@ export function MechanicConsoleView() {
                     <Package className="w-4 h-4 text-[#F97316]" />
                     Repuestos Requeridos
                   </h3>
-                  {ot.partsItems.length === 0 ? (
+                  {(ot.partsItems ?? []).length === 0 ? (
                     <p className="text-xs text-[#8E949F] italic">No se solicitaron repuestos para esta orden.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {ot.partsItems.map((part) => {
+                      {(ot.partsItems ?? []).map((part) => {
                         const isInstalled = part.status === 'INSTALADO';
                         return (
                           <div key={part.id} className="p-3 rounded-xl border border-[#2D3139] bg-[#1C2028] flex items-center justify-between gap-2">

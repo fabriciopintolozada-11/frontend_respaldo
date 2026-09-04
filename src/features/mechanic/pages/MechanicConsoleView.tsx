@@ -263,11 +263,11 @@ export const MechanicConsoleView: React.FC = () => {
                     <span className="text-[10px] text-[#8E949F]">Toque para completar</span>
                   </div>
 
-                  {ot.laborItems.length === 0 ? (
+                  {(ot.laborItems ?? []).length === 0 ? (
                     <p className="text-xs text-[#8E949F] italic">No hay tareas de mano de obra registradas aún.</p>
                   ) : (
                     <div className="space-y-2">
-                      {ot.laborItems.map((lab) => (
+                      {(ot.laborItems ?? []).map((lab) => (
                         <div
                           key={lab.id}
                           onClick={() => handleToggleLabor(ot.id, lab.id)}
@@ -314,11 +314,11 @@ export const MechanicConsoleView: React.FC = () => {
                     </h3>
                   </div>
 
-                  {ot.partsItems.length === 0 ? (
+                  {(ot.partsItems ?? []).length === 0 ? (
                     <p className="text-xs text-[#8E949F] italic">No se solicitaron repuestos para esta orden.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {ot.partsItems.map((part) => {
+                      {(ot.partsItems ?? []).map((part) => {
                         const isInstalled = part.status === 'INSTALADO';
 
                         return (

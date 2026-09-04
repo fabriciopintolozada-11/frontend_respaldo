@@ -50,7 +50,7 @@ export function MechanicConsoleView() {
       plate: order.plate,
       status: order.status,
       initialComplaint: order.initialComplaint,
-      vehicleDescription: [order.vehicle.brand, order.vehicle.model].filter(Boolean).join(' ') || undefined,
+      vehicleDescription: [order.vehicle?.brand ?? '', order.vehicle?.model ?? ''].filter(Boolean).join(' ') || undefined,
     });
   };
 

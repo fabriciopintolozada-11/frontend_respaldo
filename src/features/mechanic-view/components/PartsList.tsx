@@ -10,7 +10,7 @@ interface PartsListProps {
 }
 
 export function PartsList({
-  parts,
+  parts = [],
   onConfirmInstalled,
   isPending,
 }: PartsListProps) {
