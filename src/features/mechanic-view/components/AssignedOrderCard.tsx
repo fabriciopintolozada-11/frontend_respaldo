@@ -3,12 +3,18 @@ import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 import { LaborChecklist } from './LaborChecklist';
 import { PartsList } from './PartsList';
-import type { AssignedWorkOrderDetail } from '../api/types';
+import { ReservedPartsPanel, type ReservedPartLine } from '../../work-orders/components/ReservedPartsPanel';
+import type { AssignedWorkOrderDetail, ReservedPartDetail } from '../api/types';
 
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderDetail;
   onToggleLabor: (taskId: string) => void;
   onConfirmPart: (partId: string) => void;
+  onConfirmReservedPart: (
+    orderId: string,
+    part: ReservedPartLine,
+    quantity: number,
+  ) => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
   isMutating: boolean;
@@ -18,10 +24,27 @@ function formatCode(id: string): string {
   return `OT-${id.slice(0, 8).toUpperCase()}`;
 }
 
+// HU-07: maps the backend ReservedPartDetail line to the ReservedPartLine the
+// panel expects. quotePartId is the identifier the consume-part endpoint needs.
+// When the backend does not expose reserved parts, the mapping is undefined and
+// the panel renders its informative empty state.
+function mapToReservedPart(part: ReservedPartDetail): ReservedPartLine {
+  return {
+    quotePartId: part.quotePartId,
+    id: part.quotePartId,
+    code: part.code,
+    name: part.name,
+    reservedQuantity: part.quantityReserved,
+    usedQuantity: part.quantityUsed,
+    status: part.status,
+  };
+}
+
 export function AssignedOrderCard({
   order,
   onToggleLabor,
   onConfirmPart,
+  onConfirmReservedPart,
   onFinalize,
   onReportAdditional,
   isMutating,
@@ -29,6 +52,13 @@ export function AssignedOrderCard({
   const isSuspended =
     order.status === 'EN_PROGRESO' &&
     order.statusHistory.some((h) => h.reason?.includes('RN-03'));
+
+  // HU-07: the reserved parts are exposed by the backend in `order.reservedParts`
+  // (RN-16: no financial fields). When the backend has none, the panel shows the
+  // informative unavailable state (never live mock data).
+  const reservedParts = order.reservedParts?.length
+    ? order.reservedParts.map(mapToReservedPart)
+    : undefined;
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
@@ -106,6 +136,14 @@ export function AssignedOrderCard({
       <PartsList
         parts={order.parts}
         onConfirmInstalled={onConfirmPart}
+        isPending={isMutating}
+      />
+
+      {/* HU-07: reserved spare parts panel (consumption confirmation) */}
+      <ReservedPartsPanel
+        parts={reservedParts}
+        userRole="MECHANIC"
+        onConfirm={(part, quantity) => onConfirmReservedPart(order.id, part, quantity)}
         isPending={isMutating}
       />
 

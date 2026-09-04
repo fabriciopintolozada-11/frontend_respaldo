@@ -21,8 +21,20 @@ export interface AssignedWorkOrderDetail {
   };
   tasks: WorkOrderTask[];
   parts: WorkOrderPart[];
+  reservedParts?: ReservedPartDetail[];
   diagnosticReport: string | null;
   statusHistory: StatusHistoryEntry[];
+}
+
+// HU-07 / RN-16: a reserved spare part line as exposed by the backend for an
+// assigned work order. No financial fields (prices) are present.
+export interface ReservedPartDetail {
+  quotePartId: string;
+  code: string;
+  name: string;
+  quantityReserved: number;
+  quantityUsed: number;
+  status: 'RESERVED' | 'INSTALLED';
 }
 
 export interface PaginatedResponse<T> {

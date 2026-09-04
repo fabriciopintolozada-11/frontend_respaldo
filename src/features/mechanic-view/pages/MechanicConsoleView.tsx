@@ -16,6 +16,7 @@ import { useAssignedOrders } from '../hooks/useAssignedOrders';
 import { useMechanicMutations } from '../hooks/useMechanicMutations';
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
 import { AdditionalWorkModal } from '../components/AdditionalWorkModal';
+import { translateConsumePartError } from '../../work-orders/api/useConsumeSparePart';
 import type { AssignedWorkOrderDetail } from '../api/types';
 
 export function MechanicConsoleView() {
@@ -57,6 +58,33 @@ export function MechanicConsoleView() {
       const msg =
         err instanceof Error ? err.message : 'Error al registrar el repuesto';
       toast.danger('Fallo del repuesto', msg);
+    }
+  };
+
+  // HU-07: confirm the installation and use of a reserved spare part against
+  // the real backend endpoint. Business-rule (422) and authorization (403)
+  // rejections are surfaced contextually (RN-04, RN-07, RN-08).
+  const handleConfirmReservedPart = async (
+    orderId: string,
+    part: { quotePartId: string },
+    quantity: number,
+  ) => {
+    try {
+      await confirmPart.mutateAsync({
+        orderId,
+        partItemId: part.quotePartId,
+        quantity,
+      });
+      toast.success(
+        'Repuesto instalado',
+        'El consumo se registró y el stock del inventario se actualizó.',
+      );
+    } catch (err) {
+      const details = translateConsumePartError(err);
+      toast.danger(
+        details.isAuthorizationError ? 'Acceso denegado' : 'No se pudo confirmar el uso',
+        details.message,
+      );
     }
   };
 
@@ -214,6 +242,7 @@ export function MechanicConsoleView() {
               onConfirmPart={(partId) =>
                 handleConfirmPart(order.id, partId)
               }
+              onConfirmReservedPart={handleConfirmReservedPart}
               onFinalize={() => handleFinalize(order.id)}
               onReportAdditional={() => setReportingOrder(order)}
               isMutating={

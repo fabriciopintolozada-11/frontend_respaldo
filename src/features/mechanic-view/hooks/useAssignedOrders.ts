@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { ApiError } from '../../../shared/api/httpClient';
 import { mockDb } from '../../../shared/api/mock-db';
 import { mechanicService } from '../api/mechanic-service';
-import type { AssignedWorkOrderDetail, WorkOrderTask, WorkOrderPart } from '../api/types';
+import type { AssignedWorkOrderDetail, WorkOrderTask, WorkOrderPart, ReservedPartDetail } from '../api/types';
 import type { WorkOrder } from '../../../shared/types/openapi';
 
 function isAuthOrNetworkError(error: unknown): boolean {
@@ -53,6 +53,41 @@ const mockMechanicOrders: AssignedWorkOrderDetail[] = mockDb
   .filter((o) => Boolean(o.primaryMechanicId))
   .map(mapMockOrderToDetail);
 
+// HU-07: maps the backend assigned-detail response to the type consumed by the
+// mechanic console. The backend exposes brand/model/year at the root and the
+// reserved spare parts in a dedicated `reservedParts` list (RN-16: no prices).
+function mapBackendDetailToDetail(row: {
+  id: string;
+  vehicleId: string;
+  plate: string;
+  status: string;
+  initialComplaint: string;
+  assignedAt: string | null;
+  brand?: string;
+  model?: string;
+  year?: number;
+  reservedParts?: ReservedPartDetail[];
+}): AssignedWorkOrderDetail {
+  return {
+    id: row.id,
+    vehicleId: row.vehicleId,
+    plate: row.plate,
+    status: row.status,
+    initialComplaint: row.initialComplaint,
+    assignedAt: row.assignedAt,
+    vehicle: {
+      brand: row.brand ?? '',
+      model: row.model ?? '',
+      year: row.year ?? new Date().getFullYear(),
+    },
+    tasks: [],
+    parts: [],
+    reservedParts: row.reservedParts,
+    diagnosticReport: null,
+    statusHistory: [],
+  };
+}
+
 export function useAssignedOrders() {
   return useQuery<AssignedWorkOrderDetail[]>({
     queryKey: ['mechanic', 'assigned-orders'],
@@ -66,7 +101,7 @@ export function useAssignedOrders() {
           .filter((r): r is PromiseFulfilledResult<AssignedWorkOrderDetail> =>
             r.status === 'fulfilled',
           )
-          .map((r) => r.value);
+          .map((r) => mapBackendDetailToDetail(r.value as never));
       } catch (error) {
         if (!isAuthOrNetworkError(error)) throw error;
         return mockMechanicOrders;

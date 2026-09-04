@@ -1,5 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
+import { consumePartApi } from '../../work-orders/api/consume-part-api';
+import { isBackendMode } from '../../../shared/api/api-client';
 import type { WorkOrderStatus } from '../../../shared/types/openapi';
 import type { AssignedWorkOrderDetail } from '../api/types';
 
@@ -39,10 +41,23 @@ export function useMechanicMutations() {
     mutationFn: ({
       orderId,
       partItemId,
+      quantity = 1,
     }: {
       orderId: string;
       partItemId: string;
-    }) => workOrdersService.confirmPartInstalled(orderId, partItemId),
+      quantity?: number;
+    }) => {
+      // HU-07: in backend mode the reserved part is consumed through the real
+      // endpoint POST /work-orders/:id/consume-part using the quote part id
+      // (RN-04, RN-07, RN-08). Otherwise it falls back to the in-memory mock.
+      if (isBackendMode) {
+        return consumePartApi.consumePart(orderId, {
+          quotePartId: partItemId,
+          quantity,
+        });
+      }
+      return workOrdersService.confirmPartInstalled(orderId, partItemId);
+    },
     onMutate: async ({ orderId, partItemId }) => {
       await queryClient.cancelQueries({ queryKey: key });
       const prev = queryClient.getQueryData<AssignedWorkOrderDetail[]>(key);
@@ -65,6 +80,8 @@ export function useMechanicMutations() {
     },
     onSettled: () => {
       void queryClient.invalidateQueries({ queryKey: key });
+      void queryClient.invalidateQueries({ queryKey: ['inventory'] });
+      void queryClient.invalidateQueries({ queryKey: ['alert'] });
     },
   });
 
