@@ -3,6 +3,8 @@ import { Car, ClipboardCheck, ClipboardPlus, FileEdit, FileText, Globe, RotateCc
 
 import { useWorkshop } from '../state/WorkshopContext';
 import { useToast } from '../shared/components/ToastContext';
+import { useAuth } from '../features/auth/hooks/useAuth';
+import type { UserRole } from '../shared/types/openapi';
 
 const NAV_ITEMS = [
   { to: '/recepcion', label: 'Recepción', icon: <ClipboardPlus className="w-4 h-4" /> },
@@ -14,15 +16,31 @@ const NAV_ITEMS = [
   { to: '/consulta', label: 'Portal Cliente', icon: <Globe className="w-4 h-4" /> },
 ];
 
+const ROLE_LABELS: Record<UserRole, string> = {
+  RECEPTIONIST: 'Recepcionista',
+  MECHANIC: 'Mecánico',
+  WORKSHOP_LEAD: 'Jefe de Taller',
+  ADMIN: 'Administrador',
+};
+
 export function WorkshopLayout() {
   const toast = useToast();
   const { resetData } = useWorkshop();
+  const { user, logout } = useAuth();
+
+  const filteredNavItems = user
+    ? NAV_ITEMS.filter((item) => item.roles.includes(user.role))
+    : [];
 
   const handleReset = () => {
     if (window.confirm('¿Desea restablecer todos los datos del taller al estado inicial con ejemplos?')) {
       resetData();
       toast.info('Datos Restablecidos', 'Se reiniciaron las órdenes, bahías e inventario.');
     }
+  };
+
+  const handleLogout = () => {
+    logout();
   };
 
   return (
@@ -48,7 +66,7 @@ export function WorkshopLayout() {
             </NavLink>
 
             <nav className="hidden md:flex items-center gap-1.5">
-              {NAV_ITEMS.map((item) => (
+              {filteredNavItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -57,9 +75,7 @@ export function WorkshopLayout() {
                     `px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 min-h-[44px] whitespace-nowrap ${
                       isActive
                         ? 'bg-lime-400 text-lime-950 shadow-sm shadow-lime-950/10'
-                        : item.to === '/'
-                          ? 'bg-lime-50 text-lime-800 border border-lime-200 hover:bg-lime-100'
-                          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                        : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                     }`
                   }
                 >
@@ -70,13 +86,35 @@ export function WorkshopLayout() {
             </nav>
 
             <div className="flex items-center gap-2">
+              {user && (
+                <div className="hidden sm:flex items-center gap-2 mr-2">
+                  <div className="w-7 h-7 rounded-full bg-lime-100 flex items-center justify-center text-lime-800 text-[10px] font-bold">
+                    {user.fullName.charAt(0)}
+                  </div>
+                  <div className="text-right">
+                    <p className="text-[11px] font-bold text-slate-700 leading-tight">{user.fullName}</p>
+                    <p className="text-[10px] text-slate-400 leading-tight">{ROLE_LABELS[user.role]}</p>
+                  </div>
+                </div>
+              )}
+              {(user?.role === 'WORKSHOP_LEAD' || user?.role === 'ADMIN') && (
+                <button
+                  type="button"
+                  onClick={handleReset}
+                  title="Reiniciar datos de prueba"
+                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-lime-700 hover:border-lime-300 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                >
+                  <span className="sr-only">Reiniciar datos</span>
+                  <span className="text-sm">↻</span>
+                </button>
+              )}
               <button
                 type="button"
-                onClick={handleReset}
-                title="Reiniciar datos de prueba"
-                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-lime-700 hover:border-lime-300 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
+                onClick={handleLogout}
+                title="Cerrar sesión"
+                className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-red-600 hover:border-red-300 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
               >
-                <RotateCcw className="w-4 h-4" aria-hidden="true" />
+                <LogOut className="w-4 h-4" aria-hidden="true" />
               </button>
             </div>
           </div>
@@ -84,7 +122,7 @@ export function WorkshopLayout() {
 
         <div className="md:hidden border-t border-slate-200 bg-white px-4 py-2 overflow-x-auto">
           <div className="flex items-center gap-1.5">
-            {NAV_ITEMS.map((item) => (
+            {filteredNavItems.map((item) => (
               <NavLink
                 key={item.to}
                 to={item.to}
@@ -111,8 +149,8 @@ export function WorkshopLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-lime-500" />
-            <strong className="text-slate-900">Taller Mecánico "Los Fratelli" S.R.L.</strong>
-            <span>— Control de Bahías & OTs</span>
+            <strong className="text-slate-900">Taller Mecánico &quot;Los Fratelli&quot; S.R.L.</strong>
+            <span>— Control de Bahías &amp; OTs</span>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <span>La Paz, Bolivia</span>
