@@ -60,6 +60,15 @@ export interface WorkOrderPart {
   status: 'PENDIENTE' | 'RESERVADO' | 'INSTALADO' | 'EN_ESPERA_IMPORTACION';
 }
 
+export interface ReservedPart {
+  id: string;
+  code: string;
+  name: string;
+  quantityReserved: number;
+  quantityUsed: number;
+  status: 'RESERVED' | 'INSTALLED';
+}
+
 export interface StatusHistoryEntry {
   status: string;
   timestamp: string;

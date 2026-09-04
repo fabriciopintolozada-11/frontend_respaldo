@@ -2,17 +2,36 @@ import { apiClient, type ApiResponse, isBackendMode } from '../../../shared/api/
 import { mockDb } from '../../../shared/api/mock-db';
 import type { WorkOrder, WorkOrderStatus, StatusHistoryEntry, WorkOrderLaborItem, WorkOrderPartItem } from '../../../shared/types/openapi';
 import type { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleStatus, WorkOrderListItem } from '../../../shared/api/schema.gen';
+import type { DiagnosticPayload } from '../schemas/diagnostic-schema';
+
+export interface CreateDiagnosticResponse {
+  id: string;
+  workOrderId: string;
+  description: string;
+  suggestedTasks: string[];
+  suggestedPartIds: string[];
+  estimatedHours: number;
+  createdAt: string;
+}
 
 const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   REGISTRADA: ['DIAGNOSTICADA', 'CANCELADA'],
+  RECIBIDO: ['ASIGNADA', 'EN_DIAGNOSTICO', 'CANCELADA'],
+  ASIGNADA: ['EN_DIAGNOSTICO', 'CANCELADA'],
+  EN_DIAGNOSTICO: ['PRESUPUESTO_ENVIADO', 'DIAGNOSTICADA', 'CANCELADA'],
   DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
   PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
-  APROBADO: ['EN_PROGRESO', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+  APROBADO: ['EN_PROGRESO', 'EN_REPARACION', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
   RECHAZADO: [],
   EN_PROGRESO: ['EN_ESPERA_REPUESTO', 'FINALIZADA', 'CANCELADA'],
+  EN_REPARACION: ['ESPERANDO_REPUESTO', 'FINALIZADO', 'PRESUPUESTO_ENVIADO', 'CANCELADA'],
   EN_ESPERA_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
+  ESPERANDO_REPUESTO: ['EN_REPARACION', 'FINALIZADO', 'CANCELADA'],
   FINALIZADA: ['ENTREGADA'],
+  FINALIZADO: ['LISTO_ENTREGA', 'ENTREGADO'],
+  LISTO_ENTREGA: ['ENTREGADO'],
   ENTREGADA: [],
+  ENTREGADO: [],
   CANCELADA: [],
 };
 
@@ -91,6 +110,51 @@ export const workOrdersService = {
 
       return match || null;
     });
+  },
+
+  async createDiagnostic(
+    orderId: string,
+    payload: DiagnosticPayload,
+  ): Promise<ApiResponse<CreateDiagnosticResponse>> {
+    if (isBackendMode) {
+      return apiClient.postHttp<DiagnosticPayload, CreateDiagnosticResponse>(
+        `/work-orders/${orderId}/diagnostic`,
+        payload,
+      );
+    }
+    return apiClient.post((data) => {
+      const orders = mockDb.getWorkOrders();
+      const idx = orders.findIndex((o) => o.id === orderId || o.code === orderId);
+      if (idx === -1) throw new Error('Orden de trabajo no encontrada');
+      const order = orders[idx];
+      if (!['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'].includes(order.status)) {
+        throw new Error('La orden no puede recibir un diagnóstico en su estado actual');
+      }
+      const updatedOrder: WorkOrder = {
+        ...order,
+        status: order.status === 'EN_REPARACION' ? 'PRESUPUESTO_ENVIADO' : 'EN_DIAGNOSTICO',
+        diagnosticReport: data.description,
+        statusHistory: [
+          {
+            status: (order.status === 'EN_REPARACION' ? 'PRESUPUESTO_ENVIADO' : 'EN_DIAGNOSTICO') as WorkOrderStatus,
+            timestamp: new Date().toISOString(),
+            changedBy: 'Mecánico autenticado (Diagnóstico técnico US-11)',
+          },
+          ...order.statusHistory,
+        ],
+      };
+      orders[idx] = updatedOrder;
+      mockDb.saveWorkOrders(orders);
+      return {
+        id: `dg-${Date.now().toString().slice(-4)}`,
+        workOrderId: orderId,
+        description: data.description,
+        suggestedTasks: data.suggestedTasks,
+        suggestedPartIds: data.suggestedPartIds,
+        estimatedHours: data.estimatedHours,
+        createdAt: new Date().toISOString(),
+      } satisfies CreateDiagnosticResponse;
+    }, payload);
   },
 
   async createVehicleEntry(payload: {

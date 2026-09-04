@@ -48,6 +48,18 @@ export const router = createBrowserRouter([
         }),
       },
       {
+        path: 'presupuestos/crear',
+        lazy: async () => ({
+          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+        }),
+      },
+      {
+        path: 'presupuestos/crear/:orderId',
+        lazy: async () => ({
+          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+        }),
+      },
+      {
         path: 'presupuestos/:orderId',
         lazy: async () => ({
           Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,

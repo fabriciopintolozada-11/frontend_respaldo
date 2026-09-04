@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import {
-  Clock,
   Lock,
   RefreshCw,
   Wrench,
@@ -10,32 +9,89 @@ import {
 import { Button } from '../../../shared/components/Button';
 import { EmptyState } from '../../../shared/components/EmptyState';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
+import { Modal } from '../../../shared/components/Modal';
 import { useToast } from '../../../shared/components/ToastContext';
+import { ApiError } from '../../../shared/api/httpClient';
+
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
+import { DiagnosticForm, type DiagnosticWorkOrderContext } from '../../work-orders/components/DiagnosticForm';
+import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-schema';
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
+import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
 import { useMechanicMutations } from '../hooks/useMechanicMutations';
+
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
 import { AdditionalWorkModal } from '../components/AdditionalWorkModal';
-import { translateConsumePartError } from '../../work-orders/api/useConsumeSparePart';
+import { AwaitingPartModal } from '../components/AwaitingPartModal';
+
 import type { AssignedWorkOrderDetail } from '../api/types';
+import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
 
 export function MechanicConsoleView() {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { toggleLabor, confirmPart, updateStatus } = useMechanicMutations();
+
+  const {
+    toggleLabor,
+    updateStatus,
+    setAwaitingPart,
+  } = useMechanicMutations();
+
+  const consumePart = useConsumeSparePart();
 
   const assignedQuery = useAssignedOrders();
   const orders = assignedQuery.data ?? [];
 
   const [reportingOrder, setReportingOrder] =
     useState<AssignedWorkOrderDetail | null>(null);
+  const [diagnosingOrder, setDiagnosingOrder] =
+    useState<DiagnosticWorkOrderContext | null>(null);
+  const [isSubmittingDiagnostic, setIsSubmittingDiagnostic] = useState(false);
+
+  const [awaitingPartOrder, setAwaitingPartOrder] =
+    useState<AssignedWorkOrderDetail | null>(null);
+
   const [additionalDesc, setAdditionalDesc] = useState('');
   const [additionalHours, setAdditionalHours] = useState(2);
   const [additionalPartDesc, setAdditionalPartDesc] = useState('');
   const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
   const refresh = () => {
-    void queryClient.invalidateQueries({ queryKey: ['mechanic'] });
+    void queryClient.invalidateQueries({
+      queryKey: ['mechanic'],
+    });
+  };
+
+  const openDiagnosticForm = (order: AssignedWorkOrderDetail) => {
+    setDiagnosingOrder({
+      id: order.id,
+      code: `OT-${order.id.slice(0, 8).toUpperCase()}`,
+      plate: order.plate,
+      status: order.status,
+      initialComplaint: order.initialComplaint,
+      vehicleDescription: [order.vehicle?.brand ?? '', order.vehicle?.model ?? ''].filter(Boolean).join(' ') || undefined,
+    });
+  };
+
+  const handleSubmitDiagnostic = async (payload: DiagnosticPayload) => {
+    if (!diagnosingOrder) return;
+    setIsSubmittingDiagnostic(true);
+    try {
+      await workOrdersService.createDiagnostic(diagnosingOrder.id, payload);
+      toast.success(
+        'Diagnóstico registrado',
+        'La OT fue actualizada al estado correspondiente.',
+      );
+      setDiagnosingOrder(null);
+      refresh();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'No se pudo registrar el diagnóstico';
+      toast.danger('Fallo del diagnóstico', msg);
+      throw err;
+    } finally {
+      setIsSubmittingDiagnostic(false);
+    }
   };
 
   const handleToggleLabor = async (orderId: string, taskId: string) => {
@@ -47,9 +103,18 @@ export function MechanicConsoleView() {
     }
   };
 
-  const handleConfirmPart = async (orderId: string, partId: string) => {
+  const handleConsumePart = async (
+    workOrderId: string,
+    quotePartId: string,
+    quantity: number,
+  ) => {
     try {
-      await confirmPart.mutateAsync({ orderId, partItemId: partId });
+      await consumePart.mutateAsync({
+        workOrderId,
+        quotePartId,
+        quantity,
+      });
+
       toast.success(
         'Repuesto instalado',
         'El stock del inventario se descontó automáticamente.',
@@ -61,46 +126,75 @@ export function MechanicConsoleView() {
     }
   };
 
-  // HU-07: confirm the installation and use of a reserved spare part against
-  // the real backend endpoint. Business-rule (422) and authorization (403)
-  // rejections are surfaced contextually (RN-04, RN-07, RN-08).
-  const handleConfirmReservedPart = async (
-    orderId: string,
-    part: { quotePartId: string },
-    quantity: number,
-  ) => {
-    try {
-      await confirmPart.mutateAsync({
-        orderId,
-        partItemId: part.quotePartId,
-        quantity,
-      });
-      toast.success(
-        'Repuesto instalado',
-        'El consumo se registró y el stock del inventario se actualizó.',
-      );
-    } catch (err) {
-      const details = translateConsumePartError(err);
-      toast.danger(
-        details.isAuthorizationError ? 'Acceso denegado' : 'No se pudo confirmar el uso',
-        details.message,
-      );
-    }
-  };
-
   const handleFinalize = async (orderId: string) => {
     try {
       await updateStatus.mutateAsync({
         orderId,
-        status: 'FINALIZADA',
+        status: 'FINALIZADO',
         changedBy: 'Mecánico autenticado (Trabajo completado)',
       });
+
       toast.success(
         'Orden finalizada',
         'Orden lista para control de calidad y liquidación.',
       );
     } catch {
       toast.danger('No se pudo finalizar la orden');
+    }
+  };
+
+  const handleSetAwaitingPart = async (
+    orderId: string,
+    payload: SetAwaitingPartPayload,
+  ) => {
+    try {
+      await setAwaitingPart.mutateAsync({
+        orderId,
+        payload,
+      });
+
+      toast.success(
+        'Order paused',
+        'The work order is now waiting for the missing part.',
+      );
+
+      setAwaitingPartOrder(null);
+    } catch (error) {
+      if (error instanceof ApiError) {
+        if (
+          error.statusCode === 409 ||
+          error.statusCode === 422
+        ) {
+          toast.danger(
+            'Could not pause the order',
+            error.message,
+          );
+          throw error;
+        }
+
+        if (
+          error.statusCode === 401 ||
+          error.statusCode === 403
+        ) {
+          toast.danger(
+            'Action not allowed',
+            error.message,
+          );
+          throw error;
+        }
+      }
+
+      const message =
+        error instanceof Error
+          ? error.message
+          : 'Could not register the missing part.';
+
+      toast.danger(
+        'Could not pause the order',
+        message,
+      );
+
+      throw error;
     }
   };
 
@@ -113,6 +207,7 @@ export function MechanicConsoleView() {
     }
 
     setIsSubmittingReport(true);
+
     try {
       await workOrdersService.reportAdditionalWork(
         reportingOrder.id,
@@ -123,7 +218,8 @@ export function MechanicConsoleView() {
             description: `[ADICIONAL] ${additionalDesc}`,
             estimatedHours: Number(additionalHours) || 2,
             hourlyRateBOB: 120,
-            totalBOB: (Number(additionalHours) || 2) * 120,
+            totalBOB:
+              (Number(additionalHours) || 2) * 120,
             assignedMechanicId: undefined,
           },
         ],
@@ -145,6 +241,7 @@ export function MechanicConsoleView() {
         'Orden de trabajo suspendida',
         'El jefe de taller y el cliente fueron notificados. La orden queda pausada hasta la aprobación explícita.',
       );
+
       setReportingOrder(null);
       setAdditionalDesc('');
       setAdditionalPartDesc('');
@@ -176,23 +273,23 @@ export function MechanicConsoleView() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-lime-50 border border-lime-200 flex items-center justify-center text-lime-700">
               <Wrench className="w-5 h-5" />
             </div>
+
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">
               Consola de Mecánico
             </h1>
           </div>
+
           <p className="text-xs text-slate-600 mt-1.5">
             Panel táctil para tareas en bahía, diagnóstico, instalación de repuestos y reporte de incidentes.
           </p>
         </div>
 
-        {/* RN-16 Privacy Notice */}
         <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 border border-slate-200 text-xs font-semibold text-slate-600">
           <Lock className="w-3.5 h-3.5 text-lime-700" />
           <span>Vista técnica (sin costos)</span>
@@ -214,6 +311,7 @@ export function MechanicConsoleView() {
             <span className="w-2 h-2 rounded-full bg-lime-500" />
             Órdenes asignadas ({orders.length})
           </h2>
+
           <Button
             variant="outline"
             size="sm"
@@ -237,18 +335,26 @@ export function MechanicConsoleView() {
               key={order.id}
               order={order}
               onToggleLabor={(taskId) =>
-                handleToggleLabor(order.id, taskId)
+                handleToggleLabor(
+                  order.id,
+                  taskId,
+                )
               }
-              onConfirmPart={(partId) =>
-                handleConfirmPart(order.id, partId)
-              }
-              onConfirmReservedPart={handleConfirmReservedPart}
+              onConsumePart={handleConsumePart}
               onFinalize={() => handleFinalize(order.id)}
-              onReportAdditional={() => setReportingOrder(order)}
+              onReportAdditional={() =>
+                setReportingOrder(order)
+              }
+              onSetAwaitingPart={() =>
+                setAwaitingPartOrder(order)
+              }
+              onDiagnose={() => openDiagnosticForm(order)}
               isMutating={
                 toggleLabor.isPending ||
-                confirmPart.isPending ||
-                updateStatus.isPending
+                consumePart.isPending ||
+                updateStatus.isPending ||
+                isSubmittingDiagnostic ||
+                setAwaitingPart.isPending
               }
             />
           ))
@@ -268,6 +374,33 @@ export function MechanicConsoleView() {
         onPartDescriptionChange={setAdditionalPartDesc}
         onSubmit={handleReportAdditional}
         onClose={() => setReportingOrder(null)}
+      />
+
+      {/* Modal de diagnóstico técnico (US-11) */}
+      <Modal
+        isOpen={Boolean(diagnosingOrder)}
+        onClose={() => setDiagnosingOrder(null)}
+        title="Registrar diagnóstico técnico"
+        subtitle="Documenta los hallazgos y las necesidades preliminares de la orden."
+        maxWidth="2xl"
+        variant="light"
+      >
+        {diagnosingOrder && (
+          <DiagnosticForm
+            order={diagnosingOrder}
+            parts={[]}
+            onCancel={() => setDiagnosingOrder(null)}
+            onSubmit={handleSubmitDiagnostic}
+          />
+        )}
+      </Modal>
+
+      <AwaitingPartModal
+        isOpen={!!awaitingPartOrder}
+        order={awaitingPartOrder}
+        onClose={() => setAwaitingPartOrder(null)}
+        onSubmit={handleSetAwaitingPart}
+        isPending={setAwaitingPart.isPending}
       />
     </div>
   );

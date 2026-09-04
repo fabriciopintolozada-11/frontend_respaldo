@@ -1,22 +1,33 @@
-import { AlertTriangle, CheckCircle2, ShieldAlert } from 'lucide-react';
+import {
+  AlertTriangle,
+  CheckCircle2,
+  FileText,
+  PackageX,
+  ShieldAlert,
+} from 'lucide-react';
+
 import { Button } from '../../../shared/components/Button';
 import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
+
 import { LaborChecklist } from './LaborChecklist';
-import { PartsList } from './PartsList';
-import { ReservedPartsPanel, type ReservedPartLine } from '../../work-orders/components/ReservedPartsPanel';
+import { ReservedPartsPanel } from './ReservedPartsPanel';
+
 import type { AssignedWorkOrderDetail, ReservedPartDetail } from '../api/types';
+
+const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
+
+function isDiagnosticEligible(status: string): boolean {
+  return DIAGNOSTIC_ELIGIBLE.includes(status.toUpperCase());
+}
 
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderDetail;
   onToggleLabor: (taskId: string) => void;
-  onConfirmPart: (partId: string) => void;
-  onConfirmReservedPart: (
-    orderId: string,
-    part: ReservedPartLine,
-    quantity: number,
-  ) => void;
+  onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
+  onDiagnose: () => void;
   onFinalize: () => void;
   onReportAdditional: () => void;
+  onSetAwaitingPart: () => void;
   isMutating: boolean;
 }
 
@@ -26,9 +37,7 @@ function formatCode(id: string): string {
 
 // HU-07: maps the backend ReservedPartDetail line to the ReservedPartLine the
 // panel expects. quotePartId is the identifier the consume-part endpoint needs.
-// When the backend does not expose reserved parts, the mapping is undefined and
-// the panel renders its informative empty state.
-function mapToReservedPart(part: ReservedPartDetail): ReservedPartLine {
+function mapToReservedPart(part: ReservedPartDetail) {
   return {
     quotePartId: part.quotePartId,
     id: part.quotePartId,
@@ -43,15 +52,18 @@ function mapToReservedPart(part: ReservedPartDetail): ReservedPartLine {
 export function AssignedOrderCard({
   order,
   onToggleLabor,
-  onConfirmPart,
-  onConfirmReservedPart,
+  onConsumePart,
+  onDiagnose,
   onFinalize,
   onReportAdditional,
+  onSetAwaitingPart,
   isMutating,
 }: AssignedOrderCardProps) {
   const isSuspended =
-    order.status === 'EN_PROGRESO' &&
-    order.statusHistory.some((h) => h.reason?.includes('RN-03'));
+    (order.status === 'EN_PROGRESO' || order.status === 'EN_REPARACION') &&
+    (order.statusHistory ?? []).some((h) => h.reason?.includes('RN-03'));
+
+  const canSetAwaitingPart = order.status === 'EN_REPARACION';
 
   // HU-07: the reserved parts are exposed by the backend in `order.reservedParts`
   // (RN-16: no financial fields). When the backend has none, the panel shows the
@@ -62,42 +74,50 @@ export function AssignedOrderCard({
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5 flex-wrap">
             <span className="font-mono text-xs font-bold text-lime-800 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-lg">
               {formatCode(order.id)}
             </span>
+
             <span className="font-mono font-extrabold text-base text-slate-950 break-all">
               {order.plate}
             </span>
+
             <span className="text-xs font-semibold text-slate-600 break-words">
-              {order.vehicle.brand} {order.vehicle.model} (
-              {order.vehicle.year})
+              {order.vehicle?.brand ?? ''} {order.vehicle?.model ?? ''} (
+              {order.vehicle?.year ?? ''})
             </span>
           </div>
+
           {order.assignedAt && (
             <p className="text-xs text-slate-600 mt-1">
               Asignada:{' '}
               <strong className="text-slate-950">
-                {new Date(order.assignedAt).toLocaleDateString()}
+                {new Date(
+                  order.assignedAt,
+                ).toLocaleDateString()}
               </strong>
             </p>
           )}
         </div>
-        <WorkOrderStatusBadge status={order.status as never} />
+
+        <WorkOrderStatusBadge
+          status={order.status as never}
+        />
       </div>
 
-      {/* Suspension Alert */}
       {isSuspended && (
         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 flex items-start gap-3">
           <div className="w-1.5 h-10 bg-amber-500 rounded-full shrink-0 mt-0.5" />
+
           <div>
             <h4 className="font-bold text-sm text-slate-950">
               <span className="text-amber-800">ORDEN SUSPENDIDA - DAÑO ADICIONAL:</span>{' '}
               {order.initialComplaint}
             </h4>
+
             <p className="text-xs text-slate-600 mt-0.5">
               En pausa hasta la autorización del cliente.
             </p>
@@ -105,60 +125,81 @@ export function AssignedOrderCard({
         </div>
       )}
 
-      {/* Entry Reason & Diagnostic */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
             Motivo de ingreso:
           </span>
+
           <p className="text-slate-950 font-medium">
             {order.initialComplaint}
           </p>
         </div>
+
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
           <span className="text-[10px] text-slate-600 uppercase tracking-wider font-bold block mb-1">
             Diagnóstico técnico:
           </span>
+
           <p className="text-slate-950 font-medium">
             {order.diagnosticReport || 'Evaluación de bahía pendiente.'}
           </p>
         </div>
       </div>
 
-      {/* Labor Checklist */}
       <LaborChecklist
         tasks={order.tasks}
         onToggle={onToggleLabor}
         isPending={isMutating}
       />
 
-      {/* Parts List */}
-      <PartsList
-        parts={order.parts}
-        onConfirmInstalled={onConfirmPart}
-        isPending={isMutating}
-      />
-
       {/* HU-07: reserved spare parts panel (consumption confirmation) */}
       <ReservedPartsPanel
         parts={reservedParts}
-        userRole="MECHANIC"
-        onConfirm={(part, quantity) => onConfirmReservedPart(order.id, part, quantity)}
+        workOrderId={order.id}
+        onConsume={onConsumePart}
         isPending={isMutating}
       />
 
       {/* Footer Actions */}
       <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-        <Button
-          variant="warning"
-          size="md"
-          leftIcon={<AlertTriangle className="w-5 h-5" />}
-          onClick={onReportAdditional}
-        >
-          Reportar daño adicional
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          {isDiagnosticEligible(order.status) && (
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<FileText className="w-5 h-5" />}
+              onClick={onDiagnose}
+              disabled={isMutating}
+            >
+              Registrar diagnóstico
+            </Button>
+          )}
+          <Button
+            variant="warning"
+            size="md"
+            leftIcon={<AlertTriangle className="w-5 h-5" />}
+            onClick={onReportAdditional}
+          >
+            Reportar daño adicional
+          </Button>
 
-        {(order.status === 'EN_PROGRESO' || order.status === 'APROBADO') && (
+          {canSetAwaitingPart && (
+            <Button
+              variant="warning"
+              size="md"
+              leftIcon={<PackageX className="w-5 h-5" />}
+              onClick={onSetAwaitingPart}
+              disabled={isMutating}
+            >
+              En espera de repuesto
+            </Button>
+          )}
+        </div>
+
+        {(order.status === 'EN_PROGRESO' ||
+          order.status === 'EN_REPARACION' ||
+          order.status === 'APROBADO') && (
           <Button
             variant="primary"
             size="md"

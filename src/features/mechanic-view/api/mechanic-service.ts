@@ -24,4 +24,15 @@ export const mechanicService = {
     );
     return data;
   },
+
+  async consumePart(
+    workOrderId: string,
+    quotePartId: string,
+    quantity: number,
+  ): Promise<void> {
+    await httpClient.post(`/work-orders/${workOrderId}/consume-part`, {
+      quotePartId,
+      quantity,
+    });
+  },
 };
