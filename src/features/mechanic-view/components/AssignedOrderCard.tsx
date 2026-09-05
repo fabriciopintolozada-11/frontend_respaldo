@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import {
+  AlertTriangle,
   FileText,
   RefreshCw,
 } from 'lucide-react';
@@ -8,14 +10,19 @@ import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 
 import { useAssignedOrderDetail } from '../hooks/useAssignedOrders';
 import { ReservedPartsPanel } from './ReservedPartsPanel';
+import { AwaitingPartModal } from './AwaitingPartModal';
 
 import type { AssignedWorkOrderSummary, ReservedPartDetail } from '../api/types';
+import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
 
 const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
 
 // RN-09: a reserved spare part can only be consumed from an approved quote
 // once the order is approved or in repair.
 const CONSUME_ELIGIBLE = ['APROBADO', 'EN_REPARACION'];
+
+// RN-05: a work order can only transition to awaiting part while in repair.
+const AWAITING_PART_ELIGIBLE = ['EN_REPARACION'];
 
 function isStatusIn(status: string | undefined, allowed: string[]): boolean {
   return Boolean(status && allowed.includes(status.toUpperCase()));
@@ -25,6 +32,10 @@ interface AssignedOrderCardProps {
   order: AssignedWorkOrderSummary;
   onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
   onDiagnose: (order: AssignedWorkOrderSummary) => void;
+  onAwaitingPart: (
+    orderId: string,
+    payload: SetAwaitingPartPayload,
+  ) => Promise<void>;
   isMutating: boolean;
 }
 
@@ -50,10 +61,12 @@ export function AssignedOrderCard({
   order,
   onConsumePart,
   onDiagnose,
+  onAwaitingPart,
   isMutating,
 }: AssignedOrderCardProps) {
   const detailQuery = useAssignedOrderDetail(order.id);
   const detail = detailQuery.data;
+  const [awaitingPartOpen, setAwaitingPartOpen] = useState(false);
 
   // HU-07: the reserved parts are exposed by the backend in the detail
   // response (RN-16: no financial fields). When the backend has none, the
@@ -172,8 +185,29 @@ export function AssignedOrderCard({
               Registrar diagnóstico
             </Button>
           )}
+
+          {isStatusIn(detail?.status, AWAITING_PART_ELIGIBLE) &&
+            (detail?.parts?.length ?? 0) > 0 && (
+              <Button
+                variant="warning"
+                size="md"
+                leftIcon={<AlertTriangle className="w-5 h-5" />}
+                onClick={() => setAwaitingPartOpen(true)}
+                disabled={isMutating}
+              >
+                Repuesto faltante
+              </Button>
+            )}
         </div>
       </div>
+
+      <AwaitingPartModal
+        isOpen={awaitingPartOpen}
+        order={detail}
+        onClose={() => setAwaitingPartOpen(false)}
+        onSubmit={onAwaitingPart}
+        isPending={isMutating}
+      />
     </div>
   );
 }

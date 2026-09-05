@@ -11,14 +11,17 @@ import { EmptyState } from '../../../shared/components/EmptyState';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { Modal } from '../../../shared/components/Modal';
 import { useToast } from '../../../shared/components/ToastContext';
-import { workOrdersService } from '../../work-orders/api/work-orders-service';
+import { translateConsumePartError } from '../../work-orders/api/useConsumeSparePart';
 import {
-  translateConsumePartError,
-  useConsumeSparePart,
-} from '../../work-orders/api/useConsumeSparePart';
+  DiagnosticForm,
+  type DiagnosticWorkOrderContext,
+} from '../../work-orders/components/DiagnosticForm';
+import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-schema';
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
 import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
+import { useSetAwaitingPart } from '../hooks/useSetAwaitingPart';
 import { mechanicService } from '../api/mechanic-service';
+import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
 
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
 
@@ -27,15 +30,14 @@ import type { AssignedWorkOrderSummary } from '../api/types';
 export function MechanicConsoleView() {
   const toast = useToast();
   const queryClient = useQueryClient();
-  const { toggleLabor, updateStatus } = useMechanicMutations();
   const consumePart = useConsumeSparePart();
+  const awaitingPart = useSetAwaitingPart();
 
   const assignedQuery = useAssignedOrders();
   const orders = assignedQuery.data ?? [];
 
   const [diagnosingOrder, setDiagnosingOrder] =
     useState<DiagnosticWorkOrderContext | null>(null);
-  const [isSubmittingDiagnostic, setIsSubmittingDiagnostic] = useState(false);
 
   const refresh = () => {
     void queryClient.invalidateQueries({
@@ -55,7 +57,6 @@ export function MechanicConsoleView() {
 
   const handleSubmitDiagnostic = async (payload: DiagnosticPayload) => {
     if (!diagnosingOrder) return;
-    setIsSubmittingDiagnostic(true);
     try {
       await mechanicService.createDiagnostic(diagnosingOrder.id, payload);
       toast.success(
@@ -69,8 +70,6 @@ export function MechanicConsoleView() {
         err instanceof Error ? err.message : 'No se pudo registrar el diagnóstico';
       toast.danger('Fallo del diagnóstico', msg);
       throw err;
-    } finally {
-      setIsSubmittingDiagnostic(false);
     }
   };
 
@@ -85,26 +84,6 @@ export function MechanicConsoleView() {
         quotePartId,
         quantity,
       });
-
-  const handleConfirmPart = async (orderId: string, partId: string) => {
-    const order = orders.find((o) => o.id === orderId);
-    const part = order?.parts.find((p) => p.id === partId);
-
-    // HU-07: the endpoint requires the approved quote part id (quotePartId).
-    if (!part || !part.quotePartId) {
-      toast.danger(
-        'Fallo del repuesto',
-        'El id del repuesto (quotePartId) no está disponible. No se puede confirmar la instalación.',
-      );
-      return;
-    }
-
-    try {
-      await consumePart.mutateAsync({
-        workOrderId: orderId,
-        quotePartId: part.quotePartId,
-        quantity: part.quantityRequired,
-      });
       toast.success(
         'Repuesto instalado',
         'El stock del inventario se descontó automáticamente.',
@@ -112,6 +91,31 @@ export function MechanicConsoleView() {
     } catch (err) {
       const details = translateConsumePartError(err);
       toast.danger('Fallo del repuesto', details.message);
+    }
+  };
+
+  // US-13 / RN-05: the mechanic reports a physically missing spare part from
+  // an approved quote while the order is in repair. The middleware owns the
+  // business rules; the console only drives the UI state.
+  const handleAwaitingPart = async (
+    orderId: string,
+    payload: SetAwaitingPartPayload,
+  ) => {
+    try {
+      await awaitingPart.mutateAsync({
+        workOrderId: orderId,
+        ...payload,
+      });
+      toast.success(
+        'OT en espera de repuesto',
+        'El jefe de taller será notificado para gestionar el repuesto.',
+      );
+      refresh();
+    } catch (err) {
+      const msg =
+        err instanceof Error ? err.message : 'No se pudo registrar la espera';
+      toast.danger('Fallo de la espera', msg);
+      throw err;
     }
   };
 
@@ -188,11 +192,8 @@ export function MechanicConsoleView() {
               order={order}
               onConsumePart={handleConsumePart}
               onDiagnose={openDiagnosticForm}
-              isMutating={
-                toggleLabor.isPending ||
-                consumePart.isPending ||
-                updateStatus.isPending
-              }
+              onAwaitingPart={handleAwaitingPart}
+              isMutating={consumePart.isPending || awaitingPart.isPending}
             />
           ))
         )}

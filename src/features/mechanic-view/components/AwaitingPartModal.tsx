@@ -51,13 +51,17 @@ export function AwaitingPartModal({
       return;
     }
 
-    await onSubmit(order.id, {
-      missingPartId: values.missingPartId,
-      quantity: values.quantity,
-      reason: values.reason.trim(),
-    });
-
-    reset();
+    try {
+      await onSubmit(order.id, {
+        missingPartId: values.missingPartId,
+        quantity: values.quantity,
+        reason: values.reason.trim(),
+      });
+      reset();
+    } catch {
+      // The parent (MechanicConsoleView) reports the failure via toast; keep
+      // the typed values so the mechanic can retry without re-entering them.
+    }
   });
 
   const handleClose = () => {
