@@ -1,12 +1,11 @@
-import { mockDb } from './mock-db';
+import { apiClient } from '../shared/api/api-client';
+import { isBackendMode } from '../shared/config/env';
+
 import type {
   Bay,
   BayStatus,
   Mechanic,
-  StatusHistoryEntry,
   WorkOrder,
-  WorkOrderLaborItem,
-  WorkOrderPartItem,
   WorkOrderStatus,
   WorkshopMetrics,
 } from '../types/workshop';
@@ -18,10 +17,10 @@ const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   RECIBIDO: ['ASIGNADA', 'EN_DIAGNOSTICO', 'CANCELADA'],
   ASIGNADA: ['EN_DIAGNOSTICO', 'CANCELADA'],
   EN_DIAGNOSTICO: ['DIAGNOSTICADA', 'PRESUPUESTO_ENVIADO', 'CANCELADA'],
-    DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
-    PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
-    APROBADO: ['EN_PROGRESO', 'EN_REPARACION', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
-    RECHAZADO: [],
+  DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
+  PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
+  APROBADO: ['EN_PROGRESO', 'EN_REPARACION', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+  RECHAZADO: [],
   EN_PROGRESO: ['EN_ESPERA_REPUESTO', 'FINALIZADA', 'CANCELADA'],
   EN_REPARACION: ['ESPERANDO_REPUESTO', 'FINALIZADO', 'CANCELADA'],
   EN_ESPERA_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
@@ -48,378 +47,349 @@ export interface DiagnosticPayload {
   }>;
 }
 
-function resolveOrderKey(orderId: string): WorkOrder | null {
-  const orders = mockDb.getWorkOrders();
-  return orders.find((o) => o.id === orderId || o.code === orderId) || null;
+// Helper para calcular las bahías a partir de las órdenes
+function computeBaysFromOrders(orders: WorkOrder[]): Bay[] {
+  const bays: Bay[] = [
+    {
+      id: 1,
+      code: 'BAHIA-01',
+      name: 'Bahía 1: Elevador 4T (Mecánica Pesada)',
+      type: 'Elevador Hidráulico 4T',
+      status: 'OCUPADA',
+      currentWorkOrderId: undefined,
+      currentVehiclePlate: undefined,
+      currentVehicleModel: undefined,
+      primaryMechanicId: undefined,
+      assistantMechanicId: undefined,
+      startedAt: undefined,
+      estimatedCompletionAt: undefined,
+      notes: 'Disponible para asignación',
+    },
+    {
+      id: 2,
+      code: 'BAHIA-02',
+      name: 'Bahía 2: Elevador 2 Columnas (Frenos y Suspensión)',
+      type: 'Elevador 2 Columnas',
+      status: 'ESPERA_REPUESTO',
+      currentWorkOrderId: undefined,
+      currentVehiclePlate: undefined,
+      currentVehicleModel: undefined,
+      primaryMechanicId: undefined,
+      assistantMechanicId: undefined,
+      startedAt: undefined,
+      estimatedCompletionAt: undefined,
+      notes: 'Disponible',
+    },
+    {
+      id: 3,
+      code: 'BAHIA-03',
+      name: 'Bahía 3: Fosa / Diagnóstico Computarizado',
+      type: 'Fosa de Alineación',
+      status: 'OCUPADA',
+      currentWorkOrderId: undefined,
+      currentVehiclePlate: undefined,
+      currentVehicleModel: undefined,
+      primaryMechanicId: undefined,
+      assistantMechanicId: undefined,
+      startedAt: undefined,
+      estimatedCompletionAt: undefined,
+      notes: 'Disponible',
+    },
+    {
+      id: 4,
+      code: 'BAHIA-04',
+      name: 'Bahía 4: Mantenimiento Preventivo / Rápido',
+      type: 'Bahía Rápida / Escáner',
+      status: 'LIBRE',
+      currentWorkOrderId: undefined,
+      currentVehiclePlate: undefined,
+      currentVehicleModel: undefined,
+      primaryMechanicId: undefined,
+      assistantMechanicId: undefined,
+      startedAt: undefined,
+      estimatedCompletionAt: undefined,
+      notes: 'Disponible',
+    },
+  ];
+
+  const orderBays = orders.filter((o) => o.assignedBayId).map((o) => ({
+    bayId: o.assignedBayId!,
+    status: o.status,
+  }));
+
+  bays.forEach((bay) => {
+    const assigned = orderBays.find((ob) => ob.bayId === bay.id);
+    if (assigned) {
+      const idx = bays.findIndex((b) => b.id === bay.id);
+      if (idx >= 0) {
+        bays[idx] = { ...bays[idx], status: assigned.status as BayStatus };
+      }
+    }
+  });
+
+  return bays;
 }
 
-function persistOrder(updated: WorkOrder): WorkOrder {
-  const orders = mockDb.getWorkOrders();
-  const idx = orders.findIndex((o) => o.id === updated.id);
-  orders[idx] = updated;
-  mockDb.saveWorkOrders(orders);
+async function resolveOrderKey(orderId: string): Promise<WorkOrder | null> {
+  if (isBackendMode) {
+    try {
+      const response = await apiClient.getHttp<WorkOrder>(`/work-orders/${orderId}`);
+      return response.data;
+    } catch {
+      const response = await apiClient.getHttp<WorkOrder[]>('/work-orders');
+      return response.data.find((o) => o.id === orderId || o.code === orderId) || null;
+    }
+  }
+  return null;
+}
+
+async function persistOrder(updated: WorkOrder): Promise<WorkOrder> {
+  if (isBackendMode) {
+    const response = await apiClient.patchHttp<Partial<WorkOrder>, WorkOrder>(
+      `/work-orders/${updated.id}`,
+      updated,
+    );
+    return response.data;
+  }
   return updated;
 }
 
 export const workshopService = {
-  getAllWorkOrders(): WorkOrder[] {
-    return mockDb.getWorkOrders();
+  async getAllWorkOrders(): Promise<WorkOrder[]> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<WorkOrder[]>('/work-orders');
+      return response.data;
+    }
+    return [];
   },
 
-  getWorkOrderById(orderId: string): WorkOrder | null {
-    return resolveOrderKey(orderId);
+  async getWorkOrderById(orderId: string): Promise<WorkOrder | null> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<WorkOrder>(`/work-orders/${orderId}`);
+      return response.data;
+    }
+    return await resolveOrderKey(orderId);
   },
 
-  getAllBays(): Bay[] {
-    return mockDb.getBays();
+  async getAllBays(): Promise<Bay[]> {
+    if (isBackendMode) {
+      try {
+        const response = await apiClient.getHttp<Bay[]>('/bays');
+        return response.data;
+      } catch {
+        const orders = await workshopService.getAllWorkOrders();
+        return computeBaysFromOrders(orders);
+      }
+    }
+    return computeBaysFromOrders([]);
   },
 
-  getAllMechanics(): Mechanic[] {
-    return mockDb.getMechanics();
+  async getAllMechanics(): Promise<Mechanic[]> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<Mechanic[]>('/work-orders/mechanics');
+      return response.data;
+    }
+    return [];
   },
 
-  getAllInventory() {
-    return mockDb.getInventory();
+  async getAllInventory(): Promise<any[]> {
+    if (isBackendMode) {
+      const response = await apiClient.getHttp<any[]>('/spare-parts');
+      return response.data;
+    }
+    return [];
   },
 
-  getMetrics(): WorkshopMetrics {
-    const bays = mockDb.getBays();
-    const mechanics = mockDb.getMechanics();
-    const orders = mockDb.getWorkOrders();
+  async getMetrics(): Promise<WorkshopMetrics> {
+    if (isBackendMode) {
+      try {
+        const response = await apiClient.getHttp<WorkshopMetrics>('/workshop/metrics');
+        return response.data;
+      } catch {
+        const workOrders = await workshopService.getAllWorkOrders();
+        const bays = await workshopService.getAllBays();
+        const mechanics = await workshopService.getAllMechanics();
 
-    const occupiedBays = bays.filter((b) => b.status === 'OCUPADA').length;
-    const waitingPartsBays = bays.filter((b) => b.status === 'ESPERA_REPUESTO').length;
-    const freeBays = bays.filter((b) => b.status === 'LIBRE').length;
-    const activeWorkOrdersCount = orders.filter(
-      (o) =>
-        o.status === 'EN_PROGRESO' ||
-        o.status === 'EN_ESPERA_REPUESTO' ||
-        o.status === 'APROBADO' ||
-        o.status === 'EN_DIAGNOSTICO',
-    ).length;
-    const enDiagnosticoCount = orders.filter((o) => o.status === 'EN_DIAGNOSTICO').length;
-    const mechanicsActive = mechanics.filter((m) => m.currentBayId !== undefined).length;
-    const rate = Math.round(((occupiedBays + waitingPartsBays) / bays.length) * 100);
+        const totalBays = bays.length;
+        const occupiedBays = bays.filter((b) => b.status === 'OCUPADA').length;
+        const freeBays = totalBays - occupiedBays;
+        const activeWorkOrdersCount = workOrders.filter(
+          (o) => o.status === 'EN_PROGRESO' || o.status === 'EN_REPARACION',
+        ).length;
+        const mechanicsActive = mechanics.filter((m) => m.activeOtCount > 0 || m.currentBayId !== undefined).length;
+        const totalMechanics = mechanics.length;
+        const enDiagnosticoCount = workOrders.filter(
+          (o) => o.status === 'EN_DIAGNOSTICO',
+        ).length;
+
+        const bayOccupancyRatePercent =
+          totalBays > 0 ? Math.round((occupiedBays / totalBays) * 100) : 0;
+
+        return {
+          totalBays,
+          occupiedBays,
+          waitingPartsBays: 0,
+          freeBays,
+          bayOccupancyRatePercent,
+          activeWorkOrdersCount,
+          mechanicsActive,
+          totalMechanics,
+          enDiagnosticoCount,
+        };
+      }
+    }
 
     return {
-      totalBays: bays.length,
-      occupiedBays,
-      waitingPartsBays,
-      freeBays,
-      bayOccupancyRatePercent: rate,
-      activeWorkOrdersCount,
-      mechanicsActive,
-      totalMechanics: mechanics.length,
-      enDiagnosticoCount,
+      totalBays: 0,
+      occupiedBays: 0,
+      waitingPartsBays: 0,
+      freeBays: 0,
+      bayOccupancyRatePercent: 0,
+      activeWorkOrdersCount: 0,
+      mechanicsActive: 0,
+      totalMechanics: 0,
+      enDiagnosticoCount: 0,
     };
   },
 
-  assignBayAndMechanic(
+  async assignBayAndMechanic(
     orderId: string,
     bayId: number,
     primaryMechanicId: string,
     assistantMechanicId?: string,
-  ): WorkOrder {
-    const order = resolveOrderKey(orderId);
+  ): Promise<WorkOrder> {
+    if (isBackendMode) {
+      const payload = { bayId, primaryMechanicId, assistantMechanicId };
+      const response = await apiClient.postHttp<typeof payload, WorkOrder>(
+        `/work-orders/${orderId}/assign-bay`,
+        payload,
+      );
+      return response.data;
+    }
+    const order = await resolveOrderKey(orderId);
     if (!order) throw new Error('Orden de trabajo no encontrada');
-
-    const bays = mockDb.getBays();
-    const bayIdx = bays.findIndex((b) => b.id === bayId);
-    if (bayIdx === -1) throw new Error('Bahía no válida');
-
-    const targetBay = bays[bayIdx];
-    if (targetBay.status === 'OCUPADA' && targetBay.currentWorkOrderId !== order.code) {
-      throw new Error(`La ${targetBay.name} ya está ocupada por la OT ${targetBay.currentWorkOrderId}`);
-    }
-
-    const assigned = order.assignedBayId;
-    if (assigned && assigned !== bayId) {
-      const previousBay = bays.find((b) => b.id === assigned);
-      if (previousBay && previousBay.currentWorkOrderId === order.code) {
-        bays[assigned - 1] = {
-          ...previousBay,
-          status: 'LIBRE',
-          currentWorkOrderId: undefined,
-          currentVehiclePlate: undefined,
-          currentVehicleModel: undefined,
-          primaryMechanicId: undefined,
-          assistantMechanicId: undefined,
-        };
-      }
-    }
-
-    bays[bayIdx] = {
-      ...targetBay,
-      status: order.status === 'EN_ESPERA_REPUESTO' ? 'ESPERA_REPUESTO' : 'OCUPADA',
-      currentWorkOrderId: order.code,
-      currentVehiclePlate: order.vehiclePlate,
-      currentVehicleModel: `${order.vehicleBrand} ${order.vehicleModel}`,
-      primaryMechanicId,
-      assistantMechanicId,
-      startedAt: new Date().toISOString(),
-    };
-    mockDb.saveBays(bays);
-
-    const updatedOrder: WorkOrder = {
-      ...order,
-      assignedBayId: bayId,
-      primaryMechanicId,
-      assistantMechanicId,
-    };
-
-    this.updateMechanicCounts();
-
-    return persistOrder(updatedOrder);
+    return await persistOrder(order);
   },
 
-  updateBayStatus(bayId: number, status: BayStatus, notes?: string): Bay {
-    const bays = mockDb.getBays();
-    const idx = bays.findIndex((b) => b.id === bayId);
-    if (idx === -1) throw new Error('Bahía no encontrada');
-
-    const updated: Bay = {
-      ...bays[idx],
-      status,
-      notes: notes ?? bays[idx].notes,
-    };
-
-    if (status === 'LIBRE') {
-      updated.currentWorkOrderId = undefined;
-      updated.currentVehiclePlate = undefined;
-      updated.currentVehicleModel = undefined;
-      updated.primaryMechanicId = undefined;
-      updated.assistantMechanicId = undefined;
+  async updateBayStatus(bayId: number, status: BayStatus, notes?: string): Promise<Bay> {
+    if (isBackendMode) {
+      const payload = { status, notes };
+      const response = await apiClient.patchHttp<typeof payload, Bay>(
+        `/bays/${bayId}/status`,
+        payload,
+      );
+      return response.data;
     }
-
-    bays[idx] = updated;
-    mockDb.saveBays(bays);
-    return updated;
+    throw new Error('Modo backend requerido');
   },
 
-  updateStatus(orderId: string, newStatus: WorkOrderStatus, changedBy: string, reason?: string): WorkOrder {
-    const order = resolveOrderKey(orderId);
+  async updateStatus(
+    orderId: string,
+    newStatus: WorkOrderStatus,
+    changedBy: string,
+    reason?: string,
+  ): Promise<WorkOrder> {
+    const order = await resolveOrderKey(orderId);
     if (!order) throw new Error('Orden de trabajo no encontrada');
 
     const allowed = VALID_STATE_TRANSITIONS[order.status];
-    if (!allowed.includes(newStatus)) {
+    if (!allowed || !allowed.includes(newStatus)) {
       throw new Error(
-        `Transición no permitida: no se puede cambiar de ${order.status} a ${newStatus}. Siguientes estados válidos: ${allowed.join(', ')}`,
+        `Transición no permitida: no se puede cambiar de ${order.status} a ${newStatus}.`,
       );
     }
 
-    if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_REPUESTO') {
-      throw new Error('Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
-    }
-
-    if (newStatus === 'EN_PROGRESO' && order.isSuspendedForAdditionalWork) {
+    if (
+      newStatus === 'EN_PROGRESO' &&
+      order.status !== 'APROBADO' &&
+      order.status !== 'EN_ESPERA_REPUESTO'
+    ) {
       throw new Error(
-        'Regla RN-03: La orden está suspendida debido a detección de trabajos adicionales pendientes de aprobación del cliente.',
+        'Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.',
       );
     }
 
-    const historyEntry: StatusHistoryEntry = {
-      status: newStatus,
-      timestamp: new Date().toISOString(),
+    if (isBackendMode) {
+      const payload = { status: newStatus, changedBy, reason };
+      const response = await apiClient.patchHttp<typeof payload, WorkOrder>(
+        `/work-orders/${orderId}/status`,
+        payload,
+      );
+      return response.data;
+    }
+
+    return await persistOrder(order);
+  },
+
+  async startDiagnostic(orderId: string, changedBy: string): Promise<WorkOrder> {
+    return await this.updateStatus(
+      orderId,
+      'EN_DIAGNOSTICO',
       changedBy,
-      reason,
-    };
-
-    const updatedOrder: WorkOrder = {
-      ...order,
-      status: newStatus,
-      statusHistory: [historyEntry, ...order.statusHistory],
-      completedAt: newStatus === 'FINALIZADA' ? new Date().toISOString() : order.completedAt,
-      deliveredAt: newStatus === 'ENTREGADA' ? new Date().toISOString() : order.deliveredAt,
-    };
-
-    if ((newStatus === 'FINALIZADA' || newStatus === 'ENTREGADA' || newStatus === 'CANCELADA') && order.assignedBayId) {
-      const bays = mockDb.getBays();
-      const bayIdx = bays.findIndex((b) => b.id === order.assignedBayId);
-      if (bayIdx >= 0 && bays[bayIdx].currentWorkOrderId === order.code) {
-        bays[bayIdx] = {
-          ...bays[bayIdx],
-          status: 'LIBRE',
-          currentWorkOrderId: undefined,
-          currentVehiclePlate: undefined,
-          currentVehicleModel: undefined,
-          primaryMechanicId: undefined,
-          assistantMechanicId: undefined,
-        };
-        mockDb.saveBays(bays);
-      }
-    }
-
-    const persisted = persistOrder(updatedOrder);
-    this.updateMechanicCounts();
-    return persisted;
+      'Inicio de diagnóstico técnico inicial (HU-02).',
+    );
   },
 
-  startDiagnostic(orderId: string, changedBy: string): WorkOrder {
-    return this.updateStatus(orderId, 'EN_DIAGNOSTICO', changedBy, 'Inicio de diagnóstico técnico inicial (HU-02).');
-  },
-
-  saveDiagnosticDraft(
+  async saveDiagnosticDraft(
     orderId: string,
     payload: { diagnosticReport?: string; mechanicNotes?: string },
-    changedBy: string,
-  ): WorkOrder {
-    const order = resolveOrderKey(orderId);
+  ): Promise<WorkOrder> {
+    if (isBackendMode) {
+      const response = await apiClient.patchHttp<typeof payload, WorkOrder>(
+        `/work-orders/${orderId}/diagnostic-draft`,
+        payload,
+      );
+      return response.data;
+    }
+    const order = await resolveOrderKey(orderId);
     if (!order) throw new Error('Orden de trabajo no encontrada');
-
-    const status: WorkOrderStatus =
-      order.status === 'REGISTRADA' || order.status === 'EN_DIAGNOSTICO'
-        ? 'EN_DIAGNOSTICO'
-        : order.status;
-
-    const historyEntry: StatusHistoryEntry = {
-      status,
-      timestamp: new Date().toISOString(),
-      changedBy,
-      reason: 'Borrador de diagnóstico técnico guardado (HU-02).',
-    };
-
-    const updatedOrder: WorkOrder = {
-      ...order,
-      status,
-      diagnosticReport: payload.diagnosticReport ?? order.diagnosticReport,
-      mechanicNotes: payload.mechanicNotes ?? order.mechanicNotes,
-      statusHistory:
-        order.status === status ? order.statusHistory : [historyEntry, ...order.statusHistory],
-    };
-
-    return persistOrder(updatedOrder);
+    return await persistOrder(order);
   },
 
-  completeDiagnostic(orderId: string, payload: DiagnosticPayload, changedBy: string): WorkOrder {
-    const order = resolveOrderKey(orderId);
-    if (!order) throw new Error('Orden de trabajo no encontrada');
-
+  async completeDiagnostic(
+    orderId: string,
+    payload: DiagnosticPayload,
+  ): Promise<WorkOrder> {
     if (!payload.diagnosticReport.trim()) {
       throw new Error('El informe de diagnóstico es obligatorio.');
     }
 
-    const inventory = mockDb.getInventory();
-    const newParts: WorkOrderPartItem[] = payload.partsItems.map((p, i) => {
-      const inv = inventory.find((item) => item.id === p.partId || item.code === p.partId);
-      if (!inv) throw new Error(`Repuesto ${p.partId} no encontrado en inventario.`);
-      if (inv.stockAvailable < p.quantityRequired) {
-        throw new Error(
-          `Stock insuficiente para ${inv.name}. Disponible: ${inv.stockAvailable}, Requerido: ${p.quantityRequired}`,
-        );
-      }
-      return {
-        id: `pot-dg-${Date.now()}-${i}`,
-        partId: inv.id,
-        partCode: inv.code,
-        description: inv.name,
-        quantityRequired: p.quantityRequired,
-        quantityUsed: 0,
-        unitPriceBOB: inv.unitPriceBOB,
-        totalBOB: inv.unitPriceBOB * p.quantityRequired,
-        isReserved: false,
-        isDeliveredToBay: false,
-        status: 'PENDIENTE',
-      };
-    });
+    if (isBackendMode) {
+      const response = await apiClient.postHttp<DiagnosticPayload, WorkOrder>(
+        `/work-orders/${orderId}/diagnostic`,
+        payload,
+      );
+      return response.data;
+    }
 
-    const newLabor: WorkOrderLaborItem[] = payload.laborItems.map((l, i) => ({
-      id: `lab-dg-${Date.now()}-${i}`,
-      description: l.description,
-      estimatedHours: l.estimatedHours,
-      hourlyRateBOB: HOURLY_RATE_BOB,
-      totalBOB: Math.round(l.estimatedHours * HOURLY_RATE_BOB),
-      isCompleted: false,
-      assignedMechanicId: l.assignedMechanicId,
-    }));
-
-    const updatedLabor = [...order.laborItems, ...newLabor];
-    const updatedParts = [...order.partsItems, ...newParts];
-    const totalLabor = updatedLabor.reduce((acc, curr) => acc + curr.totalBOB, 0);
-    const totalParts = updatedParts.reduce((acc, curr) => acc + curr.totalBOB, 0);
-
-    const now = new Date().toISOString();
-    const historyEntry: StatusHistoryEntry = {
-      status: 'DIAGNOSTICADA',
-      timestamp: now,
-      changedBy,
-      reason: 'Diagnóstico técnico inicial registrado (HU-02).',
-    };
-
-    const updatedOrder: WorkOrder = {
-      ...order,
-      status: 'DIAGNOSTICADA',
-      diagnosticReport: payload.diagnosticReport,
-      diagnosticDate: now,
-      mechanicNotes: payload.mechanicNotes ?? order.mechanicNotes,
-      laborItems: updatedLabor,
-      partsItems: updatedParts,
-      totalLaborBOB: totalLabor,
-      totalPartsBOB: totalParts,
-      totalGeneralBOB: totalLabor + totalParts,
-      statusHistory: [historyEntry, ...order.statusHistory],
-    };
-
-    return persistOrder(updatedOrder);
+    const order = await resolveOrderKey(orderId);
+    if (!order) throw new Error('Orden de trabajo no encontrada');
+    return await persistOrder(order);
   },
 
-  toggleLaborCompletion(orderId: string, laborId: string): WorkOrder {
-    const order = resolveOrderKey(orderId);
+  async toggleLaborCompletion(orderId: string, laborId: string): Promise<WorkOrder> {
+    if (isBackendMode) {
+      const response = await apiClient.patchHttp<Record<string, never>, WorkOrder>(
+        `/work-orders/${orderId}/labor/${laborId}/toggle`,
+        {},
+      );
+      return response.data;
+    }
+    const order = await resolveOrderKey(orderId);
     if (!order) throw new Error('Orden no encontrada');
-
-    const laborItems = order.laborItems.map((l) =>
-      l.id === laborId ? { ...l, isCompleted: !l.isCompleted } : l,
-    );
-
-    return persistOrder({ ...order, laborItems });
+    return await persistOrder(order);
   },
 
-  confirmPartInstalled(orderId: string, partItemId: string): WorkOrder {
-    const order = resolveOrderKey(orderId);
+  async confirmPartInstalled(orderId: string, partItemId: string): Promise<WorkOrder> {
+    if (isBackendMode) {
+      const response = await apiClient.patchHttp<Record<string, never>, WorkOrder>(
+        `/work-orders/${orderId}/parts/${partItemId}/install`,
+        {},
+      );
+      return response.data;
+    }
+    const order = await resolveOrderKey(orderId);
     if (!order) throw new Error('Orden no encontrada');
-
-    const partItem = order.partsItems.find((p) => p.id === partItemId);
-    if (!partItem) throw new Error('Repuesto en OT no encontrado');
-    if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(order.status)) {
-      throw new Error('Regla RN-02: no se puede consumir un repuesto sin aprobación del presupuesto.');
-    }
-    if (!partItem.isReserved) {
-      throw new Error('Regla RN-07: el repuesto no está reservado para esta OT.');
-    }
-
-    const inventory = mockDb.getInventory();
-    const invIdx = inventory.findIndex((i) => i.id === partItem.partId || i.code === partItem.partCode);
-    if (invIdx >= 0) {
-      const inv = inventory[invIdx];
-      inventory[invIdx] = {
-        ...inv,
-        stockReserved: Math.max(0, inv.stockReserved - partItem.quantityRequired),
-        lastMovementDate: new Date().toISOString().split('T')[0],
-        daysWithoutMovement: 0,
-      };
-      mockDb.saveInventory(inventory);
-    }
-
-    const partsItems = order.partsItems.map((p) =>
-      p.id === partItemId
-        ? { ...p, quantityUsed: p.quantityRequired, status: 'INSTALADO' as const, isDeliveredToBay: true }
-        : p,
-    );
-
-    return persistOrder({ ...order, partsItems });
-  },
-
-  updateMechanicCounts(): void {
-    const bays = mockDb.getBays();
-    const mechanics = mockDb.getMechanics().map((m) => {
-      const bay = bays.find((b) => b.primaryMechanicId === m.id || b.assistantMechanicId === m.id);
-      return {
-        ...m,
-        activeOtCount: bays.filter(
-          (b) => b.primaryMechanicId === m.id || b.assistantMechanicId === m.id,
-        ).length,
-        currentBayId: bay?.id,
-      };
-    });
-    mockDb.saveMechanics(mechanics);
+    return await persistOrder(order);
   },
 };
