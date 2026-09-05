@@ -16,7 +16,7 @@ export function useConsumeSparePart() {
 
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: ['mechanic', 'assigned-orders'],
+        queryKey: ['mechanic'],
       });
     },
   });

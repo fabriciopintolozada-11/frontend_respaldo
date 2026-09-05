@@ -5,6 +5,7 @@ import type { ReservedPart } from '../api/types';
 interface ReservedPartsPanelProps {
   parts?: ReservedPart[] | null;
   workOrderId: string;
+  canConsume: boolean;
   onConsume: (workOrderId: string, quotePartId: string, quantity: number) => void;
   isPending: boolean;
 }
@@ -12,6 +13,7 @@ interface ReservedPartsPanelProps {
 export function ReservedPartsPanel({
   parts,
   workOrderId,
+  canConsume,
   onConsume,
   isPending,
 }: ReservedPartsPanelProps) {
@@ -33,24 +35,24 @@ export function ReservedPartsPanel({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {safeParts.map((part) => {
-            const isInstalled = part?.status === 'INSTALLED';
+            const isInstalled = part.status === 'INSTALLED';
 
             return (
               <div
-                key={part?.id ?? Math.random()}
+                key={part.id}
                 className="p-4 rounded-xl border border-slate-200 bg-slate-50 flex items-center justify-between gap-3"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-1.5">
                     <span className="font-mono text-xs font-bold text-lime-800">
-                      {part?.code ?? '—'}
+                      {part.code || '—'}
                     </span>
                     <span className="text-sm font-bold text-slate-950">
-                      x{part?.quantityReserved ?? 0} un.
+                      x{part.quantityReserved ?? 0} un.
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 line-clamp-1 mt-0.5">
-                    {part?.name ?? 'Sin nombre'}
+                    {part.name || 'Sin nombre'}
                   </p>
                 </div>
 
@@ -59,7 +61,7 @@ export function ReservedPartsPanel({
                     <CheckCircle2 className="w-5 h-5" />
                     <span>Instalado</span>
                   </div>
-                ) : (
+                ) : canConsume ? (
                   <Button
                     variant="primary"
                     size="sm"
@@ -67,14 +69,18 @@ export function ReservedPartsPanel({
                     onClick={() =>
                       onConsume(
                         workOrderId,
-                        part?.id ?? '',
-                        part?.quantityReserved ?? 0,
+                        part.quotePartId,
+                        part.quantityReserved,
                       )
                     }
                     disabled={isPending}
                   >
                     Confirmar uso
                   </Button>
+                ) : (
+                  <span className="text-xs font-medium text-slate-500">
+                    En espera de aprobación
+                  </span>
                 )}
               </div>
             );
