@@ -32,19 +32,9 @@ import {
   type InventoryAdjustmentType,
   type SparePart,
   type SparePartCategory,
+  CATEGORY_LABELS,
   SPARE_PART_CATEGORIES,
 } from '../spare-parts.types';
-
-const CATEGORY_LABELS: Record<SparePartCategory, string> = {
-  MOTOR: 'Motor',
-  FRENOS: 'Frenos',
-  SUSPENSION_DIRECCION: 'Suspensión / Dirección',
-  TRANSMISION: 'Transmisión',
-  FILTROS_FLUIDOS: 'Filtros y Fluidos',
-  ELECTRICO_LUCES: 'Eléctrico / Luces',
-  CLIMATIZACION: 'Climatización',
-  CARROCERIA_ACCESORIOS: 'Carrocería y Accesorios',
-};
 
 function formatCurrency(value?: string): string {
   if (value === undefined || value === null || value === '') {

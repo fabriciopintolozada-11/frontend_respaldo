@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import {
+  BellRing,
   Car,
   ClipboardCheck,
   ClipboardPlus,
@@ -19,7 +20,18 @@ import type { UserRole } from '../shared/types/openapi';
 
 const ALL_ROLES: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 
-const NAV_ITEMS: Array<{ to: string; label: string; icon: ReactNode; roles: UserRole[] }> = [
+export interface NavItem {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  roles: UserRole[];
+}
+
+export function filterNavItemsByRole(items: NavItem[], role: UserRole): NavItem[] {
+  return items.filter((item) => item.roles.includes(role));
+}
+
+export const NAV_ITEMS: NavItem[] = [
   {
     to: '/recepcion',
     label: 'Recepción',
@@ -36,6 +48,12 @@ const NAV_ITEMS: Array<{ to: string; label: string; icon: ReactNode; roles: User
     to: '/inventario',
     label: 'Inventario',
     icon: <Package className="w-4 h-4" />,
+    roles: ['WORKSHOP_LEAD', 'ADMIN'],
+  },
+  {
+    to: '/inventario/alertas',
+    label: 'Alertas Inventario',
+    icon: <BellRing className="w-4 h-4" />,
     roles: ['WORKSHOP_LEAD', 'ADMIN'],
   },
   {
@@ -83,7 +101,7 @@ export function WorkshopLayout() {
   const { user, logout } = useAuth();
 
   const filteredNavItems = user
-    ? NAV_ITEMS.filter((item) => item.roles.includes(user.role))
+    ? filterNavItemsByRole(NAV_ITEMS, user.role)
     : [];
 
   const handleReset = () => {
