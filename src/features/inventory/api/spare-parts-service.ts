@@ -22,8 +22,18 @@ const sparePartsKeys = {
 };
 
 export async function listSpareParts(params: SparePartListParams = {}): Promise<SparePartListResponse> {
-  const { data } = await httpClient.get<SparePartListResponse>('/spare-parts', { params });
-  return data;
+  const { data } = await httpClient.get<unknown>('/spare-parts', { params });
+  // HU-12: the real backend returns a flat array [{ id, code, name, unitPrice }].
+  // Normalize it into the paginated shape the UI expects.
+  if (Array.isArray(data)) {
+    return {
+      data: data as SparePart[],
+      total: data.length,
+      page: 1,
+      pageSize: data.length || 100,
+    };
+  }
+  return data as SparePartListResponse;
 }
 
 export async function createSparePart(payload: CreateSparePartRequest): Promise<SparePart> {

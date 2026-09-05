@@ -1,5 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { useForm, type FieldErrors } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { ArrowLeft, FileCheck, Hammer, Package, Plus, Send, Trash2, User, Wrench } from 'lucide-react';
+
 import { useToast } from '../../../shared/components/ToastContext';
 import { Button } from '../../../shared/components/Button';
 import { Card } from '../../../shared/components/Card';
@@ -12,7 +15,10 @@ import {
   useSparePartsCatalog,
   useCreateQuote,
   type QuoteItemType,
+  type QuoteResponse,
 } from '../api/useQuoteCreation';
+import { quoteFormSchema, type QuoteFormValues, type QuoteItemInput } from '../schemas/quote-schema';
+import { QuoteSummary } from '../components/QuoteSummary';
 
 interface DraftItem {
   key: string;
@@ -27,6 +33,30 @@ const money = new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximum
 
 function formatMoney(amount: number): string {
   return `${money.format(amount)} BOB`;
+}
+
+function toPayloadItems(items: DraftItem[]): QuoteItemInput[] {
+  return items.map((item) => ({
+    description: item.description,
+    itemType: item.type,
+    quantity: item.quantity,
+    ...(item.type === 'PART' && item.sparePartId ? { sparePartId: item.sparePartId } : {}),
+  })) as QuoteItemInput[];
+}
+
+type ItemFieldError = {
+  description?: { message?: string };
+  quantity?: { message?: string };
+  sparePartId?: { message?: string };
+};
+
+function getItemsErrorMessage(errors: FieldErrors<QuoteFormValues>): string | null {
+  const items = errors.items as (Array<ItemFieldError | undefined> & { root?: { message?: string } }) | undefined;
+  if (!items) return null;
+  if (items.root?.message) return items.root.message;
+  const first = items[0];
+  if (!first) return null;
+  return first.description?.message ?? first.quantity?.message ?? first.sparePartId?.message ?? null;
 }
 
 function QuoteCreationIndex({ onSelect }: { onSelect: (orderId: string) => void }) {
@@ -97,7 +127,13 @@ function QuoteCreationIndex({ onSelect }: { onSelect: (orderId: string) => void 
   );
 }
 
-function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () => void }) {
+interface QuoteCreationFormProps {
+  orderId: string;
+  onBack: () => void;
+  onCreated: (quote: QuoteResponse) => void;
+}
+
+function QuoteCreationForm({ orderId, onBack, onCreated }: QuoteCreationFormProps) {
   const toast = useToast();
   const { data: orderList } = usePendingQuoteOrders();
   const order = orderList?.data?.find((o) => o.id === orderId);
@@ -110,6 +146,21 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
   const [selectedPartQuantity, setSelectedPartQuantity] = useState<number>(1);
   const [draftItems, setDraftItems] = useState<DraftItem[]>([]);
 
+  const {
+    handleSubmit,
+    setValue,
+    formState: { errors, isSubmitting },
+  } = useForm<QuoteFormValues>({
+    resolver: zodResolver(quoteFormSchema),
+    defaultValues: { items: [] },
+    mode: 'onSubmit',
+    reValidateMode: 'onSubmit',
+  });
+
+  useEffect(() => {
+    setValue('items', toPayloadItems(draftItems), { shouldValidate: false });
+  }, [draftItems, setValue]);
+
   const catalog = catalogQuery.data?.data ?? [];
   const selectedPart = selectedPartId ? catalog.find((p) => p.id === selectedPartId) : undefined;
 
@@ -119,6 +170,8 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
       return sum + price * item.quantity;
     }, 0);
   }, [draftItems]);
+
+  const itemsErrorMessage = getItemsErrorMessage(errors);
 
   const addLaborItem = () => {
     if (laborHours <= 0) {
@@ -164,29 +217,28 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
     setDraftItems((current) => current.filter((item) => item.key !== key));
   };
 
-  const handleSubmit = async () => {
-    if (draftItems.length === 0) {
-      toast.warning('Agrega al menos un ítem (mano de obra o repuesto).');
-      return;
-    }
-    const items = draftItems.map((item) => ({
-      description: item.description,
-      itemType: item.type,
-      quantity: item.quantity,
-      ...(item.type === 'PART' && item.sparePartId ? { sparePartId: item.sparePartId } : {}),
-    }));
+  const onSubmitValid = async (values: QuoteFormValues) => {
     try {
-      const result = await createQuoteMutation.mutateAsync(items);
+      const result = await createQuoteMutation.mutateAsync(values.items);
       toast.success(
         'Presupuesto creado',
         `Presupuesto ${result.data.id} por ${formatMoney(Number(result.data.total))}.`,
       );
-      setDraftItems([]);
-      onBack();
+      onCreated(result.data);
     } catch (error) {
       toast.danger('No se pudo crear el presupuesto', error instanceof Error ? error.message : 'Intenta nuevamente.');
     }
   };
+
+  const onSubmitInvalid = (invalidValues: FieldErrors<QuoteFormValues>) => {
+    if (draftItems.length === 0) {
+      toast.warning('Agrega al menos un ítem (mano de obra o repuesto).');
+      return;
+    }
+    toast.warning('Revisa los ítems del presupuesto', getItemsErrorMessage(invalidValues) ?? undefined);
+  };
+
+  const submitForm = handleSubmit((values) => void onSubmitValid(values), onSubmitInvalid);
 
   if (diagnosticQuery.isLoading || catalogQuery.isLoading) {
     return <LoadingSpinner message="Cargando diagnóstico y catálogo..." />;
@@ -333,6 +385,12 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
               })}
             </div>
           )}
+          {itemsErrorMessage && (
+            <p role="alert" className="mt-3 flex items-center gap-2 text-sm text-red-500">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-red-500" />
+              {itemsErrorMessage}
+            </p>
+          )}
         </div>
 
         <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:items-center sm:justify-between">
@@ -343,8 +401,8 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
           <Button
             variant="primary"
             size="lg"
-            disabled={draftItems.length === 0 || createQuoteMutation.isPending}
-            onClick={() => void handleSubmit()}
+            disabled={draftItems.length === 0 || createQuoteMutation.isPending || isSubmitting}
+            onClick={() => void submitForm()}
             leftIcon={<Send className="h-4 w-4" />}
           >
             Enviar presupuesto
@@ -357,8 +415,22 @@ function QuoteCreationForm({ orderId, onBack }: { orderId: string; onBack: () =>
 
 export function QuoteCreationPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
+  const [createdQuote, setCreatedQuote] = useState<QuoteResponse | null>(null);
+
+  if (createdQuote) {
+    return (
+      <QuoteSummary
+        quote={createdQuote}
+        onDone={() => {
+          setCreatedQuote(null);
+          setOrderId(null);
+        }}
+      />
+    );
+  }
+
   return orderId ? (
-    <QuoteCreationForm orderId={orderId} onBack={() => setOrderId(null)} />
+    <QuoteCreationForm orderId={orderId} onBack={() => setOrderId(null)} onCreated={setCreatedQuote} />
   ) : (
     <QuoteCreationIndex onSelect={setOrderId} />
   );

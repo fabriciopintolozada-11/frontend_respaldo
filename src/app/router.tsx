@@ -68,22 +68,27 @@ export const router = createBrowserRouter([
         ],
       },
       {
-        path: 'presupuestos/crear',
-        lazy: async () => ({
-          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
-        }),
-      },
-      {
-        path: 'presupuestos/crear/:orderId',
-        lazy: async () => ({
-          Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
-        }),
-      },
-      {
-        path: 'presupuestos/:orderId',
-        lazy: async () => ({
-          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
-        }),
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_LEAD} />,
+        children: [
+          {
+            path: 'presupuestos/crear',
+            lazy: async () => ({
+              Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+            }),
+          },
+          {
+            path: 'presupuestos/crear/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+            }),
+          },
+          {
+            path: 'presupuestos/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+            }),
+          },
+        ],
       },
     ],
   },
