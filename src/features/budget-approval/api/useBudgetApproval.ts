@@ -490,3 +490,29 @@ export function useSubmitBudgetApproval(orderId: string) {
     },
   });
 }
+
+export function useCreateQuote(orderId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: {
+      workOrderId: string;
+      otCode: string;
+      vehiclePlate: string;
+      clientName: string;
+      laborSubtotalBOB: number;
+      partsSubtotalBOB: number;
+      discountBOB?: number;
+      totalBOB: number;
+      items: { description: string; itemType: 'LABOR' | 'PART'; quantity: number; unitPriceBOB?: number }[];
+    }) => {
+      // Backend ignores unitPrice for PART items, uses catalog price
+      // For LABOR, uses configured hourly rate (default 65 BOB)
+      return await request<ApiResponse<Budget>>({
+        url: `/work-orders/${encodeURIComponent(orderId)}/quote`,
+        method: 'POST',
+        data: payload,
+      });
+    },
+  });
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CheckCircle2, Package, Info } from 'lucide-react';
+import { CheckCircle2, Package } from 'lucide-react';
 import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
 import { Card } from '../../../shared/components/Card';
@@ -21,7 +21,7 @@ export interface ReservedPartLine {
 export type ReservedPartsViewerRole = 'MECHANIC' | 'WORKSHOP_LEAD';
 
 interface ReservedPartsPanelProps {
-  parts: ReservedPartLine[] | null | undefined;
+  parts: ReservedPartLine[];
   userRole: ReservedPartsViewerRole | string;
   onConfirm: (part: ReservedPartLine, quantity: number) => Promise<void> | void;
   isPending?: boolean;
@@ -32,10 +32,6 @@ function remainingQuantity(part: ReservedPartLine): number {
   return Math.max(0, part.reservedQuantity - part.usedQuantity);
 }
 
-// HU-07 / FE-T07.1: tactile panel where a mechanic confirms the installation
-// of reserved spare parts. When the source data is unavailable (null/undefined)
-// because the backend does not yet expose it for the assigned work order, an
-// informative empty state is rendered (no mock data is ever used).
 export function ReservedPartsPanel({
   parts,
   userRole,
@@ -48,26 +44,6 @@ export function ReservedPartsPanel({
   // RN-16: only WORKSHOP_LEAD (or ADMIN) may see prices. Any other role is
   // treated as a mechanic and prices are hidden both from state and render.
   const canSeePrices = userRole === 'WORKSHOP_LEAD';
-
-  // The backend does not yet expose the reserved parts for an assigned work
-  // order. Under no circumstance do we fabricate local data: we communicate
-  // that the information is pending until the backend endpoint is available.
-  if (parts === null || parts === undefined) {
-    return (
-      <Card padding="md" className="!bg-white !text-slate-900 !border-slate-200 shadow-sm">
-        <div className="flex items-center gap-2 mb-2">
-          <Info className="w-4 h-4 text-[#F97316]" />
-          <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-700">
-            Repuestos reservados
-          </h3>
-        </div>
-        <p className="text-xs text-slate-600 italic">
-          Las unidades reservadas para esta orden se mostrarán aquí cuando estén
-          disponibles desde el backend.
-        </p>
-      </Card>
-    );
-  }
 
   const reserved = parts
     .map((part) => ({ ...part, remaining: remainingQuantity(part) }))

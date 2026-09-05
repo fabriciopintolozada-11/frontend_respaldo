@@ -78,10 +78,12 @@ export interface ReservedPartDetail {
 // HU-07: shape consumed by ReservedPartsPanel.
 export interface ReservedPart {
   id: string;
-  quotePartId: string;
-  code: string;
-  name: string;
-  quantityReserved: number;
+  /** HU-07: id of the approved quote part (RESERVED) that this line maps to.
+   *  It differs from `id` and is the value the consume-part endpoint expects. */
+  quotePartId?: string;
+  partCode: string;
+  description: string;
+  quantityRequired: number;
   quantityUsed: number;
   status: 'RESERVED' | 'INSTALLED';
 }

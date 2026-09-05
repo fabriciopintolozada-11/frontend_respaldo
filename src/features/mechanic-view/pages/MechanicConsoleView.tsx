@@ -11,9 +11,11 @@ import { EmptyState } from '../../../shared/components/EmptyState';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { Modal } from '../../../shared/components/Modal';
 import { useToast } from '../../../shared/components/ToastContext';
-
-import { DiagnosticForm, type DiagnosticWorkOrderContext } from '../../work-orders/components/DiagnosticForm';
-import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-schema';
+import { workOrdersService } from '../../work-orders/api/work-orders-service';
+import {
+  translateConsumePartError,
+  useConsumeSparePart,
+} from '../../work-orders/api/useConsumeSparePart';
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
 import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
 import { mechanicService } from '../api/mechanic-service';
@@ -25,7 +27,7 @@ import type { AssignedWorkOrderSummary } from '../api/types';
 export function MechanicConsoleView() {
   const toast = useToast();
   const queryClient = useQueryClient();
-
+  const { toggleLabor, updateStatus } = useMechanicMutations();
   const consumePart = useConsumeSparePart();
 
   const assignedQuery = useAssignedOrders();
@@ -84,14 +86,32 @@ export function MechanicConsoleView() {
         quantity,
       });
 
+  const handleConfirmPart = async (orderId: string, partId: string) => {
+    const order = orders.find((o) => o.id === orderId);
+    const part = order?.parts.find((p) => p.id === partId);
+
+    // HU-07: the endpoint requires the approved quote part id (quotePartId).
+    if (!part || !part.quotePartId) {
+      toast.danger(
+        'Fallo del repuesto',
+        'El id del repuesto (quotePartId) no está disponible. No se puede confirmar la instalación.',
+      );
+      return;
+    }
+
+    try {
+      await consumePart.mutateAsync({
+        workOrderId: orderId,
+        quotePartId: part.quotePartId,
+        quantity: part.quantityRequired,
+      });
       toast.success(
         'Repuesto instalado',
         'El stock del inventario se descontó automáticamente.',
       );
     } catch (err) {
-      const msg =
-        err instanceof Error ? err.message : 'Error al registrar el repuesto';
-      toast.danger('Fallo del repuesto', msg);
+      const details = translateConsumePartError(err);
+      toast.danger('Fallo del repuesto', details.message);
     }
   };
 
@@ -169,7 +189,9 @@ export function MechanicConsoleView() {
               onConsumePart={handleConsumePart}
               onDiagnose={openDiagnosticForm}
               isMutating={
-                consumePart.isPending || isSubmittingDiagnostic
+                toggleLabor.isPending ||
+                consumePart.isPending ||
+                updateStatus.isPending
               }
             />
           ))

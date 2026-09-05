@@ -30,7 +30,7 @@ let currentToken: string | null = null;
 export function setAuthToken(token: string | null): void {
   currentToken = token;
 }
-
+  
 export const httpClient = axios.create({
   baseURL: env.apiUrl,
   timeout: env.apiTimeout,
@@ -42,10 +42,12 @@ export const httpClient = axios.create({
 
 httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   config.headers.set('X-Requested-With', 'XMLHttpRequest');
-  if (currentToken) {
-    config.headers.set('Authorization', `Bearer ${currentToken}`);
-  } else if (env.apiToken) {
-    config.headers.set('Authorization', `Bearer ${env.apiToken}`);
+  const token = currentToken || localStorage.getItem('token') || env.apiToken;
+  
+  if (token) {
+    config.headers.set('Authorization', `Bearer ${token}`);
+  } else {
+    console.warn('No auth token found in localStorage or env.apiToken - request will be unauthenticated');
   }
   return config;
 });

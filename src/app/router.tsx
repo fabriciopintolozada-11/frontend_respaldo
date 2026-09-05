@@ -37,6 +37,12 @@ export const router = createBrowserRouter([
               Component: (await import('../features/inventory/pages/InventoryManagerView')).InventoryManagerView,
             }),
           },
+          {
+            path: 'inventario/alertas',
+            lazy: async () => ({
+              Component: (await import('../features/inventory/pages/InventoryAlertsView')).InventoryAlertsView,
+            }),
+          },
         ],
       },
       {
