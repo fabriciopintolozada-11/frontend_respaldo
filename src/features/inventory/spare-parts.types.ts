@@ -19,6 +19,17 @@ export const SPARE_PART_CATEGORIES: SparePartCategory[] = [
   'CARROCERIA_ACCESORIOS',
 ];
 
+export const CATEGORY_LABELS: Record<SparePartCategory, string> = {
+  MOTOR: 'Motor',
+  FRENOS: 'Frenos',
+  SUSPENSION_DIRECCION: 'Suspensión / Dirección',
+  TRANSMISION: 'Transmisión',
+  FILTROS_FLUIDOS: 'Filtros y Fluidos',
+  ELECTRICO_LUCES: 'Eléctrico / Luces',
+  CLIMATIZACION: 'Climatización',
+  CARROCERIA_ACCESORIOS: 'Carrocería y Accesorios',
+};
+
 export interface SparePart {
   id: string;
   code: string;
