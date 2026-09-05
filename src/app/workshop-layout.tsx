@@ -66,7 +66,7 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/ots',
     label: 'Órdenes de Trabajo',
     icon: <FileText className="w-4 h-4" />,
-    roles: ALL_ROLES,
+    roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
   },
   {
     to: '/presupuestos/crear',
