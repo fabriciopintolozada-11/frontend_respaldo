@@ -1,3 +1,16 @@
+export interface AssignedQuotePart {
+  id: string;
+  sparePartId: string;
+  quantity: number;
+  status: string;
+  sparePart: { id: string; code: string; name: string };
+}
+
+export interface AssignedQuote {
+  id: string;
+  parts: AssignedQuotePart[];
+}
+
 export interface AssignedWorkOrderSummary {
   id: string;
   vehicleId: string;
@@ -5,6 +18,7 @@ export interface AssignedWorkOrderSummary {
   status: string;
   initialComplaint: string;
   assignedAt: string | null;
+  quote: AssignedQuote | null;
 }
 
 export interface AssignedWorkOrderDetail {
@@ -24,6 +38,7 @@ export interface AssignedWorkOrderDetail {
   reservedParts?: ReservedPart[];
   diagnosticReport: string | null;
   statusHistory: StatusHistoryEntry[];
+  quote: AssignedQuote | null;
 }
 
 export interface PaginatedResponse<T> {

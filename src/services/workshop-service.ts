@@ -20,11 +20,11 @@ const VALID_STATE_TRANSITIONS: Record<WorkOrderStatus, WorkOrderStatus[]> = {
   EN_DIAGNOSTICO: ['DIAGNOSTICADA', 'PRESUPUESTO_ENVIADO', 'CANCELADA'],
     DIAGNOSTICADA: ['PRESUPUESTO_ENVIADO', 'CANCELADA'],
     PRESUPUESTO_ENVIADO: ['APROBADO', 'CANCELADA'],
-    APROBADO: ['EN_PROGRESO', 'EN_REPARACION', 'EN_ESPERA_REPUESTO', 'CANCELADA'],
+    APROBADO: ['EN_PROGRESO', 'EN_REPARACION', 'EN_ESPERA_DE_REPUESTO', 'CANCELADA'],
     RECHAZADO: [],
-  EN_PROGRESO: ['EN_ESPERA_REPUESTO', 'FINALIZADA', 'CANCELADA'],
+  EN_PROGRESO: ['EN_ESPERA_DE_REPUESTO', 'FINALIZADA', 'CANCELADA'],
   EN_REPARACION: ['ESPERANDO_REPUESTO', 'FINALIZADO', 'CANCELADA'],
-  EN_ESPERA_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
+  EN_ESPERA_DE_REPUESTO: ['EN_PROGRESO', 'FINALIZADA', 'CANCELADA'],
   ESPERANDO_REPUESTO: ['EN_REPARACION', 'FINALIZADO', 'CANCELADA'],
   FINALIZADA: ['ENTREGADA'],
   FINALIZADO: ['LISTO_ENTREGA', 'ENTREGADO'],
@@ -93,7 +93,7 @@ export const workshopService = {
     const activeWorkOrdersCount = orders.filter(
       (o) =>
         o.status === 'EN_PROGRESO' ||
-        o.status === 'EN_ESPERA_REPUESTO' ||
+        o.status === 'EN_ESPERA_DE_REPUESTO' ||
         o.status === 'APROBADO' ||
         o.status === 'EN_DIAGNOSTICO',
     ).length;
@@ -150,7 +150,7 @@ export const workshopService = {
 
     bays[bayIdx] = {
       ...targetBay,
-      status: order.status === 'EN_ESPERA_REPUESTO' ? 'ESPERA_REPUESTO' : 'OCUPADA',
+      status: order.status === 'EN_ESPERA_DE_REPUESTO' ? 'ESPERA_REPUESTO' : 'OCUPADA',
       currentWorkOrderId: order.code,
       currentVehiclePlate: order.vehiclePlate,
       currentVehicleModel: `${order.vehicleBrand} ${order.vehicleModel}`,
@@ -207,7 +207,7 @@ export const workshopService = {
       );
     }
 
-    if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_REPUESTO') {
+    if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_DE_REPUESTO') {
       throw new Error('Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
     }
 
@@ -379,7 +379,7 @@ export const workshopService = {
 
     const partItem = order.partsItems.find((p) => p.id === partItemId);
     if (!partItem) throw new Error('Repuesto en OT no encontrado');
-    if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(order.status)) {
+    if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_DE_REPUESTO'].includes(order.status)) {
       throw new Error('Regla RN-02: no se puede consumir un repuesto sin aprobación del presupuesto.');
     }
     if (!partItem.isReserved) {

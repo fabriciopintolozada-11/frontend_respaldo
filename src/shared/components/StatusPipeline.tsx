@@ -8,7 +8,7 @@ const STEPS: { status: WorkOrderStatus; label: string; stepNumber: number }[] = 
   { status: 'PRESUPUESTO_ENVIADO', label: '4. Presupuesto enviado', stepNumber: 4 },
   { status: 'APROBADO', label: '5. Aprobado por Cliente', stepNumber: 5 },
   { status: 'EN_PROGRESO', label: '6. En Progreso', stepNumber: 6 },
-  { status: 'EN_ESPERA_REPUESTO', label: '7. Espera Repuesto', stepNumber: 7 },
+  { status: 'EN_ESPERA_DE_REPUESTO', label: '7. Espera Repuesto', stepNumber: 7 },
   { status: 'FINALIZADA', label: '8. Finalizada', stepNumber: 8 },
   { status: 'ENTREGADA', label: '9. Entregada', stepNumber: 9 },
 ];

@@ -16,7 +16,7 @@ export type WorkOrderStatus =
   | 'RECHAZADO'
   | 'EN_PROGRESO'
   | 'EN_REPARACION'
-  | 'EN_ESPERA_REPUESTO'
+  | 'EN_ESPERA_DE_REPUESTO'
   | 'ESPERANDO_REPUESTO'
   | 'FINALIZADA'
   | 'FINALIZADO'

@@ -60,7 +60,7 @@ const WORK_ORDER_CONFIGS: Record<WorkOrderStatus, { label: string; variant: NonN
   RECHAZADO: { label: 'Rechazado por Cliente', variant: 'danger' },
   EN_PROGRESO: { label: 'En Progreso', variant: 'purple' },
   EN_REPARACION: { label: '7. En Reparación', variant: 'purple' },
-  EN_ESPERA_REPUESTO: { label: 'Espera Repuesto', variant: 'warning' },
+  EN_ESPERA_DE_REPUESTO: { label: 'Espera Repuesto', variant: 'warning' },
   ESPERANDO_REPUESTO: { label: '8. Esperando Repuesto', variant: 'warning' },
   FINALIZADA: { label: 'Finalizada / Calidad', variant: 'success' },
   FINALIZADO: { label: '9. Finalizado / Calidad', variant: 'success' },

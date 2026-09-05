@@ -44,6 +44,26 @@ const order: AssignedWorkOrderDetail = {
   diagnosticReport: 'Pastillas desgastadas',
 
   statusHistory: [],
+
+  quote: {
+    id: 'quote-1',
+    parts: [
+      {
+        id: 'qp-1',
+        sparePartId: 'part-1',
+        quantity: 2,
+        status: 'RESERVED',
+        sparePart: { id: 'part-1', code: 'FRE-001', name: 'Pastillas de freno' },
+      },
+      {
+        id: 'qp-2',
+        sparePartId: 'part-2',
+        quantity: 1,
+        status: 'PROPOSED',
+        sparePart: { id: 'part-2', code: 'DIS-002', name: 'Disco de freno' },
+      },
+    ],
+  },
 };
 
 describe('AwaitingPartModal', () => {
@@ -176,10 +196,10 @@ describe('AwaitingPartModal', () => {
     );
   });
 
-  it('disables confirmation when the work order has no associated parts', () => {
+  it('disables confirmation when the work order has no associated quote parts', () => {
     const orderWithoutParts: AssignedWorkOrderDetail = {
       ...order,
-      parts: [],
+      quote: { id: 'quote-1', parts: [] },
     };
 
     render(

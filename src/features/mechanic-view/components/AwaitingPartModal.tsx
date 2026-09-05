@@ -122,12 +122,12 @@ export function AwaitingPartModal({
                 Selecciona un repuesto asociado a la OT
               </option>
 
-              {(order?.parts ?? []).map((part) => (
+              {(order?.quote?.parts ?? []).map((part) => (
                 <option
                   key={part.id}
-                  value={part.id}
+                  value={part.sparePartId}
                 >
-                  {part.partCode} - {part.description}
+                  {part.sparePart.code} - {part.sparePart.name}
                 </option>
               ))}
             </select>
@@ -142,7 +142,7 @@ export function AwaitingPartModal({
             </p>
           )}
 
-          {order?.parts.length === 0 && (
+          {(order?.quote?.parts.length ?? 0) === 0 && (
             <p className="mt-2 text-xs text-amber-700">
               Esta OT no tiene repuestos asociados.
             </p>
@@ -208,7 +208,7 @@ export function AwaitingPartModal({
             type="submit"
             variant="warning"
             isLoading={isPending}
-            disabled={isPending || !order || order.parts.length === 0}
+            disabled={isPending || !order || (order.quote?.parts.length ?? 0) === 0}
           >
             Confirmar espera
           </Button>

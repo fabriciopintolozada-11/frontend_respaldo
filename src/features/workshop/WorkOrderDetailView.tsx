@@ -35,7 +35,7 @@ const NEXT_STEP_LABEL: Record<WorkOrderStatus, string> = {
   RECHAZADO: '',
   EN_PROGRESO: 'Finalizar Trabajo',
   EN_REPARACION: 'Finalizar Trabajo',
-  EN_ESPERA_REPUESTO: 'Reanudar (En Progreso)',
+  EN_ESPERA_DE_REPUESTO: 'Reanudar (En Progreso)',
   ESPERANDO_REPUESTO: 'Reanudar (En Reparación)',
   FINALIZADA: 'Marcar Entregada',
   FINALIZADO: 'Marcar Entregado',
@@ -389,7 +389,7 @@ function nextStatus(status: WorkOrderStatus): WorkOrderStatus {
       return 'EN_PROGRESO';
     case 'EN_PROGRESO':
       return 'FINALIZADA';
-    case 'EN_ESPERA_REPUESTO':
+    case 'EN_ESPERA_DE_REPUESTO':
       return 'EN_PROGRESO';
     case 'FINALIZADA':
       return 'ENTREGADA';

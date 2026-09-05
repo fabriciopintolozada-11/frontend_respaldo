@@ -154,7 +154,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <option value="PRESUPUESTO_ENVIADO">3. Presupuesto enviado</option>
               <option value="APROBADO">4. Aprobado por Cliente</option>
               <option value="EN_PROGRESO">5. En Progreso</option>
-              <option value="EN_ESPERA_REPUESTO">6. Espera Repuesto</option>
+              <option value="EN_ESPERA_DE_REPUESTO">6. Espera Repuesto</option>
               <option value="FINALIZADA">7. Finalizada</option>
               <option value="ENTREGADA">8. Entregada / Cobrada</option>
             </select>
