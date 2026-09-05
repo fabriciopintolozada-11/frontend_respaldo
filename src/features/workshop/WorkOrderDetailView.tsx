@@ -22,6 +22,14 @@ import { EmptyState } from '../../shared/components/EmptyState';
 import { useToast } from '../../shared/components/ToastContext';
 import { useWorkshop } from '../../state/WorkshopContext';
 import type { WorkOrderStatus } from '../../types/workshop';
+import {
+  translateConsumePartError,
+  useConsumeSparePart,
+} from '../work-orders/api/useConsumeSparePart';
+import {
+  ReservedPartsPanel,
+  type ReservedPartLine,
+} from '../work-orders/components/ReservedPartsPanel';
 import { DiagnosticFormModal } from './DiagnosticFormModal';
 
 const NEXT_STEP_LABEL: Record<WorkOrderStatus, string> = {
@@ -58,8 +66,12 @@ export function WorkOrderDetailView() {
     startDiagnostic,
     completeDiagnostic,
     saveDiagnosticDraft,
+    confirmPartInstalled,
     refresh,
   } = useWorkshop();
+
+  const consumePart = useConsumeSparePart();
+  const [pendingPartId, setPendingPartId] = useState<string | null>(null);
 
   const [targetStatus, setTargetStatus] = useState<WorkOrderStatus | null>(null);
   const [transitionReason, setTransitionReason] = useState('');
@@ -96,6 +108,48 @@ export function WorkOrderDetailView() {
       refresh();
     } catch (err) {
       toast.danger('Transición Bloqueada', err instanceof Error ? err.message : 'Error al cambiar estado');
+    }
+  };
+
+  // HU-07: reserved spare part lines mapped to the contract expected by the
+  // consume-part endpoint. quotePartId (approved quote part) is required.
+  const reservedPartLines: ReservedPartLine[] = order.partsItems
+    .filter((p) => p.status === 'RESERVADO')
+    .map((p) => ({
+      quotePartId: p.quotePartId ?? p.id,
+      id: p.id,
+      code: p.partCode,
+      name: p.description,
+      reservedQuantity: p.quantityRequired,
+      usedQuantity: p.quantityUsed,
+      status: p.status,
+      unitPriceBOB: p.unitPriceBOB,
+    }));
+
+  const handleConfirmPartUsage = async (part: ReservedPartLine, quantity: number) => {
+    setPendingPartId(part.quotePartId);
+    try {
+      await consumePart.mutateAsync({
+        workOrderId: order.id,
+        quotePartId: part.quotePartId,
+        quantity,
+      });
+      toast.success(
+        'Repuesto instalado',
+        `${part.code} (${part.name}) se consumió del inventario automáticamente.`,
+      );
+      // Keep the workshop local store in sync with the confirmed consumption.
+      try {
+        confirmPartInstalled(order.id, part.id);
+      } catch {
+        /* local reflect is best-effort; backend is the source of truth */
+      }
+      refresh();
+    } catch (err) {
+      const details = translateConsumePartError(err);
+      toast.danger('No se pudo confirmar el uso', details.message);
+    } finally {
+      setPendingPartId(null);
     }
   };
 
@@ -307,6 +361,15 @@ export function WorkOrderDetailView() {
               </div>
             )}
           </Card>
+
+          {/* HU-07: confirm use/installation of reserved spare parts (US-07) */}
+          <ReservedPartsPanel
+            parts={reservedPartLines}
+            userRole="WORKSHOP_LEAD"
+            onConfirm={handleConfirmPartUsage}
+            isPending={consumePart.isPending}
+            pendingPartId={pendingPartId}
+          />
         </div>
       </div>
 

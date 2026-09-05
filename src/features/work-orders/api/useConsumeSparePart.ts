@@ -1,10 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ApiError } from '../../../shared/api/httpClient';
-import {
-  consumePartApi,
-  type ConsumeSparePartDto,
-  type ConsumeSparePartResponse,
-} from './consume-part-api';
+import { consumePartApi, type ConsumeSparePartDto, type ConsumeSparePartResponse } from './consume-part-api';
 
 // HU-07 / FE-04: maps backend error codes to contextual, comprehensible
 // messages. Financial/pricing content is never surfaced here (RN-16).
@@ -90,6 +86,8 @@ export function useConsumeSparePart(mutationKey?: readonly unknown[]) {
         queryClient.invalidateQueries({ queryKey: ['mechanic', 'assigned-orders'] }),
         queryClient.invalidateQueries({ queryKey: ['mechanic'] }),
         queryClient.invalidateQueries({ queryKey: ['inventory'] }),
+        queryClient.invalidateQueries({ queryKey: ['products'] }),
+        queryClient.invalidateQueries({ queryKey: ['bays'] }),
         queryClient.invalidateQueries({ queryKey: ['alert'] }),
       ]);
     },
