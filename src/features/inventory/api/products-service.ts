@@ -1,16 +1,8 @@
-import { apiClient, type ApiResponse } from '../../../shared/api/api-client';
+import type { ApiResponse } from '../../../shared/api/api-client';
+import { listSpareParts } from './spare-parts-service';
+import type { SparePart } from '../spare-parts.types';
 
-// HU-12 / CA-2: the backend catalog exposes a flat array with exactly these
-// fields (SparePartResponseDto). There is no pagination envelope.
-export interface SparePart {
-  id: string;
-  code: string;
-  name: string;
-  unitPrice: string;
-  availableStock: number;
-  reservedStock: number;
-  isActive: boolean;
-}
+export type { SparePart, SparePartCategory } from '../spare-parts.types';
 
 export interface InventoryStats {
   totalItems: number;
@@ -22,8 +14,12 @@ export interface InventoryStats {
 
 export const productsService = {
   async getAll(): Promise<ApiResponse<SparePart[]>> {
-    const response = await apiClient.getHttp<SparePart[]>('/spare-parts');
-    return { ...response, data: response.data ?? [] };
+    const response = await listSpareParts({ pageSize: 100 });
+    return {
+      success: true,
+      data: response.data,
+      timestamp: new Date().toISOString(),
+    };
   },
 
   async getStats(): Promise<ApiResponse<InventoryStats>> {

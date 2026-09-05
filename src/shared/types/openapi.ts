@@ -39,7 +39,7 @@ export type PartCategory =
   | 'CLIMATIZACION'
   | 'CARROCERIA_ACCESORIOS';
 
-export type UserRole = 'RECEPCION' | 'JEFE_TALLER' | 'MECANICO' | 'ADMIN' | 'CLIENTE_PUBLICO';
+export type UserRole = 'RECEPTIONIST' | 'MECHANIC' | 'WORKSHOP_LEAD' | 'ADMIN';
 
 export interface Vehicle {
   id: string;
