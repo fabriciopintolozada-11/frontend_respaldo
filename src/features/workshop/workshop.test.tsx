@@ -34,18 +34,22 @@ vi.mock('../mechanic-view/api/mechanic-service', () => ({
       id: 'ot-001',
       vehicleId: 'v-001',
       plate: 'OT-2025-0101',
-      status: 'EN_PROGRESO',
+      status: 'EN_REPARACION',
       initialComplaint: 'Ruido en frenos delanteros',
       assignedAt: '2025-08-01T10:00:00.000Z',
-      vehicle: { brand: 'Toyota', model: 'Corolla', year: 2020 },
-      tasks: [
-        { id: 't-1', description: 'Desmontar frenos', estimatedHours: 2, isCompleted: false },
+      brand: 'Toyota',
+      model: 'Corolla',
+      year: 2020,
+      reservedParts: [
+        {
+          quotePartId: 'qp-1',
+          code: 'REP-FR-001',
+          name: 'Pastillas delanteras',
+          quantityReserved: 1,
+          quantityUsed: 0,
+          status: 'RESERVED',
+        },
       ],
-      parts: [
-        { id: 'p-1', partCode: 'REP-FR-001', description: 'Pastillas delanteras', quantityRequired: 1, quantityUsed: 0, status: 'PENDIENTE' },
-      ],
-      diagnosticReport: 'Desgaste avanzado en pastillas',
-      statusHistory: [],
     }),
   },
 }));

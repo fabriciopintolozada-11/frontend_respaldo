@@ -6,16 +6,24 @@
 export type FuelType = 'GASOLINA' | 'DIESEL' | 'HIBRIDO' | 'ELECTRICO';
 
 export type WorkOrderStatus =
-  | 'REGISTRADA'
+  | 'RECIBIDO'
+  | 'ASIGNADA'
+  | 'EN_DIAGNOSTICO'
   | 'DIAGNOSTICADA'
   | 'PRESUPUESTO_ENVIADO'
   | 'APROBADO'
   | 'RECHAZADO'
   | 'EN_PROGRESO'
+  | 'EN_REPARACION'
   | 'EN_ESPERA_REPUESTO'
+  | 'ESPERANDO_REPUESTO'
   | 'FINALIZADA'
+  | 'FINALIZADO'
+  | 'LISTO_ENTREGA'
   | 'ENTREGADA'
-  | 'CANCELADA';
+  | 'ENTREGADO'
+  | 'CANCELADA'
+  | 'REGISTRADA';
 
 export type BayStatus = 'LIBRE' | 'OCUPADA' | 'ESPERA_REPUESTO' | 'MANTENIMIENTO';
 
@@ -31,7 +39,7 @@ export type PartCategory =
   | 'CLIMATIZACION'
   | 'CARROCERIA_ACCESORIOS';
 
-export type UserRole = 'RECEPCION' | 'JEFE_TALLER' | 'MECANICO' | 'ADMIN' | 'CLIENTE_PUBLICO';
+export type UserRole = 'RECEPTIONIST' | 'MECHANIC' | 'WORKSHOP_LEAD' | 'ADMIN';
 
 export interface Vehicle {
   id: string;

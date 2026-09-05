@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { mechanicService } from '../api/mechanic-service';
 import type {
   AssignedWorkOrderDetail,
+  AssignedWorkOrderSummary,
   WorkOrderPart,
   WorkOrderTask,
 } from '../api/types';
@@ -40,6 +41,12 @@ function mapRealDetailToAssignedDetail(detail: Record<string, any>): AssignedWor
     ? detail.quote.parts.map(mapQuotePartToWorkOrderPart)
     : [];
 
+  const vehicle = detail.vehicle ?? {
+    brand: detail.brand,
+    model: detail.model,
+    year: detail.year,
+  };
+
   return {
     id: detail.id,
     vehicleId: detail.vehicleId,
@@ -47,32 +54,45 @@ function mapRealDetailToAssignedDetail(detail: Record<string, any>): AssignedWor
     status: detail.status,
     initialComplaint: detail.initialComplaint,
     assignedAt: detail.assignedAt,
-    vehicle: detail.vehicle ?? {
-      brand: detail.brand,
-      model: detail.model,
-      year: detail.year,
-    },
+    vehicle,
+    brand: detail.brand ?? vehicle.brand,
+    model: detail.model ?? vehicle.model,
+    year: detail.year ?? vehicle.year,
     tasks: (detail.tasks as WorkOrderTask[]) ?? [],
     parts: quoteParts.length > 0 ? quoteParts : ((detail.parts as WorkOrderPart[]) ?? []),
+    reservedParts: detail.reservedParts,
     diagnosticReport: detail.diagnosticReport ?? null,
     statusHistory: detail.statusHistory ?? [],
   };
 }
 
+// HU-03 / RN-04: lists only the summaries of the work orders assigned to the
+// authenticated mechanic. No per-order detail is fetched here to avoid a N+1
+// request; each card loads its own detail on demand.
 export function useAssignedOrders() {
-  return useQuery<AssignedWorkOrderDetail[]>({
+  return useQuery<AssignedWorkOrderSummary[]>({
     queryKey: ['mechanic', 'assigned-orders'],
     queryFn: async () => {
-      const list = await mechanicService.getAssigned(1, 100);
-      const details = await Promise.allSettled(
-        list.data.map((o) => mechanicService.getAssignedDetail(o.id)),
-      );
-      return details
-        .filter((r): r is PromiseFulfilledResult<AssignedWorkOrderDetail> =>
-          r.status === 'fulfilled',
-        )
-        .map((r) => mapRealDetailToAssignedDetail(r.value));
+      const response = await mechanicService.getAssigned(1, 20);
+      return response.data;
     },
+    staleTime: 30_000,
+    retry: 1,
+  });
+}
+
+// HU-03 / FE-10 + HU-13: per-card detail of an assigned work order. Keeps the
+// US-13 mapping quote.parts -> WorkOrderPart (sparePartId) so the awaiting-part
+// flow consumes the official contract, while the card renders the reserved
+// parts exposed by the backend.
+export function useAssignedOrderDetail(orderId: string | null) {
+  return useQuery<AssignedWorkOrderDetail>({
+    queryKey: ['mechanic', 'assigned-order', orderId],
+    queryFn: async () =>
+      mapRealDetailToAssignedDetail(
+        await mechanicService.getAssignedDetail(orderId as string),
+      ),
+    enabled: Boolean(orderId),
     staleTime: 30_000,
     retry: 1,
   });
