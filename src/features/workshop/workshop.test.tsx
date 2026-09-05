@@ -6,7 +6,7 @@ import { MemoryRouter, Route, Routes } from 'react-router';
 
 import { ToastProvider } from '../../shared/components/ToastContext';
 import { WorkshopProvider } from '../../state/WorkshopContext';
-import { resetStorageToSeed } from '../../services/mock-db';
+import { resetStorageToSeed } from '../../shared/api/mock-db';
 import { workshopService } from '../../services/workshop-service';
 import { WorkshopHeadView } from './WorkshopHeadView';
 import { MechanicConsoleView as WorkshopMechanicView } from './MechanicConsoleView';
