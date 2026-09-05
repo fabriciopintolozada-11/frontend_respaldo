@@ -125,7 +125,7 @@ export function AwaitingPartModal({
               {(order?.parts ?? []).map((part) => (
                 <option
                   key={part.id}
-                  value={part.id}
+                  value={part.sparePartId}
                 >
                   {part.partCode} - {part.description}
                 </option>

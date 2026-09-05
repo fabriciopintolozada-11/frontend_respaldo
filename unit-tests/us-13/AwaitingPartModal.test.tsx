@@ -25,6 +25,7 @@ const order: AssignedWorkOrderDetail = {
   parts: [
     {
       id: 'part-1',
+      sparePartId: 'spare-part-1',
       partCode: 'FRE-001',
       description: 'Pastillas de freno',
       quantityRequired: 2,
@@ -33,6 +34,7 @@ const order: AssignedWorkOrderDetail = {
     },
     {
       id: 'part-2',
+      sparePartId: 'spare-part-2',
       partCode: 'DIS-002',
       description: 'Disco de freno',
       quantityRequired: 1,
@@ -140,7 +142,7 @@ describe('AwaitingPartModal', () => {
 
     await user.selectOptions(
       screen.getByLabelText(/Repuesto faltante/i),
-      'part-1',
+      'spare-part-1',
     );
 
     const quantityInput = screen.getByLabelText(
@@ -168,7 +170,7 @@ describe('AwaitingPartModal', () => {
     expect(onSubmit).toHaveBeenCalledWith(
       'order-12345678',
       {
-        missingPartId: 'part-1',
+        missingPartId: 'spare-part-1',
         quantity: 2,
         reason:
           'No se encuentra físicamente en almacén',

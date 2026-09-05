@@ -41,6 +41,7 @@ export interface WorkOrderTask {
 
 export interface WorkOrderPart {
   id: string;
+  sparePartId: string;
   partCode: string;
   description: string;
   quantityRequired: number;
