@@ -1,7 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { apiClient, type ApiResponse } from '../../../shared/api/api-client';
+import type { QuoteItemInput, QuoteItemType } from '../schemas/quote-schema';
 import { productsService, type SparePart } from '../../inventory/api/products-service';
+
+export type { QuoteItemInput, QuoteItemType } from '../schemas/quote-schema';
 
 // HU-12: shapes contractually exposed by the backend.
 export interface PendingQuoteWorkOrder {
@@ -25,16 +28,6 @@ export interface Diagnostic {
   suggestedPartIds: string[];
   estimatedHours: number;
   createdAt: string;
-}
-
-export type QuoteItemType = 'LABOR' | 'PART';
-
-export interface QuoteInputItem {
-  description: string;
-  itemType: QuoteItemType;
-  sparePartId?: string;
-  quantity: number;
-  unitPrice?: number;
 }
 
 export interface QuoteDetail {
@@ -70,8 +63,8 @@ async function getCatalog(): Promise<ApiResponse<SparePart[]>> {
   return productsService.getAll();
 }
 
-async function createQuote(workOrderId: string, items: QuoteInputItem[]): Promise<ApiResponse<QuoteResponse>> {
-  return apiClient.postHttp<{ items: QuoteInputItem[] }, QuoteResponse>(
+async function createQuote(workOrderId: string, items: QuoteItemInput[]): Promise<ApiResponse<QuoteResponse>> {
+  return apiClient.postHttp<{ items: QuoteItemInput[] }, QuoteResponse>(
     `/work-orders/${encodeURIComponent(workOrderId)}/quote`,
     { items },
   );
@@ -103,7 +96,7 @@ export function useCreateQuote(workOrderId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (items: QuoteInputItem[]) => createQuote(workOrderId, items),
+    mutationFn: (items: QuoteItemInput[]) => createQuote(workOrderId, items),
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['work-orders', 'pending-quote'] }),
