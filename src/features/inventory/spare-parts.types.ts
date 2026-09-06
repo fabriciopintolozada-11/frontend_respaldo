@@ -68,13 +68,6 @@ export interface CreateInventoryAdjustmentRequest {
   inventoryDiscrepancyId?: string;
 }
 
-export interface InventoryAdjustmentResponse {
-  id: string;
-  sparePartId: string;
-  previousPhysicalStock: number;
-  adjustedPhysicalStock: number;
-  quantity: number;
-  type: InventoryAdjustmentType;
-  reason: string;
-  createdAt: string;
-}
+// US-14 contract: the backend returns the updated spare part snapshot after an
+// adjustment (SparePartResponseDto), not a dedicated adjustment record.
+export type InventoryAdjustmentResponse = SparePart;

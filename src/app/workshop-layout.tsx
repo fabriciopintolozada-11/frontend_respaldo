@@ -45,7 +45,9 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/inventario',
     label: 'Inventario',
     icon: <Package className="w-4 h-4" />,
-    roles: ['WORKSHOP_LEAD', 'ADMIN'],
+    // US-23: catalog consultation is available to every role; the view hides
+    // management actions and prices for unauthorized roles (RN-16, FE-18).
+    roles: ALL_ROLES,
   },
   {
     to: '/inventario/alertas',

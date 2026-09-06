@@ -9,6 +9,7 @@ const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'
 const RECEPTION_AND_ADMIN: UserRole[] = ['RECEPTIONIST', 'ADMIN'];
 const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
 const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
+const ALL_ROLES: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 
 export const router = createBrowserRouter([
   {
@@ -33,15 +34,22 @@ export const router = createBrowserRouter([
             }),
           },
           {
-            path: 'inventario',
-            lazy: async () => ({
-              Component: (await import('../features/inventory/pages/InventoryManagerView')).InventoryManagerView,
-            }),
-          },
-          {
             path: 'inventario/alertas',
             lazy: async () => ({
               Component: (await import('../features/inventory/pages/InventoryAlertsView')).InventoryAlertsView,
+            }),
+          },
+        ],
+      },
+      {
+        // US-23: the spare parts catalog is visible to every authenticated role;
+        // management actions are role-gated inside the view (RN-16, FE-18).
+        element: <ProtectedRoute allowedRoles={ALL_ROLES} />,
+        children: [
+          {
+            path: 'inventario',
+            lazy: async () => ({
+              Component: (await import('../features/inventory/pages/InventoryManagerView')).InventoryManagerView,
             }),
           },
         ],
