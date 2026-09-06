@@ -6,6 +6,7 @@ import type { UserRole } from '../shared/types/openapi';
 import { LoginPage } from '../features/auth/pages/LoginPage';
 
 const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'];
+const RECEPTION_AND_ADMIN: UserRole[] = ['RECEPTIONIST', 'ADMIN'];
 const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
 const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
 
@@ -82,6 +83,11 @@ export const router = createBrowserRouter([
               Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
             }),
           },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_ADMIN} />,
+        children: [
           {
             path: 'presupuestos/:orderId',
             lazy: async () => ({

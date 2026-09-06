@@ -8,10 +8,11 @@ export interface EmptyStateProps {
   actionLabel?: string;
   onAction?: () => void;
   tone?: 'dark' | 'light';
+  descriptionClassName?: string;
   className?: string;
 }
 
-export function EmptyState({ icon, title, description, actionLabel, onAction, tone = 'dark', className = '' }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, actionLabel, onAction, tone = 'dark', descriptionClassName = '', className = '' }: EmptyStateProps) {
   const isLight = tone === 'light';
 
   return (
@@ -28,7 +29,7 @@ export function EmptyState({ icon, title, description, actionLabel, onAction, to
         {icon ?? <PackageOpen className="w-7 h-7" />}
       </div>
       <h3 className={`text-base font-bold ${isLight ? 'text-slate-900' : 'text-white'}`}>{title}</h3>
-      <p className={`mt-1 text-sm max-w-sm ${isLight ? 'text-slate-500' : 'text-[#8E949F]'}`}>{description}</p>
+      <p className={`mt-1 text-sm max-w-sm ${isLight ? 'text-slate-500' : 'text-[#8E949F]'} ${descriptionClassName}`}>{description}</p>
       {actionLabel && onAction && (
         <button
           type="button"
