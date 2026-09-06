@@ -5,7 +5,6 @@ import { RouterProvider } from 'react-router';
 import { AppProviders } from './app/providers';
 import { router } from './app/router';
 import { ToastProvider } from './shared/components/ToastContext';
-import { WorkshopProvider } from './state/WorkshopContext';
 import './index.css';
 
 const rootElement = document.getElementById('root');
@@ -18,9 +17,7 @@ createRoot(rootElement).render(
   <StrictMode>
     <AppProviders>
       <ToastProvider>
-        <WorkshopProvider>
-          <RouterProvider router={router} />
-        </WorkshopProvider>
+        <RouterProvider router={router} />
       </ToastProvider>
     </AppProviders>
   </StrictMode>,

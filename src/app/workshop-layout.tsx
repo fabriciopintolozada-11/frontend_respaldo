@@ -3,18 +3,14 @@ import { NavLink, Outlet } from 'react-router';
 import {
   BellRing,
   Car,
-  ClipboardCheck,
   ClipboardPlus,
   FileEdit,
-  FileText,
   Globe,
   LogOut,
   Package,
   Wrench,
 } from 'lucide-react';
 
-import { useWorkshop } from '../state/WorkshopContext';
-import { useToast } from '../shared/components/ToastContext';
 import { useAuth } from '../features/auth/hooks/useAuth';
 import type { UserRole } from '../shared/types/openapi';
 
@@ -63,21 +59,9 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['MECHANIC'],
   },
   {
-    to: '/ots',
-    label: 'Órdenes de Trabajo',
-    icon: <FileText className="w-4 h-4" />,
-    roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
-  },
-  {
     to: '/presupuestos/crear',
     label: 'Presupuestar',
     icon: <FileEdit className="w-4 h-4" />,
-    roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
-  },
-  {
-    to: '/presupuestos',
-    label: 'Aprobaciones',
-    icon: <ClipboardCheck className="w-4 h-4" />,
     roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
   },
   {
@@ -96,20 +80,11 @@ const ROLE_LABELS: Record<UserRole, string> = {
 };
 
 export function WorkshopLayout() {
-  const toast = useToast();
-  const { resetData } = useWorkshop();
   const { user, logout } = useAuth();
 
   const filteredNavItems = user
     ? filterNavItemsByRole(NAV_ITEMS, user.role)
     : [];
-
-  const handleReset = () => {
-    if (window.confirm('¿Desea restablecer todos los datos del taller al estado inicial con ejemplos?')) {
-      resetData();
-      toast.info('Datos Restablecidos', 'Se reiniciaron las órdenes, bahías e inventario.');
-    }
-  };
 
   const handleLogout = () => {
     logout();
@@ -128,10 +103,6 @@ export function WorkshopLayout() {
                 <div className="flex items-center gap-2">
                   <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">LOS FRATELLI</span>
                   <span className="text-[10px] font-semibold text-slate-500 hidden sm:inline">| Gestión de Taller</span>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 bg-lime-50 border border-lime-200 rounded-full text-[10px] font-semibold text-lime-800">
-                    <span className="w-1.5 h-1.5 rounded-full bg-lime-500 animate-pulse" />
-                    4 BAHÍAS
-                  </div>
                 </div>
                 <p className="text-[11px] text-slate-500 font-medium">Vehículos Livianos</p>
               </div>
@@ -168,18 +139,7 @@ export function WorkshopLayout() {
                     <p className="text-[10px] text-slate-400 leading-tight">{ROLE_LABELS[user.role]}</p>
                   </div>
                 </div>
-              )}
-              {(user?.role === 'WORKSHOP_LEAD' || user?.role === 'ADMIN') && (
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  title="Reiniciar datos de prueba"
-                  className="p-2 rounded-xl bg-white border border-slate-200 text-slate-500 hover:text-lime-700 hover:border-lime-300 transition-all min-h-[44px] min-w-[44px] flex items-center justify-center"
-                >
-                  <span className="sr-only">Reiniciar datos</span>
-                  <span className="text-sm">↻</span>
-                </button>
-              )}
+)}
               <button
                 type="button"
                 onClick={handleLogout}
@@ -222,16 +182,12 @@ export function WorkshopLayout() {
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-lime-500" />
             <strong className="text-slate-900">Taller Mecánico &quot;Los Fratelli&quot; S.R.L.</strong>
-            <span>— Control de Bahías &amp; OTs</span>
+            <span>— Gestión de OTs, Presupuestos e Inventario</span>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <span>La Paz, Bolivia</span>
             <span>•</span>
             <span>Moneda: BOB</span>
-            <div className="flex items-center gap-2 bg-lime-50 px-3 py-1 rounded-lg border border-lime-200">
-              <span className="w-1.5 h-1.5 rounded-full bg-lime-500" />
-              <span className="text-[11px] text-lime-800 font-bold">4 Bahías Operativas</span>
-            </div>
           </div>
         </div>
       </footer>
