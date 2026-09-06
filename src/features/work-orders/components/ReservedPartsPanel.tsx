@@ -21,7 +21,7 @@ export interface ReservedPartLine {
 export type ReservedPartsViewerRole = 'MECHANIC' | 'WORKSHOP_LEAD';
 
 interface ReservedPartsPanelProps {
-  parts: ReservedPartLine[];
+  parts?: ReservedPartLine[] | null;
   userRole: ReservedPartsViewerRole | string;
   onConfirm: (part: ReservedPartLine, quantity: number) => Promise<void> | void;
   isPending?: boolean;
@@ -44,8 +44,9 @@ export function ReservedPartsPanel({
   // RN-16: only WORKSHOP_LEAD (or ADMIN) may see prices. Any other role is
   // treated as a mechanic and prices are hidden both from state and render.
   const canSeePrices = userRole === 'WORKSHOP_LEAD';
+  const partsUnavailable = parts == null;
 
-  const reserved = parts
+  const reserved = (parts ?? [])
     .map((part) => ({ ...part, remaining: remainingQuantity(part) }))
     .filter((part) => part.remaining > 0);
 
@@ -59,7 +60,9 @@ export function ReservedPartsPanel({
           </h3>
         </div>
         <p className="text-xs text-slate-600 italic">
-          No hay repuestos reservados pendientes de instalación para esta orden.
+          {partsUnavailable
+            ? 'Los repuestos reservados se mostrarán aquí cuando estén disponibles desde el backend.'
+            : 'No hay repuestos reservados pendientes de instalación para esta orden.'}
         </p>
       </Card>
     );
