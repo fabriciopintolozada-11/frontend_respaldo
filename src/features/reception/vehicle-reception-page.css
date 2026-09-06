@@ -1,8 +1,9 @@
 .vehicle-reception-page {
-  --reception-accent: #f97316;
-  --reception-border: #2d3139;
-  --reception-muted: #8e949f;
-  color: #e0e2e6;
+  --reception-accent: #65a30d;
+  --reception-accent-soft: #ecfccb;
+  --reception-border: #e2e8f0;
+  --reception-muted: #64748b;
+  color: #0f172a;
   width: 100%;
 }
 
@@ -32,7 +33,7 @@
 
 .vehicle-reception-page .page-heading h1 {
   margin: 5px 0 8px;
-  color: #fff;
+  color: #0f172a;
   font-size: clamp(1.75rem, 4vw, 2.4rem);
   line-height: 1.1;
   letter-spacing: -0.04em;
@@ -67,7 +68,7 @@
   padding: 11px 14px;
   border: 1px solid var(--reception-border);
   border-radius: 14px;
-  background: #16191f;
+  background: #fff;
 }
 
 .vehicle-reception-page .step-indicator > span {
@@ -81,7 +82,7 @@
 }
 
 .vehicle-reception-page .step-indicator strong {
-  color: #fff;
+  color: #0f172a;
   font-size: 0.8rem;
 }
 
@@ -111,13 +112,13 @@
   padding: 22px;
   border: 1px solid var(--reception-border);
   border-radius: 18px;
-  background: #16191f;
-  box-shadow: 0 12px 30px rgb(0 0 0 / 12%);
+  background: #fff;
+  box-shadow: 0 12px 30px rgb(15 23 42 / 6%);
 }
 
 .vehicle-reception-page .plate-card {
-  border-color: rgb(249 115 22 / 38%);
-  background: linear-gradient(145deg, rgb(249 115 22 / 8%), #16191f 48%);
+  border-color: rgb(101 163 13 / 30%);
+  background: linear-gradient(145deg, #f7fee7, #fff 48%);
 }
 
 .vehicle-reception-page .section-title {
@@ -129,7 +130,7 @@
 
 .vehicle-reception-page .section-title h2 {
   margin: 0 0 3px;
-  color: #fff;
+  color: #0f172a;
   font-size: 1rem;
 }
 
@@ -140,9 +141,9 @@
   place-items: center;
   width: 38px;
   height: 38px;
-  border: 1px solid rgb(249 115 22 / 25%);
+  border: 1px solid rgb(101 163 13 / 25%);
   border-radius: 11px;
-  background: rgb(249 115 22 / 10%);
+  background: var(--reception-accent-soft);
   color: var(--reception-accent);
 }
 
@@ -158,7 +159,7 @@
 }
 
 .vehicle-reception-page .field label {
-  color: #c8cbd1;
+  color: #334155;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -169,8 +170,8 @@
   border: 1px solid var(--reception-border);
   border-radius: 11px;
   outline: none;
-  background: #0f1115;
-  color: #fff;
+  background: #fff;
+  color: #0f172a;
   font: inherit;
   transition: border-color 150ms ease, box-shadow 150ms ease;
 }
@@ -189,7 +190,7 @@
 .vehicle-reception-page .field input:focus,
 .vehicle-reception-page .field textarea:focus {
   border-color: var(--reception-accent);
-  box-shadow: 0 0 0 3px rgb(249 115 22 / 14%);
+  box-shadow: 0 0 0 3px rgb(101 163 13 / 14%);
 }
 
 .vehicle-reception-page .field input[aria-invalid='true'],
@@ -199,7 +200,7 @@
 
 .vehicle-reception-page .field input::placeholder,
 .vehicle-reception-page .field textarea::placeholder {
-  color: #5f6570;
+  color: #94a3b8;
 }
 
 .vehicle-reception-page .field-hint,
@@ -212,7 +213,7 @@
 }
 
 .vehicle-reception-page .field-error {
-  color: #fca5a5;
+  color: #b91c1c;
 }
 
 .vehicle-reception-page .plate-input input {
@@ -236,8 +237,8 @@
 }
 
 .vehicle-reception-page .electric-check.is-active {
-  border-color: rgb(239 68 68 / 55%);
-  background: rgb(239 68 68 / 8%);
+  border-color: rgb(248 113 113 / 50%);
+  background: rgb(254 242 242 / 60%);
 }
 
 .vehicle-reception-page .electric-check input {
@@ -251,13 +252,13 @@
   width: 34px;
   height: 34px;
   border-radius: 9px;
-  background: #292d35;
+  background: #f1f5f9;
   color: var(--reception-muted);
 }
 
 .vehicle-reception-page .electric-check.is-active .check-box {
-  background: rgb(239 68 68 / 16%);
-  color: #f87171;
+  background: rgb(254 226 226 / 60%);
+  color: #ef4444;
 }
 
 .vehicle-reception-page .electric-check > span:last-child {
@@ -265,7 +266,7 @@
 }
 
 .vehicle-reception-page .electric-check strong {
-  color: #e5e7eb;
+  color: #0f172a;
   font-size: 0.8rem;
 }
 
@@ -287,9 +288,9 @@
 .vehicle-reception-page .electric-alert,
 .vehicle-reception-page .lookup-notice.is-error,
 .vehicle-reception-page .global-alert.is-error {
-  border: 1px solid rgb(239 68 68 / 35%);
-  background: rgb(239 68 68 / 9%);
-  color: #f87171;
+  border: 1px solid rgb(248 113 113 / 45%);
+  background: rgb(254 242 242 / 80%);
+  color: #b91c1c;
 }
 
 .vehicle-reception-page .electric-alert {
@@ -301,7 +302,7 @@
 .vehicle-reception-page .process-note strong {
   display: block;
   margin-bottom: 2px;
-  color: #fff;
+  color: #0f172a;
   font-size: 0.8rem;
 }
 
@@ -310,7 +311,7 @@
   align-items: center;
   gap: 7px;
   margin: -4px 0 15px;
-  color: #4ade80;
+  color: #16a34a;
   font-size: 0.75rem;
   font-weight: 700;
 }
@@ -330,14 +331,14 @@
 
 .vehicle-reception-page .empty-state h3 {
   margin: 13px 0 6px;
-  color: #fff;
+  color: #0f172a;
   font-size: 0.95rem;
 }
 
 .vehicle-reception-page .spinner,
 .vehicle-reception-page .button-spinner {
   display: inline-block;
-  border: 2px solid rgb(255 255 255 / 25%);
+  border: 2px solid rgb(100 116 139 / 25%);
   border-top-color: var(--reception-accent);
   border-radius: 50%;
   animation: reception-spin 700ms linear infinite;
@@ -351,7 +352,7 @@
 .vehicle-reception-page .button-spinner {
   width: 16px;
   height: 16px;
-  border-top-color: #fff;
+  border-top-color: #1a2e05;
 }
 
 @keyframes reception-spin {
@@ -359,15 +360,15 @@
 }
 
 .vehicle-reception-page .lookup-notice.is-new {
-  border: 1px solid rgb(34 197 94 / 30%);
-  background: rgb(34 197 94 / 8%);
-  color: #4ade80;
+  border: 1px solid rgb(74 222 128 / 55%);
+  background: rgb(240 253 244 / 80%);
+  color: #15803d;
 }
 
 .vehicle-reception-page .process-note {
-  border: 1px solid rgb(59 130 246 / 25%);
-  background: rgb(59 130 246 / 8%);
-  color: #60a5fa;
+  border: 1px solid rgb(96 165 250 / 40%);
+  background: rgb(239 246 255 / 80%);
+  color: #1d4ed8;
 }
 
 .vehicle-reception-page .record-header,
@@ -381,7 +382,7 @@
 
 .vehicle-reception-page .record-header h3 {
   margin: 4px 0 0;
-  color: #fff;
+  color: #0f172a;
   font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 1.35rem;
 }
@@ -399,13 +400,13 @@
 
 .vehicle-reception-page .status-pill.is-accepted,
 .vehicle-reception-page .status-pill.is-open {
-  background: rgb(34 197 94 / 12%);
-  color: #4ade80;
+  background: rgb(74 222 128 / 22%);
+  color: #15803d;
 }
 
 .vehicle-reception-page .status-pill.is-electric {
-  background: rgb(239 68 68 / 12%);
-  color: #f87171;
+  background: rgb(248 113 113 / 18%);
+  color: #b91c1c;
 }
 
 .vehicle-reception-page .record-details,
@@ -431,14 +432,14 @@
 
 .vehicle-reception-page dd {
   margin: 0;
-  color: #e5e7eb;
+  color: #334155;
   font-size: 0.8rem;
 }
 
 .vehicle-reception-page .history-heading {
   padding-top: 16px;
   border-top: 1px solid var(--reception-border);
-  color: #fff;
+  color: #0f172a;
   font-size: 0.75rem;
 }
 
@@ -477,12 +478,12 @@
   margin-top: 5px;
   border-radius: 50%;
   background: var(--reception-accent);
-  box-shadow: 0 0 0 4px rgb(249 115 22 / 10%);
+  box-shadow: 0 0 0 4px rgb(101 163 13 / 12%);
 }
 
 .vehicle-reception-page .timeline p {
   margin: 0 0 4px;
-  color: #d1d5db;
+  color: #475569;
   font-size: 0.78rem;
   line-height: 1.45;
 }
@@ -501,7 +502,7 @@
 
 .vehicle-reception-page .submit-alert p {
   margin: 0;
-  color: #fecaca;
+  color: #b91c1c;
   font-size: 0.8rem;
 }
 
@@ -514,7 +515,7 @@
   padding: 16px 18px;
   border: 1px solid var(--reception-border);
   border-radius: 16px;
-  background: #16191f;
+  background: #fff;
 }
 
 .vehicle-reception-page .submit-bar > div {
@@ -523,7 +524,7 @@
 }
 
 .vehicle-reception-page .submit-bar strong {
-  color: #fff;
+  color: #0f172a;
   font-size: 0.85rem;
 }
 
@@ -558,14 +559,14 @@
 }
 
 .vehicle-reception-page .button-primary {
-  background: var(--reception-accent);
-  color: #fff;
+  background: #84cc16;
+  color: #1a2e05;
 }
 
 .vehicle-reception-page .button-secondary {
   border-color: var(--reception-border);
-  background: #20242b;
-  color: #fff;
+  background: #fff;
+  color: #334155;
 }
 
 .vehicle-reception-page .success-panel {
@@ -573,7 +574,7 @@
   padding: clamp(28px, 6vw, 48px);
   border: 1px solid var(--reception-border);
   border-radius: 22px;
-  background: #16191f;
+  background: #fff;
   text-align: center;
 }
 
@@ -584,22 +585,22 @@
   height: 58px;
   margin: 0 auto 18px;
   border-radius: 50%;
-  background: rgb(34 197 94 / 14%);
-  color: #4ade80;
+  background: rgb(74 222 128 / 22%);
+  color: #15803d;
 }
 
 .vehicle-reception-page .success-panel h2 {
   margin: 6px 0 9px;
-  color: #fff;
+  color: #0f172a;
   font-size: 1.65rem;
 }
 
 .vehicle-reception-page .order-ticket {
   margin: 24px 0;
   padding: 14px;
-  border: 1px dashed rgb(249 115 22 / 45%);
+  border: 1px dashed rgb(101 163 13 / 45%);
   border-radius: 13px;
-  background: rgb(249 115 22 / 6%);
+  background: #f7fee7;
   color: var(--reception-accent);
   text-align: left;
 }
@@ -616,7 +617,7 @@
 }
 
 .vehicle-reception-page .order-ticket strong {
-  color: #fff;
+  color: #0f172a;
   font-size: 0.78rem;
 }
 

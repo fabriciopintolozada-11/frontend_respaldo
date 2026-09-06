@@ -7,35 +7,37 @@ import { ApprovalSummaryModal } from './ApprovalSummaryModal';
 const items = [
   {
     id: 'labor-1',
-    type: 'labor' as const,
     description: 'Diagnóstico de frenos',
-    quantity: 2,
-    unitPriceBOB: 120,
-    totalBOB: 240,
-    status: 'PENDING',
-    isApproved: false,
-    isElectricRestricted: false,
+    itemType: 'LABOR' as const,
+    quantity: '2',
+    unitPrice: '120.00',
+    subtotal: '240.00',
+    status: 'PROPOSED',
   },
 ];
+
+const budget = {
+  laborSubtotal: '200.00',
+  partsSubtotal: '240.00',
+  total: '440.00',
+  currency: 'BOB',
+};
 
 const baseProps = {
   isOpen: true,
   onClose: vi.fn(),
-  items,
-  approvedItemIds: ['labor-1'],
-  subtotalBOB: 240,
-  taxBOB: 31.2,
-  discountBOB: 0,
-  totalBOB: 271.2,
   isSubmitting: false,
+  customerName: 'María Pérez',
+  items,
+  budget,
 };
 
 describe('ApprovalSummaryModal', () => {
-  it('requires notes and sends approval channel and decision', async () => {
+  it('requires notes (RN-07 validation mirror) and sends approval channel and decision', async () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
 
-    render(<ApprovalSummaryModal {...baseProps} decision="APROBADO" onConfirm={onConfirm} />);
+    render(<ApprovalSummaryModal {...baseProps} decision="APPROVED" onConfirm={onConfirm} />);
 
     await user.selectOptions(screen.getByLabelText(/canal de comunicación/i), 'WHATSAPP');
     await user.click(screen.getByRole('button', { name: /confirmar aprobación/i }));
@@ -47,7 +49,7 @@ describe('ApprovalSummaryModal', () => {
     await user.click(screen.getByRole('button', { name: /confirmar aprobación/i }));
 
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({
-      decision: 'APROBADO',
+      decision: 'APPROVED',
       channel: 'WHATSAPP',
       notes: 'Cliente confirmó por WhatsApp.',
     }));
@@ -57,9 +59,8 @@ describe('ApprovalSummaryModal', () => {
     const user = userEvent.setup();
     const onConfirm = vi.fn();
 
-    render(<ApprovalSummaryModal {...baseProps} decision="RECHAZADO" onConfirm={onConfirm} />);
+    render(<ApprovalSummaryModal {...baseProps} decision="REJECTED" onConfirm={onConfirm} />);
 
-    await user.type(screen.getByLabelText(/notas de respaldo/i), 'Cliente no autoriza el trabajo.');
     await user.click(screen.getByRole('button', { name: /confirmar rechazo/i }));
 
     expect(screen.getByText(/motivo del rechazo es obligatorio/i)).toBeInTheDocument();
@@ -69,9 +70,17 @@ describe('ApprovalSummaryModal', () => {
     await user.click(screen.getByRole('button', { name: /confirmar rechazo/i }));
 
     expect(onConfirm).toHaveBeenCalledWith(expect.objectContaining({
-      decision: 'RECHAZADO',
-      channel: 'CALL',
-      rejectionReason: 'Costo fuera del presupuesto del cliente.',
+      decision: 'REJECTED',
+      reason: 'Costo fuera del presupuesto del cliente.',
     }));
+  });
+
+  it('never renders invented IVA or discount totals (US-09 real contract)', () => {
+    render(<ApprovalSummaryModal {...baseProps} decision="APPROVED" onConfirm={vi.fn()} />);
+
+    expect(screen.queryByText(/IVA/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/descuento/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/maría pérez/i)).toBeInTheDocument();
+    expect(screen.getByText('440,00 BOB')).toBeInTheDocument();
   });
 });

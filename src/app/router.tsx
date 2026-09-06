@@ -89,6 +89,12 @@ export const router = createBrowserRouter([
         element: <ProtectedRoute allowedRoles={RECEPTION_AND_ADMIN} />,
         children: [
           {
+            path: 'presupuestos',
+            lazy: async () => ({
+              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+            }),
+          },
+          {
             path: 'presupuestos/:orderId',
             lazy: async () => ({
               Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
