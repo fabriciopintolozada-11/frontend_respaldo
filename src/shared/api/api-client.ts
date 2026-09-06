@@ -3,7 +3,7 @@ import { env } from '../config/env';
 
 /**
  * Centralized API Client (Standardized HTTP Client Layer)
- * Provides typed responses, interceptors, simulated network delays, and event subscriptions.
+ * Provides typed responses, interceptors, and event subscriptions.
  */
 
 export interface ApiResponse<T> {
@@ -35,16 +35,7 @@ export class ApiClientError extends Error {
 export const isBackendMode = env.dataSource === 'backend';
 
 class ApiClient {
-  private delayMs = 180;
-
-  private async simulateNetwork(): Promise<void> {
-    if (this.delayMs <= 0) return;
-    await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-  }
-
   private async request<T>(path: string, method: 'GET' | 'POST' | 'PATCH', payload?: unknown): Promise<ApiResponse<T>> {
-    await this.simulateNetwork();
-
     try {
       const response = await httpClient.request<T>({
         url: path,
@@ -88,7 +79,6 @@ class ApiClient {
   }
 
   async get<T>(fetcher: () => T): Promise<ApiResponse<T>> {
-    await this.simulateNetwork();
     try {
       const data = fetcher();
       return {
@@ -106,7 +96,6 @@ class ApiClient {
   }
 
   async post<T, R>(mutator: (payload: T) => R, payload: T): Promise<ApiResponse<R>> {
-    await this.simulateNetwork();
     try {
       const result = mutator(payload);
       return {

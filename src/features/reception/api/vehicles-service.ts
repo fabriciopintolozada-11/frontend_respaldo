@@ -14,9 +14,8 @@ export const vehiclesService = {
           id: string;
           plate: string;
           isFullyElectric: boolean;
-          customer_name: string;
-          customer_id: string;
-          history: Array<{ createdAt: string }>;
+          customer: { id: string; identification: string; name: string; phone?: string };
+          technicalHistory: Array<{ createdAt: string }>;
         }>(`/vehicles/${encodeURIComponent(plate.trim().toUpperCase())}/history`);
         return {
           ...response,
@@ -29,10 +28,10 @@ export const vehiclesService = {
             fuelType: response.data.isFullyElectric ? 'ELECTRICO' : 'GASOLINA',
             color: '',
             mileage: 0,
-            clientName: response.data.customer_name,
-            clientDocument: response.data.customer_id,
+            clientName: response.data.customer.name,
+            clientDocument: response.data.customer.identification,
             clientPhone: '',
-            totalPreviousVisits: response.data.history.length,
+            totalPreviousVisits: response.data.technicalHistory.length,
           },
         };
       } catch {

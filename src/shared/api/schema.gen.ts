@@ -168,10 +168,6 @@ export interface components {
             plate: string;
             /** @description Vehicle summary */
             vehicle: components["schemas"]["VehicleSummaryDto"];
-            /** @description Customer name */
-            customerName: string;
-            /** @description Initial complaint reported by the customer */
-            initialComplaint: string;
             /**
              * Format: date-time
              * @description Work order creation date

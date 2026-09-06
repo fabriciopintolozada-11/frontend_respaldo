@@ -1,4 +1,4 @@
-import axios, { type AxiosError, type AxiosRequestConfig } from 'axios';
+import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 
 import { env } from '../config/env';
 
@@ -25,29 +25,81 @@ export class ApiError extends Error {
   }
 }
 
+let currentToken: string | null = null;
+
+export function setAuthToken(token: string | null): void {
+  currentToken = token;
+}
+  
 export const httpClient = axios.create({
   baseURL: env.apiUrl,
   timeout: env.apiTimeout,
   headers: {
     Accept: 'application/json',
     'Content-Type': 'application/json',
-    ...(env.apiToken ? { Authorization: `Bearer ${env.apiToken}` } : {}),
   },
 });
 
-httpClient.interceptors.request.use((config) => {
+httpClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   config.headers.set('X-Requested-With', 'XMLHttpRequest');
+  const token = currentToken || localStorage.getItem('token') || env.apiToken;
+  
+  if (token) {
+    config.headers.set('Authorization', `Bearer ${token}`);
+  } else {
+    console.warn('No auth token found in localStorage or env.apiToken - request will be unauthenticated');
+  }
   return config;
 });
 
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: boolean) => void;
+  reject: (reason?: unknown) => void;
+}> = [];
+
+function processQueue(error: unknown): void {
+  failedQueue.forEach(({ reject }) => reject(error));
+  failedQueue = [];
+}
+
 httpClient.interceptors.response.use(
   (response) => response,
-  (error: AxiosError<ApiErrorBody>) => {
+  async (error: AxiosError<ApiErrorBody>) => {
     if (!axios.isAxiosError(error)) {
       return Promise.reject(error);
     }
 
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
     const statusCode = error.response?.status ?? 0;
+
+    if (statusCode === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        return new Promise<boolean>((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(() => httpClient.request(originalRequest));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      try {
+        const { tryRefresh } = await import('../../features/auth/providers/AuthProvider');
+        const refreshed = await tryRefresh();
+        if (refreshed) {
+          processQueue(null);
+          return httpClient.request(originalRequest);
+        }
+        processQueue(error);
+        return Promise.reject(error);
+      } catch (refreshError) {
+        processQueue(refreshError);
+        return Promise.reject(error);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     const body = error.response?.data;
     const message = Array.isArray(body?.message)
       ? body.message.join(' · ')

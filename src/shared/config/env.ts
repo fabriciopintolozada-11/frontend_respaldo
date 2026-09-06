@@ -6,3 +6,5 @@ export const env = {
   apiToken: import.meta.env.MODE === 'test' ? undefined : import.meta.env.VITE_API_TOKEN?.trim() || undefined,
   dataSource: import.meta.env.VITE_DATA_SOURCE === 'mock' ? 'mock' : 'backend',
 } as const;
+
+export const isBackendMode = env.dataSource === 'backend';

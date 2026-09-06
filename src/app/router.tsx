@@ -1,8 +1,21 @@
 import { createBrowserRouter, Navigate } from 'react-router';
 
 import { WorkshopLayout } from './workshop-layout';
+import { ProtectedRoute } from '../features/auth/components/ProtectedRoute';
+import type { UserRole } from '../shared/types/openapi';
+import { LoginPage } from '../features/auth/pages/LoginPage';
+
+const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'];
+const RECEPTION_AND_ADMIN: UserRole[] = ['RECEPTIONIST', 'ADMIN'];
+const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
+const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
+const ALL_ROLES: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 
 export const router = createBrowserRouter([
+  {
+    path: '/login',
+    element: <LoginPage />,
+  },
   {
     path: '/',
     element: <WorkshopLayout />,
@@ -12,46 +25,90 @@ export const router = createBrowserRouter([
         element: <Navigate to="/taller" replace />,
       },
       {
-        path: 'taller',
-        lazy: async () => ({
-          Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
-        }),
+        element: <ProtectedRoute allowedRoles={LEAD_AND_ADMIN} />,
+        children: [
+          {
+            path: 'taller',
+            lazy: async () => ({
+              Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
+            }),
+          },
+          {
+            path: 'inventario/alertas',
+            lazy: async () => ({
+              Component: (await import('../features/inventory/pages/InventoryAlertsView')).InventoryAlertsView,
+            }),
+          },
+        ],
       },
       {
-        path: 'recepcion',
-        lazy: async () => ({
-          Component: (await import('../features/vehicle-registration/pages/VehicleRegistrationPage')).VehicleRegistrationPage,
-        }),
+        // US-23: the spare parts catalog is visible to every authenticated role;
+        // management actions are role-gated inside the view (RN-16, FE-18).
+        element: <ProtectedRoute allowedRoles={ALL_ROLES} />,
+        children: [
+          {
+            path: 'inventario',
+            lazy: async () => ({
+              Component: (await import('../features/inventory/pages/InventoryManagerView')).InventoryManagerView,
+            }),
+          },
+        ],
       },
       {
-        path: 'mecanico',
-        lazy: async () => ({
-          Component: (await import('../features/mechanic-view/pages/MechanicConsoleView')).MechanicConsoleView,
-        }),
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_LEAD} />,
+        children: [
+          {
+            path: 'recepcion',
+            lazy: async () => ({
+              Component: (await import('../features/reception/vehicle-reception-page')).VehicleReceptionPage,
+            }),
+          },
+        ],
       },
       {
-        path: 'ots',
-        lazy: async () => ({
-          Component: (await import('../features/workshop/WorkOrdersListView')).WorkOrdersListView,
-        }),
+        element: <ProtectedRoute allowedRoles={MECHANIC_ONLY} />,
+        children: [
+          {
+            path: 'mecanico',
+            lazy: async () => ({
+              Component: (await import('../features/mechanic-view/pages/MechanicConsoleView')).MechanicConsoleView,
+            }),
+          },
+        ],
       },
       {
-        path: 'ots/:orderId',
-        lazy: async () => ({
-          Component: (await import('../features/workshop/WorkOrderDetailView')).WorkOrderDetailView,
-        }),
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_LEAD} />,
+        children: [
+          {
+            path: 'presupuestos/crear',
+            lazy: async () => ({
+              Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+            }),
+          },
+          {
+            path: 'presupuestos/crear/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/quote-creation/pages/QuoteCreationPage')).QuoteCreationPage,
+            }),
+          },
+        ],
       },
       {
-        path: 'presupuestos',
-        lazy: async () => ({
-          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
-        }),
-      },
-      {
-        path: 'presupuestos/:orderId',
-        lazy: async () => ({
-          Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
-        }),
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_ADMIN} />,
+        children: [
+          {
+            path: 'presupuestos',
+            lazy: async () => ({
+              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+            }),
+          },
+          {
+            path: 'presupuestos/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/budget-approval/pages/BudgetApprovalPage')).BudgetApprovalPage,
+            }),
+          },
+        ],
       },
     ],
   },

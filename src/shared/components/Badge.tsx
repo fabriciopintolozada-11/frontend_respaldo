@@ -11,25 +11,25 @@ export interface BadgeProps {
 }
 
 const variantStyles: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: 'bg-slate-100 text-slate-600 border-slate-200',
-  success: 'bg-lime-50 text-lime-900 border-lime-200',
-  warning: 'bg-amber-50 text-amber-800 border-amber-200',
-  danger: 'bg-red-50 text-red-700 border-red-200',
-  info: 'bg-sky-50 text-sky-700 border-sky-200',
-  purple: 'bg-violet-50 text-violet-700 border-violet-200',
-  amber: 'bg-lime-50 text-lime-900 border-lime-200',
-  slate: 'bg-slate-100 text-slate-600 border-slate-200',
+  default: 'bg-[#2D3139] text-[#8E949F] border-[#2D3139]',
+  success: 'bg-[#22C55E15] text-[#22C55E] border-[#22C55E30]',
+  warning: 'bg-[#F59E0B15] text-[#F59E0B] border-[#F59E0B30]',
+  danger: 'bg-[#EF444415] text-[#EF4444] border-[#EF444430]',
+  info: 'bg-[#3B82F615] text-[#3B82F6] border-[#3B82F630]',
+  purple: 'bg-[#A855F715] text-[#A855F7] border-[#A855F730]',
+  amber: 'bg-[#F9731615] text-[#F97316] border-[#F9731630]',
+  slate: 'bg-[#1C2028] text-[#8E949F] border-[#2D3139]',
 };
 
 const dotStyles: Record<NonNullable<BadgeProps['variant']>, string> = {
-  default: 'bg-slate-500',
-  success: 'bg-lime-500',
-  warning: 'bg-amber-500',
-  danger: 'bg-red-500',
-  info: 'bg-sky-500',
-  purple: 'bg-violet-500',
-  amber: 'bg-lime-500',
-  slate: 'bg-slate-500',
+  default: 'bg-[#8E949F]',
+  success: 'bg-[#22C55E]',
+  warning: 'bg-[#F59E0B]',
+  danger: 'bg-[#EF4444]',
+  info: 'bg-[#3B82F6]',
+  purple: 'bg-[#A855F7]',
+  amber: 'bg-[#F97316]',
+  slate: 'bg-[#8E949F]',
 };
 
 const sizeStyles = {
@@ -51,21 +51,29 @@ export function Badge({ children, variant = 'default', size = 'md', className = 
 
 const WORK_ORDER_CONFIGS: Record<WorkOrderStatus, { label: string; variant: NonNullable<BadgeProps['variant']> }> = {
   REGISTRADA: { label: '1. Registrada', variant: 'slate' },
-  EN_DIAGNOSTICO: { label: '2. En Diagnóstico', variant: 'amber' },
-  DIAGNOSTICADA: { label: '3. Diagnóstico Completado', variant: 'info' },
-  PRESUPUESTADA: { label: '4. Presupuestada', variant: 'amber' },
-  APROBADA: { label: '5. Aprobada x Cliente', variant: 'success' },
-  EN_PROGRESO: { label: '6. En Progreso', variant: 'purple' },
-  EN_ESPERA_REPUESTO: { label: '7. Espera Repuesto', variant: 'warning' },
-  FINALIZADA: { label: '8. Finalizada / Calidad', variant: 'success' },
-  ENTREGADA: { label: '9. Entregada / Cobrada', variant: 'default' },
+  RECIBIDO: { label: '1. Recibido', variant: 'slate' },
+  ASIGNADA: { label: '2. Asignado', variant: 'info' },
+  EN_DIAGNOSTICO: { label: '3. En Diagnóstico', variant: 'amber' },
+  DIAGNOSTICADA: { label: '4. Diagnóstico Completado', variant: 'info' },
+  PRESUPUESTO_ENVIADO: { label: '5. Presupuesto enviado', variant: 'amber' },
+  APROBADO: { label: '6. Aprobado por Cliente', variant: 'success' },
+  RECHAZADO: { label: 'Rechazado por Cliente', variant: 'danger' },
+  EN_PROGRESO: { label: 'En Progreso', variant: 'purple' },
+  EN_REPARACION: { label: '7. En Reparación', variant: 'purple' },
+  EN_ESPERA_REPUESTO: { label: 'Espera Repuesto', variant: 'warning' },
+  ESPERANDO_REPUESTO: { label: '8. Esperando Repuesto', variant: 'warning' },
+  FINALIZADA: { label: 'Finalizada / Calidad', variant: 'success' },
+  FINALIZADO: { label: '9. Finalizado / Calidad', variant: 'success' },
+  LISTO_ENTREGA: { label: '10. Listo para Entrega', variant: 'success' },
+  ENTREGADA: { label: 'Entregada / Cobrada', variant: 'default' },
+  ENTREGADO: { label: '11. Entregado / Cobrado', variant: 'default' },
   CANCELADA: { label: 'Cancelada', variant: 'danger' },
 };
 
-export function WorkOrderStatusBadge({ status, size = 'md' }: { status: WorkOrderStatus; size?: BadgeProps['size'] }) {
+export function WorkOrderStatusBadge({ status, size = 'md', className = '' }: { status: WorkOrderStatus; size?: BadgeProps['size']; className?: string }) {
   const config = WORK_ORDER_CONFIGS[status] ?? { label: status, variant: 'default' as const };
   return (
-    <Badge variant={config.variant} size={size} dot>
+    <Badge variant={config.variant} size={size} className={className} dot>
       {config.label}
     </Badge>
   );

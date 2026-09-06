@@ -52,7 +52,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
     return matchesSearch && matchesStatus && matchesAlerts;
   });
 
-  const rn06Count = orders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTADA').length;
+  const rn06Count = orders.filter((o) => o.daysWithoutClientResponse >= 15 && o.status === 'PRESUPUESTO_ENVIADO').length;
   const rn03Count = orders.filter((o) => o.isSuspendedForAdditionalWork).length;
 
   if (ordersQuery.isPending) {
@@ -77,13 +77,13 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
-            Máquina de estados visual, bitácora de auditoría, control de alertas y suspensiones .
+            Máquina de estados visual, bitácora de auditoría, control de alertas (RN-06) y suspensiones (RN-03).
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="primary" size="md" leftIcon={<PlusCircle className="w-4 h-4" />} onClick={onNewOrder}>
-            Nueva recepción
+            Nueva Recepción (HU-01)
           </Button>
         </div>
       </div>
@@ -95,14 +95,14 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             <div
               onClick={() => {
                 setOnlyAlertsFilter(true);
-                setStatusFilter('PRESUPUESTADA');
+                setStatusFilter('PRESUPUESTO_ENVIADO');
               }}
               className="p-3.5 rounded-2xl bg-[#EF444410] border border-[#EF444430] text-[#E0E2E6] flex items-center justify-between cursor-pointer hover:border-[#EF4444] transition-all"
             >
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta RN-06</h4>
                   <p className="text-[11px] text-[#8E949F]">&gt;15 días sin respuesta tras presupuesto</p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <div className="flex items-center gap-3">
                 <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas RN-03</h4>
                   <p className="text-[11px] text-[#8E949F]">Trabajos adicionales pendientes de aprobación</p>
                 </div>
               </div>
@@ -151,8 +151,8 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <option value="TODOS">Todos los Estados</option>
               <option value="REGISTRADA">1. Registrada</option>
               <option value="DIAGNOSTICADA">2. Diagnosticada</option>
-              <option value="PRESUPUESTADA">3. Presupuestada</option>
-              <option value="APROBADA">4. Aprobada x Cliente</option>
+              <option value="PRESUPUESTO_ENVIADO">3. Presupuesto enviado</option>
+              <option value="APROBADO">4. Aprobado por Cliente</option>
               <option value="EN_PROGRESO">5. En Progreso</option>
               <option value="EN_ESPERA_REPUESTO">6. Espera Repuesto</option>
               <option value="FINALIZADA">7. Finalizada</option>
@@ -162,10 +162,11 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             <button
               type="button"
               onClick={() => setOnlyAlertsFilter(!onlyAlertsFilter)}
-              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 cursor-pointer ${onlyAlertsFilter
+              className={`px-3 py-2 rounded-xl text-xs font-semibold border transition-all min-h-[44px] flex items-center gap-2 cursor-pointer ${
+                onlyAlertsFilter
                   ? 'bg-[#F97316] text-white border-[#F97316]'
                   : 'bg-[#0F1115] border-[#2D3139] text-[#8E949F] hover:text-white hover:border-[#3D4149]'
-                }`}
+              }`}
             >
               <AlertTriangle className="w-3.5 h-3.5" />
               <span>Solo Alertas</span>
@@ -184,13 +185,13 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
           icon={<FileText className="w-8 h-8 text-[#8E949F]" />}
           title="No se encontraron órdenes de trabajo"
           description="Ajusta los filtros de búsqueda o registra un nuevo vehículo en el taller."
-          actionLabel="Registrar vehículo"
+          actionLabel="Registrar Vehículo (HU-01)"
           onAction={onNewOrder}
         />
       ) : (
         <div className="space-y-3">
           {filteredOrders.map((ot) => {
-            const hasRN06 = ot.daysWithoutClientResponse >= 15 && ot.status === 'PRESUPUESTADA';
+            const hasRN06 = ot.daysWithoutClientResponse >= 15 && ot.status === 'PRESUPUESTO_ENVIADO';
             const hasRN03 = ot.isSuspendedForAdditionalWork;
 
             return (

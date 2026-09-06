@@ -28,7 +28,7 @@ export function PublicTrackingPage() {
     setLookup({ plate: plate.trim().toUpperCase(), identification: identification.trim() });
   };
 
-  const isNotFound = query.error instanceof ApiError && query.error.isNotFound;
+  const isNotFound = query.error instanceof ApiError && query.error.statusCode === 404;
   const normalizedStatus = query.data ? normalizeWorkOrderStatus(query.data.status) : null;
   const currentStage = query.data?.stage ?? (normalizedStatus ? WORK_ORDER_STATUS_LABELS[normalizedStatus] : undefined);
 
@@ -111,7 +111,7 @@ export function PublicTrackingPage() {
           {query.isSuccess && query.data && (
             <Card variant="public" padding="lg" className="space-y-8">
               <div className="flex flex-col justify-between gap-4 border-b border-slate-100 pb-6 sm:flex-row sm:items-start">
-                <div>
+<div>
                   <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Orden de trabajo</p>
                   <h2 className="mt-2 text-2xl font-black tracking-tight text-slate-950">Vehículo <span className="font-mono text-lime-700">{query.data.plate}</span></h2>
                   <p className="mt-1 text-sm text-slate-600">{query.data.vehicle.brand} {query.data.vehicle.model} · {query.data.vehicle.year}</p>

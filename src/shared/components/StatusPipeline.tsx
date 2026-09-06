@@ -5,8 +5,8 @@ const STEPS: { status: WorkOrderStatus; label: string; stepNumber: number }[] = 
   { status: 'REGISTRADA', label: '1. Registrada', stepNumber: 1 },
   { status: 'EN_DIAGNOSTICO', label: '2. En Diagnóstico', stepNumber: 2 },
   { status: 'DIAGNOSTICADA', label: '3. Diagnóstico Completado', stepNumber: 3 },
-  { status: 'PRESUPUESTADA', label: '4. Presupuestada', stepNumber: 4 },
-  { status: 'APROBADA', label: '5. Aprobada x Cliente', stepNumber: 5 },
+  { status: 'PRESUPUESTO_ENVIADO', label: '4. Presupuesto enviado', stepNumber: 4 },
+  { status: 'APROBADO', label: '5. Aprobado por Cliente', stepNumber: 5 },
   { status: 'EN_PROGRESO', label: '6. En Progreso', stepNumber: 6 },
   { status: 'EN_ESPERA_REPUESTO', label: '7. Espera Repuesto', stepNumber: 7 },
   { status: 'FINALIZADA', label: '8. Finalizada', stepNumber: 8 },
@@ -20,6 +20,7 @@ export interface StatusPipelineProps<S extends string> {
   onSelectNextStatus?: (status: S) => void;
   interactive?: boolean;
   className?: string;
+  tone?: 'dark' | 'light';
 }
 
 export function StatusPipeline<S extends string>({
@@ -29,13 +30,14 @@ export function StatusPipeline<S extends string>({
   onSelectNextStatus,
   interactive = false,
   className = '',
+  tone = 'dark',
 }: StatusPipelineProps<S>) {
   const currentStepIdx = STEPS.findIndex((s) => s.status === currentStatus);
 
   return (
     <div className={`w-full ${className}`}>
       {isSuspendedForAdditionalWork && (
-        <div className="mb-3 p-3 rounded-xl bg-[#F59E0B10] border border-[#F59E0B30] text-[#F59E0B] flex items-start gap-2.5 text-sm">
+        <div className="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-start gap-2.5 text-sm">
           <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
             <span className="font-bold">Regla RN-03 Aplicada:</span> Trabajo en bahía suspendido temporalmente por
@@ -44,8 +46,8 @@ export function StatusPipeline<S extends string>({
         </div>
       )}
 
-      {daysWithoutClientResponse >= 15 && currentStatus === 'PRESUPUESTADA' && (
-        <div className="mb-3 p-3 rounded-xl bg-[#EF444410] border border-[#EF444430] text-[#EF4444] flex items-start gap-2.5 text-sm">
+      {daysWithoutClientResponse >= 15 && currentStatus === 'PRESUPUESTO_ENVIADO' && (
+        <div className="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-start gap-2.5 text-sm">
           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
             <span className="font-bold">Alerta RN-06 ({daysWithoutClientResponse} días sin respuesta):</span> La orden
@@ -54,9 +56,18 @@ export function StatusPipeline<S extends string>({
         </div>
       )}
 
+      {currentStatus === 'RECHAZADO' && (
+        <div className="mb-3 flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+          <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
+          <div>
+            <span className="font-bold">Presupuesto rechazado:</span> la OT permanece abierta hasta el retiro del vehículo.
+          </div>
+        </div>
+      )}
+
       <div className="w-full overflow-x-auto pb-2">
         <div className="flex items-center min-w-[760px] justify-between relative py-2">
-          <div className="absolute top-1/2 left-6 right-6 -translate-y-1/2 h-1 bg-[#2D3139] -z-0" />
+          <div className={`absolute top-1/2 left-6 right-6 -translate-y-1/2 h-1 -z-0 ${tone === 'light' ? 'bg-slate-200' : 'bg-[#2D3139]'}`} />
           {STEPS.map((step, idx) => {
             const isCompleted = currentStepIdx > idx;
             const isCurrent = step.status === currentStatus;
@@ -76,14 +87,16 @@ export function StatusPipeline<S extends string>({
                       ? 'bg-[#F97316] text-white ring-4 ring-[#F9731630] scale-110'
                       : isCompleted
                         ? 'bg-[#22C55E] text-white'
-                        : 'bg-[#1C2028] border-2 border-[#2D3139] text-[#8E949F]'
+                         : tone === 'light'
+                           ? 'bg-white border-2 border-slate-300 text-slate-500'
+                           : 'bg-[#1C2028] border-2 border-[#2D3139] text-[#8E949F]'
                   } ${isClickable ? 'cursor-pointer hover:ring-2 hover:ring-[#F97316]' : 'cursor-default'}`}
                 >
                   {isCompleted ? <CheckCircle2 className="w-5 h-5" /> : isCurrent ? <Clock className="w-5 h-5 animate-pulse" /> : <span>{step.stepNumber}</span>}
                 </button>
                 <span
                   className={`mt-2 text-xs text-center font-medium whitespace-nowrap px-1 ${
-                    isCurrent ? 'text-[#F97316] font-bold' : isCompleted ? 'text-[#22C55E]' : 'text-[#8E949F]'
+                     isCurrent ? 'text-[#F97316] font-bold' : isCompleted ? 'text-[#22C55E]' : tone === 'light' ? 'text-slate-600' : 'text-[#8E949F]'
                   }`}
                 >
                   {step.label}

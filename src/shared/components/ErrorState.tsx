@@ -15,7 +15,7 @@ export function ErrorState({ message = 'Ocurrio un error al cargar los datos.', 
       <h3 className="text-sm font-bold text-slate-950">Error</h3>
       <p className="max-w-md text-xs text-slate-600">{message}</p>
       {onRetry && (
-        <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" />}>
+        <Button variant="outline-light" size="sm" onClick={onRetry} leftIcon={<RefreshCw className="h-3.5 w-3.5" />}>
           Reintentar
         </Button>
       )}

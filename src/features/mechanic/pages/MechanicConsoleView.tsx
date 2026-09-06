@@ -27,12 +27,19 @@ import { useToast } from '../../../shared/components/ToastContext';
 import { workOrdersService } from '../../work-orders/api/work-orders-service';
 import type { WorkOrder } from '../../../shared/types/openapi';
 import { useMechanicOrders } from '../api/useMechanicOrders';
+import { DiagnosticForm } from '../../work-orders/components/DiagnosticForm';
+
+export function isDiagnosticEligible(status: string): boolean {
+  const normalizedStatus = status.trim().toUpperCase();
+  return normalizedStatus === 'RECIBIDO' || normalizedStatus === 'EN_DIAGNOSTICO';
+}
 
 export const MechanicConsoleView: React.FC = () => {
   const toast = useToast();
   const queryClient = useQueryClient();
   const assignedOrdersQuery = useMechanicOrders();
   const workOrders: WorkOrder[] = assignedOrdersQuery.data?.data ?? [];
+  const [diagnosingOrder, setDiagnosingOrder] = useState<WorkOrder | null>(null);
 
   // Additional work reporting modal (RN-03)
   const [reportingOt, setReportingOt] = useState<WorkOrder | null>(null);
@@ -60,8 +67,8 @@ export const MechanicConsoleView: React.FC = () => {
     try {
       await workOrdersService.confirmPartInstalled(orderId, partItemId);
       toast.success(
-        'Repuesto Instalado',
-        'Stock descontado automáticamente del inventario.'
+        'Repuesto instalado',
+        'El uso del repuesto quedó registrado.'
       );
       await loadData();
     } catch (err) {
@@ -85,7 +92,7 @@ export const MechanicConsoleView: React.FC = () => {
         750, // Cost calculated by system/Jefe de Taller
         [
           {
-            description: `[ADICIONAL RN-03] ${additionalDesc}`,
+            description: additionalDesc,
             estimatedHours: Number(additionalHours) || 2,
             hourlyRateBOB: 120,
             totalBOB: (Number(additionalHours) || 2) * 120,
@@ -94,20 +101,20 @@ export const MechanicConsoleView: React.FC = () => {
         ],
         additionalPartDesc
           ? [
-            {
-              partId: 'REP-ADD-001',
-              partCode: 'REP-ADD',
-              description: `[ADICIONAL RN-03] ${additionalPartDesc}`,
-              quantityRequired: 1,
-              unitPriceBOB: 200,
-              totalBOB: 200,
-            },
-          ]
+              {
+                partId: 'REP-ADD-001',
+                partCode: 'REP-ADD',
+                description: additionalPartDesc,
+                quantityRequired: 1,
+                unitPriceBOB: 200,
+                totalBOB: 200,
+              },
+            ]
           : []
       );
 
       toast.warning(
-        'Trabajo Suspendido',
+        'Trabajo suspendido',
         'Se notificó al Jefe de Taller y al cliente. La orden queda pausada hasta confirmación explícita.'
       );
       setReportingOt(null);
@@ -127,37 +134,37 @@ export const MechanicConsoleView: React.FC = () => {
   }
 
   if (assignedOrdersQuery.isError) {
-    return <EmptyState icon={<AlertTriangle className="w-8 h-8 text-red-600" />} title="No se pudieron cargar tus órdenes" description="Verifique que la sesión corresponda a un mecánico." actionLabel="Reintentar" onAction={loadData} />;
+    return <EmptyState icon={<AlertTriangle className="w-8 h-8 text-[#EF4444]" />} title="No se pudieron cargar tus órdenes" description="Verifique que la sesión corresponda a un mecánico." actionLabel="Reintentar" onAction={loadData} />;
   }
 
   return (
-    <div className="space-y-6 bg-slate-50 text-slate-900">
+    <div className="space-y-6">
       {/* Top Header with Role Switcher & RN-16 Compliance Badge */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-lime-50 border border-lime-200 flex items-center justify-center text-lime-700">
+            <div className="w-9 h-9 rounded-xl bg-[#F9731615] border border-[#F9731630] flex items-center justify-center text-[#F97316]">
               <Wrench className="w-5 h-5" />
             </div>
-            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">
-              Consola del Mecánico
+            <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
+              Consola del mecánico
             </h1>
           </div>
-          <p className="text-xs text-slate-600 mt-1.5">
+          <p className="text-xs text-[#8E949F] mt-1.5">
             Panel táctil de tareas en bahía, registro de diagnóstico, instalación de repuestos y reporte de imprevistos.
           </p>
         </div>
 
         {/* RN-16 Privacy Notice */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-xs font-semibold text-slate-600">
-          <Lock className="w-3.5 h-3.5 text-lime-700" />
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-[#16191F] border border-[#2D3139] text-xs font-semibold text-[#8E949F]">
+          <Lock className="w-3.5 h-3.5 text-[#F97316]" />
           <span>Vista técnica sin costos</span>
         </div>
       </div>
 
-      <Card variant="public" padding="sm">
-        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-600">
-          <User className="w-4 h-4 text-lime-700" />
+      <Card variant="flat" padding="sm">
+        <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#8E949F]">
+          <User className="w-4 h-4 text-[#F97316]" />
           <span>Sesión del mecánico autenticado</span>
         </div>
       </Card>
@@ -165,18 +172,18 @@ export const MechanicConsoleView: React.FC = () => {
       {/* Assigned Orders Feed */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-            <Clock className="w-4 h-4 text-lime-700" />
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-[#8E949F] flex items-center gap-2">
+            <Clock className="w-4 h-4 text-[#F97316]" />
             Órdenes Asignadas ({assignedOrders.length})
           </h2>
-          <Button variant="ghost" size="sm" className="text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={loadData} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>
+          <Button variant="ghost" size="sm" onClick={loadData} leftIcon={<RefreshCw className="w-3.5 h-3.5" />}>
             Refrescar
           </Button>
         </div>
 
         {assignedOrders.length === 0 ? (
           <EmptyState
-            icon={<Wrench className="w-8 h-8 text-slate-500" />}
+            icon={<Wrench className="w-8 h-8 text-[#8E949F]" />}
             title="Sin órdenes asignadas actualmente"
             description="No tienes vehículos en cola para tu puesto de trabajo. El Jefe de Taller te asignará la próxima orden disponible."
           />
@@ -187,31 +194,31 @@ export const MechanicConsoleView: React.FC = () => {
             return (
               <Card
                 key={ot.id}
-                variant="public"
+                variant={isSuspended ? 'warning' : 'default'}
                 padding="md"
                 className="space-y-4"
               >
                 {/* OT Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-200">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#2D3139]">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2.5 flex-wrap">
-                      <span className="font-mono text-xs font-bold text-lime-900 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-lg">
+                      <span className="font-mono text-xs font-bold text-[#F97316] bg-[#F9731615] border border-[#F9731630] px-2 py-0.5 rounded-lg">
                         {ot.code}
                       </span>
-                      <span className="font-mono font-extrabold text-base text-slate-950 break-all">
+                      <span className="font-mono font-extrabold text-base text-white break-all">
                         {ot.vehiclePlate}
                       </span>
-                      <span className="text-xs font-semibold text-slate-600 break-words">
+                      <span className="text-xs font-semibold text-[#8E949F] break-words">
                         • {ot.vehicleBrand} {ot.vehicleModel} ({ot.vehicleYear})
                       </span>
                       {ot.assignedBayId && (
-                        <span className="text-[10px] font-bold text-lime-900 bg-lime-50 border border-lime-200 px-2 py-0.5 rounded-md font-mono">
+                        <span className="text-[10px] font-bold text-[#22C55E] bg-[#22C55E15] border border-[#22C55E30] px-2 py-0.5 rounded-md font-mono">
                           Bahía #{ot.assignedBayId}
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-slate-600 mt-1">
-                      Cliente: <strong className="text-slate-950">{ot.clientName}</strong> | Tel: {ot.clientPhone}
+                    <p className="text-xs text-[#8E949F] mt-1">
+                      Cliente: <strong className="text-white">{ot.clientName}</strong> | Tel: {ot.clientPhone}
                     </p>
                   </div>
 
@@ -222,25 +229,25 @@ export const MechanicConsoleView: React.FC = () => {
 
                 {/* RN-03 Suspension Alert if active */}
                 {isSuspended && (
-                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 flex items-start gap-3">
-                    <ShieldAlert className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
+                  <div className="p-3 rounded-xl bg-[#F9731610] border border-[#F9731630] text-[#E0E2E6] flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
                     <div className="text-xs">
-                      <span className="font-bold text-amber-800">ORDEN SUSPENDIDA POR DAÑO ADICIONAL:</span>{' '}
-                      {ot.additionalWorkDescription}. <em className="text-slate-600">Pausado hasta autorización del cliente.</em>
+                      <span className="font-bold text-[#F97316]">ORDEN SUSPENDIDA POR DAÑO ADICIONAL:</span>{' '}
+                      {ot.additionalWorkDescription}. <em className="text-[#8E949F]">Pausado hasta autorización del cliente.</em>
                     </div>
                   </div>
                 )}
 
                 {/* Entry Reason & Diagnostic */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600 block mb-1">Motivo de Ingreso:</span>
-                    <p className="text-slate-900">{ot.entryReason}</p>
+                  <div className="p-3 rounded-xl bg-[#1C2028] border border-[#2D3139]">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#8E949F] block mb-1">Motivo de Ingreso:</span>
+                    <p className="text-[#E0E2E6]">{ot.entryReason}</p>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-slate-600 block mb-1">Diagnóstico Técnico:</span>
-                    <p className="text-slate-900">
+                  <div className="p-3 rounded-xl bg-[#1C2028] border border-[#2D3139]">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#8E949F] block mb-1">Diagnóstico Técnico:</span>
+                    <p className="text-[#E0E2E6]">
                       {ot.diagnosticReport || 'En proceso de evaluación en bahía.'}
                     </p>
                   </div>
@@ -249,44 +256,46 @@ export const MechanicConsoleView: React.FC = () => {
                 {/* Labor Checklist (HU-03) - STRICTLY NO PRICES (RN-16) */}
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <CheckSquare className="w-4 h-4 text-lime-700" />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E949F] flex items-center gap-1.5">
+                      <CheckSquare className="w-4 h-4 text-[#F97316]" />
                       Operaciones de Mano de Obra
                     </h3>
-                    <span className="text-[10px] text-slate-500">Toque para completar</span>
+                    <span className="text-[10px] text-[#8E949F]">Toque para completar</span>
                   </div>
 
-                  {ot.laborItems.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No hay tareas de mano de obra registradas aún.</p>
+                  {(ot.laborItems ?? []).length === 0 ? (
+                    <p className="text-xs text-[#8E949F] italic">No hay tareas de mano de obra registradas aún.</p>
                   ) : (
                     <div className="space-y-2">
-                      {ot.laborItems.map((lab) => (
+                      {(ot.laborItems ?? []).map((lab) => (
                         <div
                           key={lab.id}
                           onClick={() => handleToggleLabor(ot.id, lab.id)}
-                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all min-h-[44px] ${lab.isCompleted
-                            ? 'bg-lime-50 border-lime-200 text-lime-900'
-                            : 'bg-white border-slate-200 hover:border-lime-300 text-slate-900'
-                            }`}
+                          className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all min-h-[44px] ${
+                            lab.isCompleted
+                              ? 'bg-[#22C55E10] border-[#22C55E30] text-[#22C55E]'
+                              : 'bg-[#1C2028] border-[#2D3139] hover:border-[#3D4149] text-[#E0E2E6]'
+                          }`}
                         >
                           <div className="flex items-center gap-3">
-                            <div className="text-lime-700">
+                            <div className="text-[#F97316]">
                               {lab.isCompleted ? (
-                                <CheckCircle2 className="w-4 h-4 text-lime-700" />
+                                <CheckCircle2 className="w-4 h-4 text-[#22C55E]" />
                               ) : (
-                                <Square className="w-4 h-4 text-slate-500" />
+                                <Square className="w-4 h-4 text-[#8E949F]" />
                               )}
                             </div>
                             <span
-                              className={`text-xs font-medium ${lab.isCompleted ? 'line-through opacity-70 text-lime-900' : 'text-slate-900'
-                                }`}
+                              className={`text-xs font-medium ${
+                                lab.isCompleted ? 'line-through opacity-70' : 'text-white'
+                              }`}
                             >
                               {lab.description}
                             </span>
                           </div>
 
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 border border-slate-200">
+                            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-[#0F1115] text-[#8E949F] border border-[#2D3139]">
                               ⏱️ {lab.estimatedHours}h est.
                             </span>
                           </div>
@@ -299,34 +308,34 @@ export const MechanicConsoleView: React.FC = () => {
                 {/* Parts Requisition & Installation (RN-07, RN-08) - STRICTLY NO PRICES (RN-16) */}
                 <div className="space-y-2 pt-1">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-xs font-semibold uppercase tracking-wider text-slate-600 flex items-center gap-1.5">
-                      <Package className="w-4 h-4 text-lime-700" />
+                    <h3 className="text-xs font-semibold uppercase tracking-wider text-[#8E949F] flex items-center gap-1.5">
+                      <Package className="w-4 h-4 text-[#F97316]" />
                       Repuestos Requeridos
                     </h3>
                   </div>
 
-                  {ot.partsItems.length === 0 ? (
-                    <p className="text-xs text-slate-500 italic">No se solicitaron repuestos para esta orden.</p>
+                  {(ot.partsItems ?? []).length === 0 ? (
+                    <p className="text-xs text-[#8E949F] italic">No se solicitaron repuestos para esta orden.</p>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      {ot.partsItems.map((part) => {
+                      {(ot.partsItems ?? []).map((part) => {
                         const isInstalled = part.status === 'INSTALADO';
 
                         return (
                           <div
                             key={part.id}
-                            className="p-3 rounded-xl border border-slate-200 bg-white flex items-center justify-between gap-2"
+                            className="p-3 rounded-xl border border-[#2D3139] bg-[#1C2028] flex items-center justify-between gap-2"
                           >
                             <div>
                               <div className="flex items-center gap-1.5">
-                                <span className="font-mono text-xs font-bold text-lime-900">
+                                <span className="font-mono text-xs font-bold text-[#F97316]">
                                   {part.partCode}
                                 </span>
-                                <span className="text-xs font-bold text-slate-900">
+                                <span className="text-xs font-bold text-white">
                                   x{part.quantityRequired} un.
                                 </span>
                               </div>
-                              <p className="text-xs text-slate-600 line-clamp-1">
+                              <p className="text-xs text-[#8E949F] line-clamp-1">
                                 {part.description}
                               </p>
                             </div>
@@ -340,9 +349,9 @@ export const MechanicConsoleView: React.FC = () => {
                                 variant="outline"
                                 size="sm"
                                 onClick={() => handleConfirmPartInstalled(ot.id, part.id)}
-                                className="text-xs border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+                                className="text-xs min-h-[36px]"
                               >
-                                Confirmar Uso
+                                Confirmar uso
                               </Button>
                             )}
                           </div>
@@ -353,23 +362,33 @@ export const MechanicConsoleView: React.FC = () => {
                 </div>
 
                 {/* Mechanic Actions Footer */}
-                <div className="pt-3 border-t border-slate-200 flex flex-wrap items-center justify-between gap-3">
-                  <Button
-                    variant="warning"
-                    className="border-amber-300 bg-amber-50 text-amber-800 hover:bg-amber-100 hover:text-amber-950 focus:ring-amber-300"
-                    size="sm"
-                    leftIcon={<AlertTriangle className="w-4 h-4" />}
-                    onClick={() => setReportingOt(ot)}
-                  >
-                    Reportar Daño Adicional
-                  </Button>
+                <div className="pt-3 border-t border-[#2D3139] flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex flex-wrap gap-2">
+                    {isDiagnosticEligible(ot.status) && (
+                      <Button
+                        variant="primary"
+                        size="sm"
+                        leftIcon={<FileText className="w-4 h-4" />}
+                        onClick={() => setDiagnosingOrder(ot)}
+                      >
+                        Registrar diagnóstico
+                      </Button>
+                    )}
+                    <Button
+                      variant="warning"
+                      size="sm"
+                      leftIcon={<AlertTriangle className="w-4 h-4" />}
+                      onClick={() => setReportingOt(ot)}
+                    >
+                      Reportar daño adicional
+                    </Button>
+                  </div>
 
                   {ot.status === 'EN_PROGRESO' && (
                     <Button
-                      variant="primary"
+                      variant="success"
                       size="sm"
                       leftIcon={<CheckCircle2 className="w-4 h-4" />}
-                      className="bg-lime-400 text-lime-900 hover:bg-lime-500 focus:ring-lime-400"
                       onClick={async () => {
                         try {
                           await workOrdersService.updateStatus(
@@ -398,21 +417,20 @@ export const MechanicConsoleView: React.FC = () => {
       <Modal
         isOpen={!!reportingOt}
         onClose={() => setReportingOt(null)}
-        title={`Reportar Daño Oculto en ${reportingOt?.vehiclePlate}`}
-        subtitle="Suspende automáticamente el avance en bahía y genera cotización adicional para el cliente"
-        variant="light"
+        title={`Reportar daño oculto en ${reportingOt?.vehiclePlate}`}
+        subtitle="El avance se suspenderá hasta contar con una nueva aprobación del cliente."
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-600 mb-1.5">
-              Descripción Técnica del Daño Oculto <span className="text-red-600">*</span>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-[#8E949F] mb-1.5">
+              Descripción Técnica del Daño Oculto <span className="text-[#EF4444]">*</span>
             </label>
             <textarea
               rows={3}
               value={additionalDesc}
               onChange={(e) => setAdditionalDesc(e.target.value)}
               placeholder="Ej: Fuga activa en retén de bancada al retirar protector de cárter..."
-              className="w-full rounded-xl border border-slate-300 bg-white p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:border-lime-500 focus:outline-none focus:ring-2 focus:ring-lime-200"
+              className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] p-3 text-xs text-[#E0E2E6] focus:border-[#F97316] focus:outline-none"
             />
           </div>
 
@@ -425,7 +443,6 @@ export const MechanicConsoleView: React.FC = () => {
                 onChange={(e) => setAdditionalHours(Number(e.target.value))}
                 min={1}
                 max={20}
-                tone="light"
               />
             </div>
 
@@ -435,30 +452,52 @@ export const MechanicConsoleView: React.FC = () => {
                 value={additionalPartDesc}
                 onChange={(e) => setAdditionalPartDesc(e.target.value)}
                 placeholder="Ej: Retén trasero de cigüeñal OEM"
-                tone="light"
               />
             </div>
           </div>
 
-          <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-950 text-xs">
-            ⚠️ <strong className="text-slate-950">Efecto Inmediato:</strong> La orden cambiará a estado <em className="text-amber-800">Suspendido</em>. Se notificará al cliente para aprobación formal.
+          <div className="p-3 rounded-xl bg-[#F9731610] border border-[#F9731630] text-[#E0E2E6] text-xs">
+            <strong className="text-white">Efecto inmediato:</strong> La orden quedará suspendida y se notificará al cliente para solicitar una aprobación formal.
           </div>
 
-          <div className="pt-4 flex justify-end gap-2.5 border-t border-slate-200">
-            <Button variant="outline" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => setReportingOt(null)}>
+          <div className="pt-4 flex justify-end gap-2.5 border-t border-[#2D3139]">
+            <Button variant="outline" onClick={() => setReportingOt(null)}>
               Cancelar
             </Button>
             <Button
               variant="danger"
-              className="bg-red-600 text-white hover:bg-red-700 focus:ring-red-500"
               isLoading={isSubmittingReport}
               onClick={handleReportAdditionalWork}
               leftIcon={<ShieldAlert className="w-4 h-4" />}
             >
-              Aplicar Suspensión
+              Aplicar suspensión
             </Button>
           </div>
         </div>
+      </Modal>
+
+      <Modal
+        isOpen={Boolean(diagnosingOrder)}
+        onClose={() => setDiagnosingOrder(null)}
+        title="Registrar diagnóstico técnico"
+        subtitle="Documenta los hallazgos y las necesidades preliminares de la orden."
+        maxWidth="2xl"
+        variant="light"
+      >
+        {diagnosingOrder && (
+          <DiagnosticForm
+            order={{
+              id: diagnosingOrder.id,
+              code: diagnosingOrder.code,
+              plate: diagnosingOrder.vehiclePlate,
+              status: diagnosingOrder.status,
+              initialComplaint: diagnosingOrder.entryReason,
+              vehicleDescription: [diagnosingOrder.vehicleBrand, diagnosingOrder.vehicleModel].filter(Boolean).join(' ') || undefined,
+            }}
+            parts={[]}
+            onCancel={() => setDiagnosingOrder(null)}
+          />
+        )}
       </Modal>
     </div>
   );

@@ -17,8 +17,6 @@ export function statusResponse(overrides: Partial<VehicleStatusResponse> = {}): 
     workOrderId: 'work-order-1',
     plate: 'ABC123',
     vehicle: { brand: 'Toyota', model: 'Corolla', year: 2019 },
-    customerName: 'Ana García',
-    initialComplaint: 'Ruido en la suspensión delantera',
     createdAt: '2026-08-10T12:00:00.000Z',
     status: 'EN_REPARACION',
     stage: 'En reparación',
