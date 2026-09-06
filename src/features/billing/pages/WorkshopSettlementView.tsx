@@ -100,7 +100,7 @@ export const WorkshopSettlementView: React.FC<{
       });
 
       toast.success(
-        'Cuenta Liquidada y Vehículo Entregado (RN-21, RN-22)',
+        'Cuenta Liquidada y Vehículo Entregado',
         `Se emitió ${documentType === 'FACTURA_COMPUTARIZADA' ? 'Factura Computarizada' : 'Recibo'} por ${selectedBillForPay.totalAmountBOB} BOB.`
       );
       setSelectedBillForPay(null);
@@ -126,7 +126,7 @@ export const WorkshopSettlementView: React.FC<{
               <DollarSign className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              Liquidación & Caja del Taller (RN-21, RN-22)
+              Liquidación & Caja del Taller
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
@@ -177,7 +177,7 @@ export const WorkshopSettlementView: React.FC<{
         <EmptyState
           icon={<Receipt className="w-8 h-8 text-[#8E949F]" />}
           title="No hay liquidaciones pendientes"
-          description="Las cuentas se crean automáticamente al finalizar una orden de trabajo (RN-21)."
+          description="Las cuentas se crean automáticamente al finalizar una orden de trabajo."
         />
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -216,7 +216,7 @@ export const WorkshopSettlementView: React.FC<{
                         </Badge>
                       ) : (
                         <Badge variant="danger" size="sm">
-                          Pendiente (RN-21)
+                          Pendiente
                         </Badge>
                       )}
                       <span className="text-[10px] text-[#8E949F] font-mono">
@@ -286,7 +286,7 @@ export const WorkshopSettlementView: React.FC<{
                       }}
                       className="text-xs"
                     >
-                      Liquidar Cuenta (RN-21)
+                      Liquidar Cuenta
                     </Button>
                   )}
                 </div>
@@ -301,7 +301,7 @@ export const WorkshopSettlementView: React.FC<{
         isOpen={!!selectedBillForPay}
         onClose={() => setSelectedBillForPay(null)}
         title={`Cobro & Liquidación - Orden ${selectedBillForPay?.workOrderId}`}
-        subtitle="Regla RN-21: Registro formal de pago y entrega física del vehículo liviano"
+        subtitle="Registro formal de pago y entrega física del vehículo liviano"
       >
         <div className="space-y-4">
           <div className="p-3.5 rounded-2xl bg-[#F9731610] border border-[#F9731630] text-[#E0E2E6] flex items-center justify-between">
@@ -412,7 +412,7 @@ export const WorkshopSettlementView: React.FC<{
               onClick={handleProcessPayment}
               leftIcon={<CheckCircle2 className="w-4 h-4" />}
             >
-              Confirmar Cobro & Entregar Vehículo (RN-21)
+              Confirmar Cobro & Entregar Vehículo
             </Button>
           </div>
         </div>

@@ -86,7 +86,7 @@ export const budgetsService = {
             {
               status: 'APROBADO',
               timestamp: new Date().toISOString(),
-              changedBy: 'Cliente (Aprobación explícita RN-02)',
+              changedBy: 'Cliente (Aprobación explícita)',
               reason: `Presupuesto ${updated.totalBOB} BOB aprobado con token ${updated.approvalToken}`,
             },
             ...orders[oIdx].statusHistory,

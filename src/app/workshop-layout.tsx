@@ -39,7 +39,8 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/taller',
     label: 'Jefe de Taller',
     icon: <Car className="w-4 h-4" />,
-    roles: ['WORKSHOP_LEAD', 'ADMIN'],
+    // US-00: the workshop head board is exclusive to WORKSHOP_LEAD.
+    roles: ['WORKSHOP_LEAD'],
   },
   {
     to: '/inventario',

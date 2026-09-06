@@ -79,7 +79,7 @@ function toApiMessage(error: unknown, fallback: string): string {
       case 409:
         return error.message || 'Ya existe un repuesto con ese código.';
       case 422:
-        return error.message || 'El stock físico no puede quedar por debajo del stock reservado (RN-07).';
+        return error.message || 'El stock físico no puede quedar por debajo del stock reservado.';
       default:
         return error.message || fallback;
     }
@@ -268,7 +268,7 @@ export function InventoryManagerView() {
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">Catálogo de Repuestos</h1>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Stock físico, disponible y reservado. Los ajustes de inventario se registran con trazabilidad (US-14).
+            Stock físico, disponible y reservado. Los ajustes de inventario se registran con trazabilidad.
           </p>
         </div>
         {canManage && (
@@ -293,7 +293,7 @@ export function InventoryManagerView() {
         <MetricCard
           title="Unidades Reservadas"
           value={totalReserved}
-          subtitle="Bloqueadas para OTs (RN-07)"
+          subtitle="Bloqueadas para OTs"
           icon={<Layers className="w-5 h-5" />}
           theme="light"
         />
@@ -564,7 +564,7 @@ export function InventoryManagerView() {
             </label>
             <textarea
               rows={3}
-              placeholder="Ej: Conteo físico detectó 3 unidades adicionales tras inspección (RN-07)."
+              placeholder="Ej: Conteo físico detectó 3 unidades adicionales tras inspección."
               className={`${inputClass} resize-none ${adjustForm.formState.errors.reason ? 'border-red-400' : ''}`}
               {...adjustForm.register('reason')}
             />
@@ -720,7 +720,7 @@ export function InventoryManagerView() {
             <AlertTriangle className="w-4 h-4 flex-shrink-0" />
             <span>
               El repuesto dejará de estar disponible para nuevas cotizaciones y consultas del catálogo, pero
-              conservará su historial y movimientos (RN-19).
+              conservará su historial y movimientos.
             </span>
           </div>
           <div className="flex items-center justify-end gap-2 pt-2">

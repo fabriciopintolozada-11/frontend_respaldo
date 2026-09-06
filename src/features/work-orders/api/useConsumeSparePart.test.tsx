@@ -132,7 +132,7 @@ describe('useConsumeSparePart', () => {
     const details = translateConsumePartError(result.current.error);
     expect(details.isAuthorizationError).toBe(true);
     expect(details.code).toBe(403);
-    expect(details.message).toContain('RN-04');
+    expect(details.message).toContain('mecánico asignado');
   });
 
   it('does not surface a 401 as a business rule (auth required for a new session)', () => {

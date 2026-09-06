@@ -100,7 +100,7 @@ export function RotationBadge({ rotation }: { rotation: PartRotation }) {
     ALTA: { label: 'Alta Rotación', variant: 'success' },
     MEDIA: { label: 'Media Rotación', variant: 'info' },
     BAJA: { label: 'Baja Rotación', variant: 'slate' },
-    SIN_ROTACION_ALERTA: { label: '⚠️ Alerta: 2+ Meses Sin Rotar (RN-10)', variant: 'danger' },
+    SIN_ROTACION_ALERTA: { label: '⚠️ Alerta: 2+ Meses Sin Rotar', variant: 'danger' },
   };
   const config = configs[rotation] ?? { label: rotation, variant: 'default' as const };
   return <Badge variant={config.variant}>{config.label}</Badge>;

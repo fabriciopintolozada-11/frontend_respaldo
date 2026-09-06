@@ -74,7 +74,7 @@ export const BudgetsAndApprovalsView: React.FC<{
     try {
       await budgetsService.recordClientApproval(budgetToApprove.id, approvalToken || undefined);
       toast.success(
-        'Presupuesto Aprobado Explícitamente (RN-02)',
+        'Presupuesto Aprobado Explícitamente',
         `Orden vinculada pasó a estado APROBADO. Se habilitó el inicio de trabajos en bahía.`
       );
       setBudgetToApprove(null);
@@ -100,7 +100,7 @@ export const BudgetsAndApprovalsView: React.FC<{
               <FileCheck className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              Presupuestos & Aprobaciones de Clientes (RN-02, RN-03)
+              Presupuestos & Aprobaciones de Clientes
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
@@ -114,7 +114,7 @@ export const BudgetsAndApprovalsView: React.FC<{
         <Card variant="flat" padding="sm" className="flex items-start gap-3">
           <CheckCircle2 className="w-4 h-4 text-[#22C55E] shrink-0 mt-0.5" />
           <div className="text-xs">
-            <span className="font-bold text-white">Regla RN-02 (Aprobación Previa):</span>
+            <span className="font-bold text-white">Aprobación Previa:</span>
             <p className="text-[#8E949F] mt-0.5">
               Ningún vehículo puede ingresar a bahía ni consumir repuestos sin el consentimiento explícito del cliente
               (vía portal, WhatsApp o firma presencial).
@@ -125,7 +125,7 @@ export const BudgetsAndApprovalsView: React.FC<{
         <Card variant="flat" padding="sm" className="flex items-start gap-3">
           <ShieldAlert className="w-4 h-4 text-[#F97316] shrink-0 mt-0.5" />
           <div className="text-xs">
-            <span className="font-bold text-white">Regla RN-03 (Suspensión por Adicionales):</span>
+            <span className="font-bold text-white">Suspensión por Adicionales:</span>
             <p className="text-[#8E949F] mt-0.5">
               Si se detectan fallas no contempladas en el diagnóstico inicial, la labor se congela de inmediato hasta que
               el cliente apruebe el anexo presupuestario.
@@ -190,11 +190,11 @@ export const BudgetsAndApprovalsView: React.FC<{
                     <div className="flex flex-col items-end gap-1">
                       {isApproved ? (
                         <Badge variant="success" size="sm">
-                          Aprobado ✓ (RN-02)
+                          Aprobado ✓
                         </Badge>
                       ) : isExpired ? (
                         <Badge variant="danger" size="sm">
-                          Expirado (&gt;15d RN-06)
+                          Expirado (&gt;15 días)
                         </Badge>
                       ) : (
                         <Badge variant="amber" size="sm">
@@ -203,7 +203,7 @@ export const BudgetsAndApprovalsView: React.FC<{
                       )}
                       {isAdditional && (
                         <span className="text-[10px] font-mono font-bold text-[#F97316] bg-[#F9731615] border border-[#F9731630] px-1.5 py-0.5 rounded">
-                          Anexo RN-03
+                          Anexo
                         </span>
                       )}
                     </div>
@@ -265,7 +265,7 @@ export const BudgetsAndApprovalsView: React.FC<{
                       }}
                       className="text-xs"
                     >
-                      Registrar Aprobación (RN-02)
+                      Registrar Aprobación
                     </Button>
                   )}
                 </div>
@@ -280,7 +280,7 @@ export const BudgetsAndApprovalsView: React.FC<{
         isOpen={!!budgetToApprove}
         onClose={() => setBudgetToApprove(null)}
         title={`Registrar Aprobación de Cliente - ${budgetToApprove?.otCode}`}
-        subtitle="Regla RN-02: Aprobación formal requerida para liberar el vehículo a bahía y reservar repuestos"
+        subtitle="Aprobación formal requerida para liberar el vehículo a bahía y reservar repuestos"
       >
         <div className="space-y-4">
           <div className="p-3.5 rounded-xl bg-[#1C2028] border border-[#2D3139] text-xs space-y-1">
@@ -302,7 +302,7 @@ export const BudgetsAndApprovalsView: React.FC<{
               onChange={(e) => setApprovalMethod(e.target.value as any)}
               className="w-full rounded-xl border border-[#2D3139] bg-[#0F1115] p-2.5 text-xs text-white focus:outline-none focus:border-[#F97316]"
             >
-              <option value="PORTAL_WEB">Portal Web de Consulta Pública (RN-17)</option>
+              <option value="PORTAL_WEB">Portal Web de Consulta Pública</option>
               <option value="WHATSAPP_CONFIRMADO">Mensaje de Confirmación por WhatsApp</option>
               <option value="FIRMA_DIGITAL">Firma Presencial en Tablet de Recepción</option>
             </select>
@@ -328,7 +328,7 @@ export const BudgetsAndApprovalsView: React.FC<{
               onClick={handleApproveBudget}
               leftIcon={<CheckCircle2 className="w-4 h-4" />}
             >
-              Confirmar Aprobación (RN-02)
+              Confirmar Aprobación
             </Button>
           </div>
         </div>
