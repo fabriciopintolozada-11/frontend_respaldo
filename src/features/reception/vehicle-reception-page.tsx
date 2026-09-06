@@ -12,6 +12,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useForm, useWatch } from 'react-hook-form'
 import { FormField, TextAreaField } from '../../components/ui/form-field'
 import { ApiError } from '../../shared/api/httpClient'
+import { cleanServerMessage } from '../../shared/lib/utils'
 import { useCreateWorkOrder, useVehicleHistory } from './api/reception-api'
 import type {
   CreatedWorkOrderResponse,
@@ -120,7 +121,7 @@ export function VehicleReceptionPage() {
       window.scrollTo({ top: 0, behavior: 'smooth' })
     } catch (error) {
       if (error instanceof ApiError && Array.isArray(error.body?.message)) {
-        setSubmitError(error.body.message.join(' '))
+        setSubmitError(error.body.message.map((message: string) => cleanServerMessage(message)).filter(Boolean).join(' '))
       } else {
         setSubmitError(errorMessage(error))
       }
@@ -148,7 +149,7 @@ export function VehicleReceptionPage() {
     <div className="vehicle-reception-page page-container">
       <section className="page-heading">
         <div>
-          <span className="eyebrow">HU-01 · Recepción de taller</span>
+          <span className="eyebrow">Recepción de taller</span>
           <h1>Registrar ingreso</h1>
           <p>Consulta el expediente y crea una Orden de Trabajo para iniciar la atención.</p>
         </div>
@@ -263,7 +264,7 @@ export function VehicleReceptionPage() {
         {submitError && <div className="global-alert is-error submit-alert" role="alert"><AlertTriangle size={20} /><p>{submitError}</p></div>}
 
         <div className="submit-bar">
-          <div><strong>Crear Orden de Trabajo</strong><span>Estado inicial asignado por el backend: OPEN</span></div>
+          <div><strong>Crear Orden de Trabajo</strong><span>Estado inicial: RECIBIDO</span></div>
           <button className="button button-primary" type="submit" disabled={isSubmitting || isElectricBlocked || lookup.status === 'loading'}>
             {isSubmitting ? <><span className="button-spinner" /> Registrando...</> : <>Registrar ingreso <ChevronRight size={19} /></>}
           </button>
@@ -274,5 +275,6 @@ export function VehicleReceptionPage() {
 }
 
 function errorMessage(error: unknown) {
-  return error instanceof Error ? error.message : 'Ocurrió un error inesperado.'
+  if (error instanceof Error && error.message) return cleanServerMessage(error.message) || error.message
+  return 'Ocurrió un error inesperado.'
 }

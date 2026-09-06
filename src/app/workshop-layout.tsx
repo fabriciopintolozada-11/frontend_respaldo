@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { NavLink, Outlet } from 'react-router';
 import {
+  BadgeCheck,
   BellRing,
   Car,
   ClipboardPlus,
@@ -63,6 +64,12 @@ export const NAV_ITEMS: NavItem[] = [
     label: 'Presupuestar',
     icon: <FileEdit className="w-4 h-4" />,
     roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
+  },
+  {
+    to: '/presupuestos',
+    label: 'Aprobaciones',
+    icon: <BadgeCheck className="w-4 h-4" />,
+    roles: ['RECEPTIONIST', 'ADMIN'],
   },
   {
     to: '/consulta',

@@ -6,7 +6,7 @@ import { Button } from '../../../shared/components/Button';
 import { Badge } from '../../../shared/components/Badge';
 import type { QuoteResponse } from '../api/useQuoteCreation';
 
-const money = new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = new Intl.NumberFormat('es-BO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 function formatBs(amount: number | string): string {
   const value = Number(amount);
@@ -90,7 +90,7 @@ export function QuoteSummary({ quote, onDone }: QuoteSummaryProps) {
             Enviar por WhatsApp
           </Button>
           {onDone && (
-            <Button variant="outline" size="lg" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-900" onClick={onDone} leftIcon={<ArrowLeft className="h-5 w-5" />}>
+            <Button variant="outline-light" size="lg" onClick={onDone} leftIcon={<ArrowLeft className="h-5 w-5" />}>
               Volver
             </Button>
           )}

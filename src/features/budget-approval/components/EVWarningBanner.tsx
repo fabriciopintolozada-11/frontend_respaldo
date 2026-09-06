@@ -1,14 +1,13 @@
-import { Ban, ShieldAlert, Zap } from 'lucide-react';
+import { Ban, Zap } from 'lucide-react';
 
 import { Badge } from '../../../shared/components/Badge';
 import { Card } from '../../../shared/components/Card';
 
 interface EVWarningBannerProps {
   isFullyElectric: boolean;
-  blockedItemCount: number;
 }
 
-export function EVWarningBanner({ isFullyElectric, blockedItemCount }: EVWarningBannerProps) {
+export function EVWarningBanner({ isFullyElectric }: EVWarningBannerProps) {
   if (!isFullyElectric) return null;
 
   return (
@@ -19,16 +18,12 @@ export function EVWarningBanner({ isFullyElectric, blockedItemCount }: EVWarning
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h2 className="font-extrabold text-amber-950">RN-18: Vehículo 100% eléctrico</h2>
-            <Badge variant="warning" size="sm">Acciones restringidas</Badge>
+            <h2 className="font-extrabold text-amber-950">Vehículo 100% eléctrico</h2>
+            <Badge variant="warning" size="sm">Precaución</Badge>
           </div>
           <p className="mt-1.5 text-sm leading-relaxed text-amber-900">
-            El presupuesto solo puede incluir procedimientos autorizados para sistemas eléctricos. Los servicios de motor de combustión están bloqueados para evitar una aprobación incorrecta.
+            Este presupuesto corresponde a un vehículo 100% eléctrico: verifica que los servicios incluidos sean seguros antes de autorizar la aprobación.
           </p>
-          <div className="mt-3 flex items-center gap-2 text-xs font-bold text-amber-950">
-            <ShieldAlert className="h-4 w-4" />
-            {blockedItemCount} {blockedItemCount === 1 ? 'ítem bloqueado' : 'ítems bloqueados'}
-          </div>
         </div>
         <Ban className="hidden h-5 w-5 shrink-0 text-amber-700 sm:block" />
       </div>

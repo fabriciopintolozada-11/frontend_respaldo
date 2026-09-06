@@ -19,6 +19,7 @@ import {
 } from '../api/useQuoteCreation';
 import { quoteFormSchema, type QuoteFormValues, type QuoteItemInput } from '../schemas/quote-schema';
 import { QuoteSummary } from '../components/QuoteSummary';
+import { cleanServerMessage } from '../../../shared/lib/utils';
 
 interface DraftItem {
   key: string;
@@ -86,7 +87,7 @@ function QuoteCreationIndex({ onSelect }: { onSelect: (orderId: string) => void 
         </div>
       </div>
       <p className="max-w-2xl text-sm text-slate-600">
-        Selecciona una orden de trabajo en diagnóstico para leer las tareas y repuestos sugeridos y crear su presupuesto (HU-12).
+        Selecciona una orden de trabajo en diagnóstico para leer las tareas y repuestos sugeridos y crear su presupuesto.
       </p>
 
       {orders.length === 0 ? (
@@ -226,7 +227,7 @@ function QuoteCreationForm({ orderId, onBack, onCreated }: QuoteCreationFormProp
       );
       onCreated(result.data);
     } catch (error) {
-      toast.danger('No se pudo crear el presupuesto', error instanceof Error ? error.message : 'Intenta nuevamente.');
+      toast.danger('No se pudo crear el presupuesto', cleanServerMessage(error instanceof Error ? error.message : '') || 'Intenta nuevamente.');
     }
   };
 
@@ -256,7 +257,7 @@ function QuoteCreationForm({ orderId, onBack, onCreated }: QuoteCreationFormProp
   return (
     <div className="space-y-6 rounded-3xl bg-slate-50 p-4 sm:p-6">
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" className="text-slate-700 hover:bg-slate-200 hover:text-slate-950" onClick={onBack} leftIcon={<ArrowLeft className="h-4 w-4" />}>
+        <Button variant="ghost-light" size="sm" onClick={onBack} leftIcon={<ArrowLeft className="h-4 w-4" />}>
           Volver
         </Button>
         <div className="h-6 w-px bg-slate-300" />
@@ -311,7 +312,7 @@ function QuoteCreationForm({ orderId, onBack, onCreated }: QuoteCreationFormProp
                   placeholder="Ej: 2.5"
                 />
               </div>
-              <Button variant="outline" onClick={addLaborItem} leftIcon={<Plus className="h-4 w-4" />}>Agregar</Button>
+              <Button variant="outline-light" onClick={addLaborItem} leftIcon={<Plus className="h-4 w-4" />}>Agregar</Button>
             </div>
           </div>
 
@@ -349,7 +350,7 @@ function QuoteCreationForm({ orderId, onBack, onCreated }: QuoteCreationFormProp
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-lime-400"
                   />
                 </div>
-                <Button variant="outline" onClick={addPartItem} leftIcon={<Plus className="h-4 w-4" />}>Agregar</Button>
+                <Button variant="outline-light" onClick={addPartItem} leftIcon={<Plus className="h-4 w-4" />}>Agregar</Button>
               </div>
             )}
           </div>
