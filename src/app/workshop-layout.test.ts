@@ -22,4 +22,14 @@ describe('filterNavItemsByRole (FE-18)', () => {
     const items = filterNavItemsByRole(NAV_ITEMS, 'ADMIN');
     expect(items.some((item) => item.to === '/inventario/alertas')).toBe(true);
   });
+
+  it('shows the inventory catalog navigation for every role (US-23, FE-18)', () => {
+    for (const role of ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'] as const) {
+      const items = filterNavItemsByRole(NAV_ITEMS, role);
+      expect(items.some((item) => item.to === '/inventario')).toBe(true);
+      expect(items.some((item) => item.to === '/inventario/alertas')).toBe(
+        role === 'WORKSHOP_LEAD' || role === 'ADMIN',
+      );
+    }
+  });
 });
