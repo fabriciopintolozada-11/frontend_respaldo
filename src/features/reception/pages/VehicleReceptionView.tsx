@@ -153,7 +153,7 @@ export const VehicleReceptionView: React.FC<{
     // Enforcement of RN-18
     if (data.fuelType === 'ELECTRICO') {
       toast.danger(
-        'Bloqueo RN-18 Activo',
+        'Bloqueo Eléctrico Activo',
         'No se puede recepcionar vehículos 100% eléctricos en Taller Los Fratelli. Especializados solo en combustión e híbridos livianos.'
       );
       return;
@@ -209,7 +209,7 @@ export const VehicleReceptionView: React.FC<{
               <ClipboardList className="w-5 h-5" />
             </div>
             <h1 className="text-xl sm:text-2xl font-extrabold text-white tracking-tight">
-              Recepción de Vehículos (HU-01)
+              Recepción de Vehículos
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
@@ -244,7 +244,7 @@ export const VehicleReceptionView: React.FC<{
             leftIcon={<Search className="w-4 h-4" />}
             variant="secondary"
           >
-            Autocompletar Historial (RN-19)
+            Autocompletar Historial
           </Button>
         </div>
 
@@ -269,7 +269,7 @@ export const VehicleReceptionView: React.FC<{
           <div className="w-1.5 h-12 bg-[#EF4444] rounded-full shrink-0 mt-0.5"></div>
           <div>
             <h4 className="font-bold text-sm sm:text-base text-white flex items-center gap-2">
-              <span className="text-[#EF4444]">BLOQUEO RN-18:</span> VEHÍCULO 100% ELÉCTRICO DETECTADO
+              <span className="text-[#EF4444]">BLOQUEO:</span> VEHÍCULO 100% ELÉCTRICO DETECTADO
             </h4>
             <p className="text-xs text-[#8E949F] mt-1 leading-relaxed">
               El Taller Mecánico Los Fratelli opera bajo normas de seguridad exclusivas para vehículos livianos a combustión e
@@ -341,7 +341,7 @@ export const VehicleReceptionView: React.FC<{
                   <option value="GASOLINA">Gasolina (Convencional)</option>
                   <option value="DIESEL">Diésel (Turbodiésel / Common Rail)</option>
                   <option value="HIBRIDO">Híbrido Liviano (HEV / MHEV)</option>
-                  <option value="ELECTRICO">100% Eléctrico (EV - Bloqueado RN-18)</option>
+                  <option value="ELECTRICO">100% Eléctrico (EV - Bloqueado)</option>
                 </select>
               </div>
 
@@ -435,7 +435,7 @@ export const VehicleReceptionView: React.FC<{
                     {...register('clientDocument')}
                     error={errors.clientDocument?.message}
                     placeholder="Ej: 4892019 LP"
-                    helperText="Para consulta de estado RN-17 y facturación"
+                    helperText="Para consulta de estado y facturación"
                     required
                   />
                 </div>
@@ -582,8 +582,8 @@ export const VehicleReceptionView: React.FC<{
             className="w-full sm:w-auto"
           >
             {isElectricBlocked
-              ? 'Bloqueado por RN-18 (No Eléctricos)'
-              : 'Registrar Ingreso y Generar Orden (HU-01)'}
+              ? 'Bloqueado (No Eléctricos)'
+              : 'Registrar Ingreso y Generar Orden'}
           </Button>
         </div>
       </form>

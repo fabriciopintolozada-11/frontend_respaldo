@@ -8,6 +8,7 @@ import { LoginPage } from '../features/auth/pages/LoginPage';
 const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'];
 const RECEPTION_AND_ADMIN: UserRole[] = ['RECEPTIONIST', 'ADMIN'];
 const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
+const LEAD_ONLY: UserRole[] = ['WORKSHOP_LEAD'];
 const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
 const ALL_ROLES: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 
@@ -25,7 +26,8 @@ export const router = createBrowserRouter([
         element: <Navigate to="/taller" replace />,
       },
       {
-        element: <ProtectedRoute allowedRoles={LEAD_AND_ADMIN} />,
+        // US-00: the workshop head board is exclusive to WORKSHOP_LEAD.
+        element: <ProtectedRoute allowedRoles={LEAD_ONLY} />,
         children: [
           {
             path: 'taller',
@@ -33,6 +35,11 @@ export const router = createBrowserRouter([
               Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
             }),
           },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={LEAD_AND_ADMIN} />,
+        children: [
           {
             path: 'inventario/alertas',
             lazy: async () => ({

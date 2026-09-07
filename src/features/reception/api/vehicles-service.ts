@@ -51,7 +51,7 @@ export const vehiclesService = {
       // RN-18: Bloqueo explícito de vehículos 100% eléctricos
       if (data.fuelType === 'ELECTRICO') {
         throw new Error(
-          'REGLA DE NEGOCIO RN-18: Taller Los Fratelli está especializado exclusivamente en vehículos a combustión e híbridos livianos. No se permite el ingreso de vehículos 100% eléctricos por carecer de certificación y equipamiento de seguridad para alto voltaje.'
+          'Taller Los Fratelli está especializado exclusivamente en vehículos a combustión e híbridos livianos. No se permite el ingreso de vehículos 100% eléctricos por carecer de certificación y equipamiento de seguridad para alto voltaje.'
         );
       }
 

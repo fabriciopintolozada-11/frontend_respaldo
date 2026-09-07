@@ -17,7 +17,7 @@ export function translateConsumePartError(error: unknown): ConsumePartErrorDetai
       return {
         code: 403,
         message:
-          'RN-04: solo el mecánico asignado u un supervisor autorizado puede confirmar el uso de repuestos.',
+          'Solo el mecánico asignado o un supervisor autorizado puede confirmar el uso de repuestos.',
         isAuthorizationError: true,
         isBusinessRuleError: false,
       };

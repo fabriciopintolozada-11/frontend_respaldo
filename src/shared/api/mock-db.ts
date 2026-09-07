@@ -96,7 +96,7 @@ export const INITIAL_BAYS: Bay[] = [
     primaryMechanicId: 'MEC-03',
     startedAt: '2025-05-11T09:00:00Z',
     estimatedCompletionAt: '2025-05-12T14:00:00Z',
-    notes: 'Trabajo suspendido por detección de fuga de retén adicional (RN-03).',
+    notes: 'Trabajo suspendido por detección de fuga de retén adicional.',
   },
   {
     id: 4,
@@ -951,7 +951,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
       { status: 'DIAGNOSTICADA', timestamp: '2025-04-24T15:00:00Z', changedBy: 'Diego Morales' },
       { status: 'PRESUPUESTO_ENVIADO', timestamp: '2025-04-25T09:00:00Z', changedBy: 'Jefe Taller (Presupuesto enviado por Email/WhatsApp)' },
     ],
-    internalNotes: 'ALERTA RN-06: 17 días sin respuesta del cliente. Llamar a número alternativo o remitir aviso de custodia / costo de parqueo.',
+    internalNotes: 'ALERTA: 17 días sin respuesta del cliente. Llamar a número alternativo o remitir aviso de custodia / costo de parqueo.',
   },
   {
     id: 'ot-004',
@@ -1043,7 +1043,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
     entryDate: '2025-05-11T09:00:00Z',
     estimatedDeliveryDate: '2025-05-14T17:00:00Z',
     entryReason: 'Cambio de pastillas de freno y cambio de aceite de motor.',
-    diagnosticReport: 'Durante la inspección en elevador, se detectó FUGA ACTIVA DE ACEITE en el Retén Trasero de Cigüeñal (Bancada). Requiere desmontar caja para reemplazar retén. Trabajo suspendido automáticamente hasta aprobación del cliente (RN-03).',
+    diagnosticReport: 'Durante la inspección en elevador, se detectó FUGA ACTIVA DE ACEITE en el Retén Trasero de Cigüeñal (Bancada). Requiere desmontar caja para reemplazar retén. Trabajo suspendido automáticamente hasta aprobación del cliente.',
     laborItems: [
       {
         id: 'lab-08',
@@ -1056,7 +1056,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
       },
       {
         id: 'lab-09',
-        description: '[ADICIONAL RN-03] Desmontaje de caja y reemplazo de retén de bancada',
+        description: 'Desmontaje de caja y reemplazo de retén de bancada',
         estimatedHours: 4.5,
         hourlyRateBOB: 120,
         totalBOB: 540,
@@ -1082,7 +1082,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
         id: 'pot-11',
         partId: 'REP-MOT-004',
         partCode: 'REP-MOT-004',
-        description: '[ADICIONAL RN-03] Retén Trasero de Cigüeñal Original',
+        description: 'Retén Trasero de Cigüeñal Original',
         quantityRequired: 1,
         quantityUsed: 0,
         unitPriceBOB: 210,
@@ -1106,7 +1106,7 @@ export const INITIAL_WORK_ORDERS: WorkOrder[] = [
       { status: 'REGISTRADA', timestamp: '2025-05-11T09:00:00Z', changedBy: 'Recepción' },
       { status: 'DIAGNOSTICADA', timestamp: '2025-05-11T10:30:00Z', changedBy: 'Diego Morales (Detectó daño adicional)' },
     ],
-    mechanicNotes: 'ATENCIÓN RN-03: Fuga severa en retén. No armar hasta que el cliente autorice el trabajo extra de 750 BOB.',
+    mechanicNotes: 'ATENCIÓN: Fuga severa en retén. No armar hasta que el cliente autorice el trabajo extra de 750 BOB.',
   },
   {
     id: 'ot-006',

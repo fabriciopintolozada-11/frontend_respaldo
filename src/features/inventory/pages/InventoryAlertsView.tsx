@@ -123,7 +123,7 @@ export function InventoryAlertsView() {
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">Alertas de Inventario</h1>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Repuestos sin rotación por 60 días o más (RN-10) y disponibilidad crítica por reservas.
+            Repuestos sin rotación por 60 días o más y disponibilidad crítica por reservas.
           </p>
         </div>
         <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => void refetch()} leftIcon={<RefreshCw className="w-4 h-4" />}>

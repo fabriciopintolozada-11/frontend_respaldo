@@ -7,7 +7,7 @@ const ROLE_DEFAULT_ROUTE: Record<UserRole, string> = {
   RECEPTIONIST: '/recepcion',
   MECHANIC: '/mecanico',
   WORKSHOP_LEAD: '/taller',
-  ADMIN: '/taller',
+  ADMIN: '/presupuestos',
 };
 
 interface ProtectedRouteProps {

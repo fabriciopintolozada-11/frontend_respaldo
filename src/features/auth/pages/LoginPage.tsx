@@ -11,7 +11,7 @@ const ROLE_DEFAULT_ROUTE = {
   RECEPTIONIST: '/recepcion',
   MECHANIC: '/mecanico',
   WORKSHOP_LEAD: '/taller',
-  ADMIN: '/taller',
+  ADMIN: '/presupuestos',
 } as const;
 
 export function LoginPage() {

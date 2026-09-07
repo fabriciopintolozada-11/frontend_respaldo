@@ -108,7 +108,7 @@ export const WorkOrderDetailView: React.FC<WorkOrderDetailViewProps> = ({
     if (!order) return;
     try {
       await workOrdersService.approveAdditionalWork(order.id, 'PORTAL_WEB');
-      toast.success('Trabajo Adicional Aprobado (RN-02, RN-03)', 'Se levantó la suspensión en bahía.');
+      toast.success('Trabajo Adicional Aprobado', 'Se levantó la suspensión en bahía.');
       await loadOrder();
     } catch {
       toast.danger('No se pudo aprobar el trabajo adicional');
@@ -161,7 +161,7 @@ export const WorkOrderDetailView: React.FC<WorkOrderDetailViewProps> = ({
               leftIcon={<DollarSign className="w-4 h-4" />}
               onClick={() => onNavigateToBilling(order.id)}
             >
-              Liquidar Cuenta en BOB (RN-21)
+              Liquidar Cuenta en BOB
             </Button>
           )}
         </div>
@@ -230,7 +230,7 @@ export const WorkOrderDetailView: React.FC<WorkOrderDetailViewProps> = ({
               <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0 mt-0.5" />
               <div>
                 <h4 className="font-bold text-xs sm:text-sm text-white">
-                  Suspensión Automática Activa por Trabajo Adicional (RN-03)
+                  Suspensión Automática Activa por Trabajo Adicional
                 </h4>
                 <p className="text-xs text-[#8E949F] mt-1">
                   Motivo reportado: <strong className="text-white">"{order.additionalWorkDescription}"</strong> (+{order.additionalWorkCostBOB} BOB).
@@ -245,7 +245,7 @@ export const WorkOrderDetailView: React.FC<WorkOrderDetailViewProps> = ({
               onClick={handleApproveAdditionalWork}
               className="whitespace-nowrap"
             >
-              Registrar Aprobación Cliente (RN-02)
+              Registrar Aprobación Cliente
             </Button>
           </div>
         </Card>
