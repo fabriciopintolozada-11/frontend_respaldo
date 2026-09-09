@@ -39,6 +39,12 @@ export const router = createBrowserRouter([
               Component: (await import('../features/inventory/pages/InventoryAlertsView')).InventoryAlertsView,
             }),
           },
+          {
+            path: 'workshop-bays',
+            lazy: async () => ({
+              Component: (await import('../features/work-bays/pages/WorkBaysMonitoringPage')).WorkBaysMonitoringPage,
+            }),
+          },
         ],
       },
       {
