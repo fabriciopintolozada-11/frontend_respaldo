@@ -79,6 +79,17 @@ export const router = createBrowserRouter([
         ],
       },
       {
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_LEAD} />,
+        children: [
+          {
+            path: 'seguimiento',
+            lazy: async () => ({
+              Component: (await import('../features/work-orders/pages/WorkOrderTrackingPage')).WorkOrderTrackingPage,
+            }),
+          },
+        ],
+      },
+      {
         element: <ProtectedRoute allowedRoles={MECHANIC_ONLY} />,
         children: [
           {

@@ -9,6 +9,7 @@ import {
   Globe,
   LogOut,
   Package,
+  Search,
   Wrench,
 } from 'lucide-react';
 
@@ -33,6 +34,12 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/recepcion',
     label: 'Recepción',
     icon: <ClipboardPlus className="w-4 h-4" />,
+    roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
+  },
+  {
+    to: '/seguimiento',
+    label: 'Seguimiento',
+    icon: <Search className="w-4 h-4" />,
     roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
   },
   {
