@@ -1,4 +1,4 @@
-import { AlertTriangle, CarFront, Clock3, MapPin, Phone, UserRound, Wrench } from 'lucide-react';
+import { AlertTriangle, CarFront, Clock3, Flag, MapPin, Phone, UserRound, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { components } from '../../../shared/api/schema.gen';
@@ -8,6 +8,9 @@ type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
 interface WorkOrderTrackingCardProps {
   order: TrackingOrder;
   onViewHistory: (plate: string) => void;
+  // US-19: when provided (WORKSHOP_LEAD only, FE-18), the card shows the
+  // "Concluir Reparación" action for orders in EN_REPARACION (BE-T19.2).
+  onComplete?: (orderId: string) => void;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -36,10 +39,11 @@ const STATUS_STYLES: Record<string, string> = {
   FINALIZADO: 'bg-slate-100 text-slate-700',
 };
 
-export function WorkOrderTrackingCard({ order, onViewHistory }: WorkOrderTrackingCardProps) {
+export function WorkOrderTrackingCard({ order, onViewHistory, onComplete }: WorkOrderTrackingCardProps) {
   const isPaused = Boolean(order.missingPartName || order.pausedReason);
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
   const statusStyle = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-700';
+  const canComplete = Boolean(onComplete) && order.status === 'EN_REPARACION';
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -59,13 +63,25 @@ export function WorkOrderTrackingCard({ order, onViewHistory }: WorkOrderTrackin
             {order.model}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => onViewHistory(order.plate)}
-          className="min-h-[44px] rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:border-lime-500 hover:bg-lime-50"
-        >
-          Ver expediente histórico
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          {canComplete && onComplete && (
+            <button
+              type="button"
+              onClick={() => onComplete(order.id)}
+              className="flex min-h-[44px] items-center gap-2 rounded-xl bg-lime-400 px-4 text-sm font-bold text-lime-950 shadow-sm transition hover:bg-lime-300"
+            >
+              <Flag className="h-4 w-4" aria-hidden="true" />
+              Concluir Reparación
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() => onViewHistory(order.plate)}
+            className="min-h-[44px] rounded-xl border border-slate-300 px-4 text-sm font-bold text-slate-700 transition hover:border-lime-500 hover:bg-lime-50"
+          >
+            Ver expediente histórico
+          </button>
+        </div>
       </div>
 
       <dl className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
