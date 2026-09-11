@@ -72,9 +72,9 @@ export function WorkOrderTrackingPage() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-700">US-05 · Seguimiento operativo</p>
-          <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-950">Consulta por placa</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">Consulta el estado actual de la orden sin interrumpir a los mecánicos y revisa el expediente técnico permanente del vehículo.</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-300">Seguimiento operativo</p>
+          <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Consulta por placa</h1>
+          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Consulta el estado actual de la orden sin interrumpir a los mecánicos y revisa el expediente técnico permanente del vehículo.</p>
         </div>
         <div className="hidden rounded-2xl border border-lime-200 bg-lime-50 p-4 lg:block"><ClipboardList className="h-8 w-8 text-lime-700" aria-hidden="true" /></div>
       </header>
