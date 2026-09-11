@@ -30,7 +30,7 @@ export function WorkOrderTrackingPage() {
     <div className="space-y-6">
       <header className="flex flex-col gap-4 rounded-3xl bg-slate-950 p-6 text-white sm:p-8 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-300">US-05 · Seguimiento operativo</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-lime-300">Seguimiento operativo</p>
           <h1 className="mt-2 text-3xl font-black tracking-tight sm:text-4xl">Consulta por placa</h1>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">Consulta el estado actual de la orden sin interrumpir a los mecánicos y revisa el expediente técnico permanente del vehículo.</p>
         </div>
