@@ -112,27 +112,27 @@ export function WorkshopLayout() {
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-16">
-            <NavLink to="/taller" className="flex items-center gap-3 cursor-pointer group">
+            <NavLink to="/taller" className="flex items-center gap-3 cursor-pointer group shrink-0 pr-3 lg:pr-6 border-r border-slate-200">
               <div className="w-10 h-10 rounded-xl bg-lime-400 flex items-center justify-center text-lime-950 shadow-sm group-hover:scale-105 transition-transform">
                 <Wrench className="w-5 h-5 text-lime-950" />
               </div>
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-base sm:text-lg tracking-tight text-slate-900">LOS FRATELLI</span>
-                  <span className="text-[10px] font-semibold text-slate-500 hidden sm:inline">| Gestión de Taller</span>
+                  <span className="font-extrabold text-base sm:text-lg tracking-wide whitespace-nowrap text-slate-900">LOS FRATELLI</span>
+                  <span className="text-[10px] font-semibold text-slate-500 hidden xl:inline">| Gestión de Taller</span>
                 </div>
-                <p className="text-[11px] text-slate-500 font-medium">Vehículos Livianos</p>
+                <p className="text-[11px] text-slate-500 font-medium whitespace-nowrap">Vehículos Livianos</p>
               </div>
             </NavLink>
 
-            <nav className="hidden md:flex items-center gap-1.5">
+            <nav className="hidden md:flex items-center gap-1 lg:gap-1.5 overflow-x-auto">
               {filteredNavItems.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
                   end={item.to === '/'}
                   className={({ isActive }) =>
-                    `px-3 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 min-h-[44px] whitespace-nowrap ${
+                    `px-2.5 lg:px-3 py-2 rounded-xl text-[11px] lg:text-xs font-bold transition-all flex items-center gap-1.5 min-h-9 shrink-0 whitespace-nowrap ${
                       isActive
                         ? 'bg-lime-400 text-lime-950 shadow-sm shadow-lime-950/10'
                         : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -145,18 +145,18 @@ export function WorkshopLayout() {
               ))}
             </nav>
 
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
               {user && (
-                <div className="hidden sm:flex items-center gap-2 mr-2">
-                  <div className="w-7 h-7 rounded-full bg-lime-100 flex items-center justify-center text-lime-800 text-[10px] font-bold">
+                <div className="flex items-center gap-2 mr-1 lg:mr-2">
+                  <div className="w-7 h-7 rounded-full bg-lime-100 flex items-center justify-center text-lime-800 text-[10px] font-bold shrink-0">
                     {user.fullName.charAt(0)}
                   </div>
-                  <div className="text-right">
-                    <p className="text-[11px] font-bold text-slate-700 leading-tight">{user.fullName}</p>
+                  <div className="text-right hidden lg:block">
+                    <p className="text-[11px] font-bold text-slate-700 leading-tight whitespace-nowrap">{user.fullName}</p>
                     <p className="text-[10px] text-slate-400 leading-tight">{ROLE_LABELS[user.role]}</p>
                   </div>
                 </div>
-)}
+              )}
               <button
                 type="button"
                 onClick={handleLogout}

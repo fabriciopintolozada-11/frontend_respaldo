@@ -2,10 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import type { ReactNode } from 'react';
 
 import type { components } from '../../../shared/api/schema.gen';
 import { server } from '../../../test/msw-handlers';
+import { AuthContext, type AuthContextValue } from '../../auth/providers/AuthProvider';
+import type { AuthUser } from '../../auth/api/auth-service';
+import { ToastProvider } from '../../../shared/components/ToastContext';
 import { WorkOrderTrackingPage } from './WorkOrderTrackingPage';
 
 type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
@@ -41,9 +45,33 @@ const history: VehicleHistory = {
   workOrders: [],
 };
 
-function renderPage() {
-  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
-  return render(<QueryClientProvider client={queryClient}><WorkOrderTrackingPage /></QueryClientProvider>);
+function renderPage(role: AuthUser['role'] = 'WORKSHOP_LEAD') {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
+  });
+  const user: AuthUser = {
+    id: 'usr-1',
+    fullName: 'Test User',
+    username: 'test',
+    role,
+  };
+  const authValue: AuthContextValue = {
+    user,
+    accessToken: 'test-token',
+    isAuthenticated: true,
+    isLoading: false,
+    login: vi.fn(async () => user),
+    logout: vi.fn(),
+    refreshSession: vi.fn(async () => true),
+  };
+  const wrapper = ({ children }: { children: ReactNode }) => (
+    <AuthContext.Provider value={authValue}>
+      <ToastProvider>
+        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+      </ToastProvider>
+    </AuthContext.Provider>
+  );
+  return render(<WorkOrderTrackingPage />, { wrapper });
 }
 
 describe('WorkOrderTrackingPage', () => {
@@ -76,5 +104,34 @@ describe('WorkOrderTrackingPage', () => {
 
     expect(await screen.findByText('Sin órdenes activas')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /consultar expediente histórico/i })).toBeInTheDocument();
+  });
+
+  it('shows "Concluir Reparación" only to a WORKSHOP_LEAD on EN_REPARACION orders (US-19 / FE-18)', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () => HttpResponse.json([order])),
+    );
+    const user = userEvent.setup();
+
+    renderPage('WORKSHOP_LEAD');
+    await user.type(screen.getByLabelText(/placa del vehículo/i), 'ABC123');
+
+    expect(
+      await screen.findByRole('button', { name: /^Concluir Reparación$/ }),
+    ).toBeInTheDocument();
+  });
+
+  it('hides "Concluir Reparación" for a non-lead role (US-19 / FE-18)', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () => HttpResponse.json([order])),
+    );
+    const user = userEvent.setup();
+
+    renderPage('RECEPTIONIST');
+    await user.type(screen.getByLabelText(/placa del vehículo/i), 'ABC123');
+
+    expect(await screen.findByText('1 orden encontrada')).toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /^Concluir Reparación$/ }),
+    ).not.toBeInTheDocument();
   });
 });
