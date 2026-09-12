@@ -23,12 +23,12 @@ const listItem = {
 
 const listResponse = { data: [listItem], total: 1, page: 1, pageSize: 100 };
 
-describe('workOrdersService.getAll con filtro de estancados (FE-T16.3)', () => {
+describe('workOrdersService.getAll (HU-01 / BE-24)', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('envía onlyStaleQuotes=true cuando el filtro está activo', async () => {
+  it('consulta el listado paginado de órdenes de trabajo sin filtros extra', async () => {
     const urlSpy = vi.fn();
     server.use(
       http.get(WORK_ORDERS_PATH, ({ request }) => {
@@ -37,23 +37,15 @@ describe('workOrdersService.getAll con filtro de estancados (FE-T16.3)', () => {
       }),
     );
 
-    await workOrdersService.getAll({ onlyStaleQuotes: true });
-
-    expect(urlSpy).toHaveBeenCalledWith(expect.stringContaining('onlyStaleQuotes=true'));
-  });
-
-  it('mantiene la URL original sin el parámetro cuando el filtro no se solicita (compatible con HU-01)', async () => {
-    const urlSpy = vi.fn();
-    server.use(
-      http.get(WORK_ORDERS_PATH, ({ request }) => {
-        urlSpy(request.url);
-        return HttpResponse.json(listResponse);
-      }),
-    );
-
-    await workOrdersService.getAll();
+    const result = await workOrdersService.getAll();
 
     expect(urlSpy).toHaveBeenCalledWith(expect.stringContaining('/api/v1/work-orders?page=1&pageSize=100'));
     expect(urlSpy).toHaveBeenCalledWith(expect.not.stringContaining('onlyStaleQuotes'));
+    expect(result.data).toHaveLength(1);
+    expect(result.data[0]).toMatchObject({
+      vehiclePlate: 'ABC123',
+      status: 'PRESUPUESTO_ENVIADO',
+      clientName: 'María Pérez',
+    });
   });
 });

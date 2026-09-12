@@ -15,6 +15,8 @@ import type { CompleteWorkOrderPayload } from '../../mechanic-view/api/complete-
 import type {
   CompleteRepairOrderContext,
 } from '../../mechanic-view/components/CompleteRepairModal';
+import { OnlyStaleQuotesFilter } from '../../stale-quotes/components/OnlyStaleQuotesFilter';
+import { useStaleQuoteOrders } from '../../stale-quotes/api/useStaleQuoteOrders';
 import { CompleteRepairModal } from '../../mechanic-view/components/CompleteRepairModal';
 
 const PLATE_PATTERN = /^[A-Z0-9-]{3,10}$/;
@@ -28,6 +30,7 @@ export function WorkOrderTrackingPage() {
   const [plate, setPlate] = useState('');
   const [searchedPlate, setSearchedPlate] = useState('');
   const [historyPlate, setHistoryPlate] = useState<string | null>(null);
+  const [onlyStale, setOnlyStale] = useState(false);
   const [completingOrder, setCompletingOrder] =
     useState<CompleteRepairOrderContext | null>(null);
 
@@ -45,6 +48,7 @@ export function WorkOrderTrackingPage() {
   const normalizedPlate = normalizeTrackingPlate(plate);
   const isValidPlate = PLATE_PATTERN.test(normalizedPlate);
   const query = useWorkOrderTracking(searchedPlate);
+  const staleQuery = useStaleQuoteOrders(onlyStale);
 
   useEffect(() => {
     if (!isValidPlate) {
@@ -89,25 +93,39 @@ export function WorkOrderTrackingPage() {
       </header>
 
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm sm:p-6">
-        <label htmlFor="tracking-plate" className="block text-sm font-bold text-slate-800">Placa del vehículo</label>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <label htmlFor="tracking-plate" className="block text-sm font-bold text-slate-800">Placa del vehículo</label>
+          <OnlyStaleQuotesFilter checked={onlyStale} onToggle={setOnlyStale} />
+        </div>
         <div className="relative mt-2 max-w-xl">
           <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <input id="tracking-plate" value={plate} onChange={(event) => setPlate(event.target.value)} placeholder="ABC123" autoComplete="off" className="min-h-[52px] w-full rounded-xl border border-slate-300 pl-12 pr-4 font-mono text-lg uppercase tracking-widest outline-none transition focus:border-lime-500 focus:ring-4 focus:ring-lime-100" />
+          <input id="tracking-plate" value={plate} onChange={(event) => setPlate(event.target.value)} placeholder="ABC123" autoComplete="off" disabled={onlyStale} className="min-h-[52px] w-full rounded-xl border border-slate-300 pl-12 pr-4 font-mono text-lg uppercase tracking-widest outline-none transition focus:border-lime-500 focus:ring-4 focus:ring-lime-100 disabled:cursor-not-allowed disabled:bg-slate-50 disabled:text-slate-300" />
         </div>
-        <p className="mt-2 text-xs text-slate-500">La búsqueda se ejecuta automáticamente al ingresar una placa válida.</p>
-        {plate.length > 0 && !isValidPlate && <p className="mt-2 text-sm font-semibold text-red-600" role="alert">Ingresa una placa válida de 3 a 10 caracteres.</p>}
+        <p className="mt-2 text-xs text-slate-500">{onlyStale ? 'Modo alerta activo: se muestran los presupuestos con 15 o más días sin respuesta del cliente.' : 'La búsqueda se ejecuta automáticamente al ingresar una placa válida.'}</p>
+        {!onlyStale && plate.length > 0 && !isValidPlate && <p className="mt-2 text-sm font-semibold text-red-600" role="alert">Ingresa una placa válida de 3 a 10 caracteres.</p>}
       </section>
 
-      <TrackingResults
-        query={query}
-        searchedPlate={searchedPlate}
-        onViewHistory={setHistoryPlate}
-        onComplete={canComplete ? handleOpenComplete : undefined}
-        onSettle={canSettle ? (orderId) => navigate(`/liquidacion/${orderId}`) : undefined}
-      />
+      {onlyStale ? (
+        <StaleResults
+          query={staleQuery}
+          onViewHistory={setHistoryPlate}
+          onComplete={canComplete ? handleOpenComplete : undefined}
+          onSettle={canSettle ? (orderId) => navigate(`/liquidacion/${orderId}`) : undefined}
+        />
+      ) : (
+        <>
+          <TrackingResults
+            query={query}
+            searchedPlate={searchedPlate}
+            onViewHistory={setHistoryPlate}
+            onComplete={canComplete ? handleOpenComplete : undefined}
+            onSettle={canSettle ? (orderId) => navigate(`/liquidacion/${orderId}`) : undefined}
+          />
 
-      {searchedPlate && !query.isPending && !query.isError && query.data?.length === 0 && (
-        <button type="button" onClick={() => setHistoryPlate(searchedPlate)} className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-lime-500 hover:bg-lime-50">Consultar expediente histórico de {searchedPlate}</button>
+          {searchedPlate && !query.isPending && !query.isError && query.data?.length === 0 && (
+            <button type="button" onClick={() => setHistoryPlate(searchedPlate)} className="min-h-[44px] rounded-xl border border-slate-300 bg-white px-4 text-sm font-bold text-slate-700 hover:border-lime-500 hover:bg-lime-50">Consultar expediente histórico de {searchedPlate}</button>
+          )}
+        </>
       )}
 
       <VehicleHistoryDrawer plate={historyPlate} onClose={() => setHistoryPlate(null)} />
@@ -130,6 +148,16 @@ function TrackingResults({ query, searchedPlate, onViewHistory, onComplete, onSe
   if (!query.data?.length) return <EmptyTrackingState title="Sin órdenes activas" message={`No hay órdenes de trabajo activas asociadas a ${searchedPlate}.`} />;
 
   return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-700">Resultado de seguimiento</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{query.data.length} {query.data.length === 1 ? 'orden encontrada' : 'órdenes encontradas'}</h2></div>{query.data.map((order) => <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} onSettle={onSettle} />)}</section>;
+}
+
+function StaleResults({ query, onViewHistory, onComplete, onSettle }: { query: ReturnType<typeof useStaleQuoteOrders>; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void; onSettle?: (orderId: string) => void }) {
+  if (query.isPending) return <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center" role="status"><span className="mx-auto block h-8 w-8 animate-spin rounded-full border-4 border-red-300 border-t-transparent" /><p className="mt-3 font-semibold text-slate-700">Consultando presupuestos estancados...</p></div>;
+  if (query.isError) return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert"><AlertCircle className="h-6 w-6" aria-hidden="true" /><p className="mt-2 font-bold">No se pudieron cargar los presupuestos estancados</p><p className="mt-1 text-sm">{getErrorMessage(query.error)}</p><button type="button" onClick={() => void query.refetch()} className="mt-4 min-h-[44px] rounded-xl bg-red-700 px-4 text-sm font-bold text-white hover:bg-red-800">Reintentar</button></div>;
+  if (!query.data?.length) return <EmptyTrackingState title="No hay presupuestos estancados" message="Ninguna orden lleva 15 o más días esperando la aprobación de su presupuesto." />;
+
+  const sorted = [...query.data].sort((a, b) => (b.daysWaitingApproval ?? 0) - (a.daysWaitingApproval ?? 0));
+
+  return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-red-700">Alerta de presupuestos</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{sorted.length} {sorted.length === 1 ? 'presupuesto estancado' : 'presupuestos estancados'}</h2><p className="mt-1 text-sm text-slate-500">Órdenes con 15 o más días sin respuesta del cliente.</p></div>{sorted.map((order) => <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} onSettle={onSettle} />)}</section>;
 }
 
 function EmptyTrackingState({ title, message }: { title: string; message: string }) {

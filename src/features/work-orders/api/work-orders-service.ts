@@ -2,7 +2,6 @@ import { apiClient, type ApiResponse, isBackendMode } from '../../../shared/api/
 import { mockDb } from '../../../shared/api/mock-db';
 import type { WorkOrder, WorkOrderStatus, StatusHistoryEntry, WorkOrderLaborItem, WorkOrderPartItem } from '../../../shared/types/openapi';
 import type { AssignedWorkOrder, AssignedWorkOrderDetail, ListResponse, VehicleStatus, WorkOrderListItem } from '../../../shared/api/schema.gen';
-import { buildOnlyStaleQuotesQueryString } from '../../stale-quotes/only-stale-quotes';
 import type { DiagnosticPayload } from '../schemas/diagnostic-schema';
 
 export interface CreateDiagnosticResponse {
@@ -70,11 +69,9 @@ const mapPublicStatus = (status: VehicleStatus): WorkOrder => ({
 });
 
 export const workOrdersService = {
-  async getAll(params?: { onlyStaleQuotes?: boolean }): Promise<ApiResponse<WorkOrder[]>> {
+  async getAll(): Promise<ApiResponse<WorkOrder[]>> {
     if (isBackendMode) {
-      const staleQuery = buildOnlyStaleQuotesQueryString(params?.onlyStaleQuotes);
-      const query = `page=1&pageSize=100${staleQuery ? `&${staleQuery}` : ''}`;
-      const response = await apiClient.getHttp<ListResponse<WorkOrderListItem>>(`/work-orders?${query}`);
+      const response = await apiClient.getHttp<ListResponse<WorkOrderListItem>>('/work-orders?page=1&pageSize=100');
       return { ...response, data: response.data.data.map(mapListItem) };
     }
     return apiClient.get(() => mockDb.getWorkOrders());

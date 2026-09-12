@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { components } from '../../../shared/api/schema.gen';
 import { server } from '../../../test/msw-handlers';
-import { getTrackingSummary } from './tracking-api';
+import { getStaleQuoteOrders, getTrackingSummary } from './tracking-api';
 
 type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
 
@@ -51,5 +51,52 @@ describe('getTrackingSummary', () => {
     );
 
     await expect(getTrackingSummary('ABC123')).rejects.toMatchObject({ statusCode: 403, message: 'Forbidden' });
+  });
+});
+
+describe('getStaleQuoteOrders (US-16 / RN-06)', () => {
+  const staleOrder: TrackingOrder = {
+    ...trackingOrder,
+    status: 'PRESUPUESTO_ENVIADO',
+    missingPartName: null,
+    pausedReason: 'Awaiting customer approval',
+    daysWaitingApproval: 17,
+    isStaleQuote: true,
+  };
+
+  it('consulta el tracking summary con onlyStaleQuotes=true', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', ({ request }) => {
+        const url = new URL(request.url);
+        expect(url.searchParams.get('onlyStaleQuotes')).toBe('true');
+        return HttpResponse.json([staleOrder]);
+      }),
+    );
+
+    await expect(getStaleQuoteOrders()).resolves.toEqual([staleOrder]);
+  });
+
+  it('ignora la placa: el endpoint devuelve todas las órdenes estancadas', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () => HttpResponse.json([staleOrder])),
+    );
+
+    await expect(getStaleQuoteOrders()).resolves.toEqual([staleOrder]);
+  });
+
+  it('propaga los errores del backend', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () => HttpResponse.json(
+        {
+          statusCode: 500,
+          message: 'Internal server error',
+          path: '/api/v1/work-orders/tracking-summary',
+          timestamp: '2026-09-10T12:00:00.000Z',
+        },
+        { status: 500 },
+      )),
+    );
+
+    await expect(getStaleQuoteOrders()).rejects.toMatchObject({ statusCode: 500 });
   });
 });
