@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { http, HttpResponse } from 'msw';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MemoryRouter } from 'react-router';
 import { describe, expect, it, vi } from 'vitest';
 import type { ReactNode } from 'react';
 
@@ -67,7 +68,9 @@ function renderPage(role: AuthUser['role'] = 'WORKSHOP_LEAD') {
   const wrapper = ({ children }: { children: ReactNode }) => (
     <AuthContext.Provider value={authValue}>
       <ToastProvider>
-        <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter initialEntries={['/seguimiento']}>{children}</MemoryRouter>
+        </QueryClientProvider>
       </ToastProvider>
     </AuthContext.Provider>
   );

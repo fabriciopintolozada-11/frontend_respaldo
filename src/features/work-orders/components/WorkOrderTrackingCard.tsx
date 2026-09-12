@@ -1,4 +1,4 @@
-import { AlertTriangle, CarFront, Clock3, Flag, MapPin, Phone, UserRound, Wrench } from 'lucide-react';
+import { AlertTriangle, CarFront, Clock3, DollarSign, Flag, MapPin, Phone, UserRound, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 import type { components } from '../../../shared/api/schema.gen';
@@ -11,6 +11,9 @@ interface WorkOrderTrackingCardProps {
   // US-19: when provided (WORKSHOP_LEAD only, FE-18), the card shows the
   // "Concluir Reparación" action for orders in EN_REPARACION (BE-T19.2).
   onComplete?: (orderId: string) => void;
+  // US-20: when provided (RECEPTIONIST / WORKSHOP_LEAD / ADMIN, FE-18), the
+  // card shows the "Liquidar Cuenta" action for orders in LISTO_ENTREGA.
+  onSettle?: (orderId: string) => void;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -39,11 +42,12 @@ const STATUS_STYLES: Record<string, string> = {
   FINALIZADO: 'bg-slate-100 text-slate-700',
 };
 
-export function WorkOrderTrackingCard({ order, onViewHistory, onComplete }: WorkOrderTrackingCardProps) {
+export function WorkOrderTrackingCard({ order, onViewHistory, onComplete, onSettle }: WorkOrderTrackingCardProps) {
   const isPaused = Boolean(order.missingPartName || order.pausedReason);
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
   const statusStyle = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-700';
   const canComplete = Boolean(onComplete) && order.status === 'EN_REPARACION';
+  const canSettle = Boolean(onSettle) && order.status === 'LISTO_ENTREGA';
 
   return (
     <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
@@ -72,6 +76,16 @@ export function WorkOrderTrackingCard({ order, onViewHistory, onComplete }: Work
             >
               <Flag className="h-4 w-4" aria-hidden="true" />
               Concluir Reparación
+            </button>
+          )}
+          {canSettle && onSettle && (
+            <button
+              type="button"
+              onClick={() => onSettle(order.id)}
+              className="flex min-h-[44px] items-center gap-2 rounded-xl bg-lime-400 px-4 text-sm font-bold text-lime-950 shadow-sm transition hover:bg-lime-300"
+            >
+              <DollarSign className="h-4 w-4" aria-hidden="true" />
+              Liquidar Cuenta
             </button>
           )}
           <button

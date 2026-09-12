@@ -5,6 +5,7 @@ import {
   BellRing,
   Car,
   ClipboardPlus,
+  DollarSign,
   FileEdit,
   Globe,
   LogOut,
@@ -40,6 +41,14 @@ export const NAV_ITEMS: NavItem[] = [
     to: '/seguimiento',
     label: 'Seguimiento',
     icon: <Search className="w-4 h-4" />,
+    roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
+  },
+  {
+    // US-20: settlement of ready work orders. Visible to roles that can see
+    // monetary values (RN-16 / FE-18).
+    to: '/liquidacion',
+    label: 'Liquidación',
+    icon: <DollarSign className="w-4 h-4" />,
     roles: ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'],
   },
   {
