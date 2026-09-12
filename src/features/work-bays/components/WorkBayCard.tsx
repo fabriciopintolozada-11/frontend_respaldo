@@ -1,6 +1,8 @@
 import { AlertTriangle, Car, ClipboardList, Clock, User, Wrench } from 'lucide-react';
 
-import type { WorkBayMonitoring, WorkBayMonitoringStatus } from '../api/types';
+import type { WorkBayMonitoring } from '../api/types';
+
+export type BayUiStatus = 'DISPONIBLE' | 'EN_DIAGNOSTICO' | 'EN_REPARACION' | 'EN_ESPERA_DE_REPUESTO';
 
 export interface BayStatusStyle {
   label: string;
@@ -10,7 +12,7 @@ export interface BayStatusStyle {
   panel: string;
 }
 
-export const BAY_STATUS_STYLES: Record<WorkBayMonitoringStatus, BayStatusStyle> = {
+export const BAY_STATUS_STYLES: Record<BayUiStatus, BayStatusStyle> = {
   DISPONIBLE: {
     label: 'Disponible',
     badge: 'bg-slate-100 text-slate-600',
@@ -33,7 +35,7 @@ export const BAY_STATUS_STYLES: Record<WorkBayMonitoringStatus, BayStatusStyle> 
     panel: 'bg-[#22C55E08]',
   },
   EN_ESPERA_DE_REPUESTO: {
-    label: 'Espera de Repuesto',
+    label: 'En Espera de Repuesto',
     badge: 'bg-[#F59E0B15] text-[#F59E0B] border border-[#F59E0B30]',
     border: 'border-[#F59E0B40]',
     dot: 'bg-[#F59E0B]',
@@ -41,25 +43,46 @@ export const BAY_STATUS_STYLES: Record<WorkBayMonitoringStatus, BayStatusStyle> 
   },
 };
 
+function toUiStatus(bay: WorkBayMonitoring): BayUiStatus {
+  switch (bay.status) {
+    case 'LIBRE':
+      return 'DISPONIBLE';
+    case 'ESPERA_REPUESTO':
+      return 'EN_ESPERA_DE_REPUESTO';
+    case 'MANTENIMIENTO':
+      return 'EN_REPARACION';
+    case 'OCUPADA':
+    default:
+      return bay.currentWorkOrder?.status === 'EN_DIAGNOSTICO' ? 'EN_DIAGNOSTICO' : 'EN_REPARACION';
+  }
+}
+
+function vehicleDescription(bay: WorkBayMonitoring): string | null {
+  const brand = bay.currentWorkOrder?.vehicleBrand?.trim();
+  const model = bay.currentWorkOrder?.vehicleModel?.trim();
+  if (!brand && !model) return null;
+  return [brand, model].filter(Boolean).join(' ');
+}
+
 function hasOccupationDetail(bay: WorkBayMonitoring): boolean {
-  const occupation = bay.occupation;
+  const workOrder = bay.currentWorkOrder;
   return Boolean(
-    occupation?.vehiclePlate ||
-      occupation?.vehicleDescription ||
-      occupation?.mechanicName ||
-      occupation?.workOrderStatus ||
-      typeof occupation?.hoursInStage === 'number',
+    workOrder?.plate ||
+      workOrder?.vehicleBrand ||
+      workOrder?.vehicleModel ||
+      workOrder?.mechanicName ||
+      workOrder?.status ||
+      typeof workOrder?.elapsedHours === 'number',
   );
 }
 
-function hasWaitingInfo(bay: WorkBayMonitoring): boolean {
-  return Boolean(bay.occupation?.waitingPartName || typeof bay.occupation?.waitingDays === 'number');
-}
-
 export function WorkBayCard({ bay }: { bay: WorkBayMonitoring }) {
-  const style = BAY_STATUS_STYLES[bay.status] ?? BAY_STATUS_STYLES.DISPONIBLE;
-  const isAvailable = bay.status === 'DISPONIBLE';
-  const occupation = bay.occupation;
+  const uiStatus = toUiStatus(bay);
+  const style = BAY_STATUS_STYLES[uiStatus];
+  const isAvailable = uiStatus === 'DISPONIBLE';
+  const isWaiting = uiStatus === 'EN_ESPERA_DE_REPUESTO';
+  const workOrder = bay.currentWorkOrder;
+  const vehicle = vehicleDescription(bay);
 
   return (
     <article className={`flex flex-col gap-3 rounded-2xl border bg-white p-4 ${style.border}`}>
@@ -67,8 +90,8 @@ export function WorkBayCard({ bay }: { bay: WorkBayMonitoring }) {
         <div className="min-w-0 flex items-center gap-2">
           <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${style.dot}`} />
           <div className="min-w-0">
-            <h3 className="truncate font-mono text-sm font-extrabold text-slate-900">{bay.bayCode}</h3>
-            <p className="mt-0.5 truncate text-[11px] text-slate-500">{bay.bayName}</p>
+            <h3 className="truncate font-mono text-sm font-extrabold text-slate-900">Bahía {bay.bayNumber}</h3>
+            <p className="mt-0.5 truncate text-[11px] text-slate-500">Bahía física {bay.bayNumber}</p>
           </div>
         </div>
         <span className={`shrink-0 rounded-lg border px-2.5 py-1 text-[11px] font-bold ${style.badge}`}>
@@ -85,48 +108,42 @@ export function WorkBayCard({ bay }: { bay: WorkBayMonitoring }) {
       ) : (
         <>
           <div className={`space-y-2 rounded-xl p-3 text-xs ${style.panel}`}>
-            {occupation?.vehiclePlate && (
+            {workOrder?.plate && (
               <div className="flex items-center gap-2">
                 <Car className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="font-mono font-bold text-slate-900">{occupation.vehiclePlate}</span>
+                <span className="font-mono font-bold text-slate-900">{workOrder.plate}</span>
               </div>
             )}
-            {occupation?.vehicleDescription && (
-              <p className="text-slate-600">{occupation.vehicleDescription}</p>
-            )}
-            {occupation?.mechanicName && (
+            {vehicle && <p className="text-slate-600">{vehicle}</p>}
+            {workOrder?.mechanicName && (
               <div className="flex items-center gap-2">
                 <User className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="text-slate-700">{occupation.mechanicName}</span>
+                <span className="text-slate-700">{workOrder.mechanicName}</span>
               </div>
             )}
-            {occupation?.workOrderStatus && (
+            {workOrder?.status && (
               <div className="flex items-center gap-2">
                 <ClipboardList className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="font-semibold text-slate-800">OT: {occupation.workOrderStatus}</span>
+                <span className="font-semibold text-slate-800">OT: {workOrder.status}</span>
               </div>
             )}
-            {typeof occupation?.hoursInStage === 'number' && (
+            {typeof workOrder?.elapsedHours === 'number' && (
               <div className="flex items-center gap-2">
                 <Clock className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <span className="text-slate-700">{occupation.hoursInStage} h en etapa</span>
+                <span className="text-slate-700">{workOrder.elapsedHours} h en etapa</span>
               </div>
             )}
-            {!hasOccupationDetail(bay) && !hasWaitingInfo(bay) && (
+            {!hasOccupationDetail(bay) && (
               <p className="text-slate-500">Ocupada - sin detalle disponible del backend</p>
             )}
           </div>
 
-          {bay.status === 'EN_ESPERA_DE_REPUESTO' && hasWaitingInfo(bay) && (
+          {isWaiting && (
             <div className="rounded-xl border border-[#F59E0B30] bg-[#F59E0B10] p-3 text-xs text-amber-800">
               <div className="flex items-center gap-2 font-bold">
                 <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-600" />
                 Espera de repuesto
               </div>
-              {occupation?.waitingPartName && <p className="mt-1 text-amber-700">Repuesto: {occupation.waitingPartName}</p>}
-              {typeof occupation?.waitingDays === 'number' && (
-                <p className="text-amber-700">{occupation.waitingDays} días de espera</p>
-              )}
             </div>
           )}
         </>

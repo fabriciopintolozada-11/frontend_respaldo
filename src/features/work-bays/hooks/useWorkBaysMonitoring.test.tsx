@@ -11,11 +11,24 @@ import { useWorkBaysMonitoring } from './useWorkBaysMonitoring';
 
 const MONITORING_PATH = '/api/v1/work-bays/monitoring';
 
+function makeBay(bayNumber: number, status: WorkBayMonitoring['status']): WorkBayMonitoring {
+  return {
+    id: `bay-${bayNumber}`,
+    bayNumber,
+    isOccupied: status !== 'LIBRE',
+    status,
+    currentWorkOrderId: null,
+    currentWorkOrder: null,
+    createdAt: '2026-09-01T12:00:00.000Z',
+    updatedAt: '2026-09-01T12:00:00.000Z',
+  };
+}
+
 const monitoringResponse: WorkBayMonitoring[] = [
-  { bayId: 1, bayCode: 'BAHIA-01', bayName: 'Bahía 1', status: 'EN_DIAGNOSTICO' },
-  { bayId: 2, bayCode: 'BAHIA-02', bayName: 'Bahía 2', status: 'EN_ESPERA_DE_REPUESTO' },
-  { bayId: 3, bayCode: 'BAHIA-03', bayName: 'Bahía 3', status: 'EN_REPARACION' },
-  { bayId: 4, bayCode: 'BAHIA-04', bayName: 'Bahía 4', status: 'DISPONIBLE' },
+  makeBay(1, 'OCUPADA'),
+  makeBay(2, 'ESPERA_REPUESTO'),
+  makeBay(3, 'OCUPADA'),
+  makeBay(4, 'LIBRE'),
 ];
 
 function makeWrapper() {
@@ -45,7 +58,8 @@ describe('workBaysService.getMonitoring (FE-T18.3)', () => {
 
     expect(urlSpy).toHaveBeenCalledWith(expect.stringContaining('/api/v1/work-bays/monitoring'));
     expect(result).toHaveLength(4);
-    expect(result[0].bayCode).toBe('BAHIA-01');
+    expect(result[0].bayNumber).toBe(1);
+    expect(result[0].status).toBe('OCUPADA');
   });
 });
 

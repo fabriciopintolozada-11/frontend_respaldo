@@ -4,57 +4,78 @@ import { describe, expect, it } from 'vitest';
 import type { WorkBayMonitoring } from '../api/types';
 import { WorkBaysGrid } from './WorkBaysGrid';
 
-function makeBay(overrides: Partial<WorkBayMonitoring> & { bayId: number }): WorkBayMonitoring {
+function makeBay(overrides: Partial<WorkBayMonitoring> & { bayNumber: number }): WorkBayMonitoring {
   return {
-    bayCode: `BAHIA-0${overrides.bayId}`,
-    bayName: `Bahía ${overrides.bayId}`,
-    status: 'DISPONIBLE',
+    id: `bay-${overrides.bayNumber}`,
+    bayNumber: overrides.bayNumber,
+    isOccupied: false,
+    status: 'LIBRE',
+    currentWorkOrderId: null,
+    currentWorkOrder: null,
+    createdAt: '2026-09-01T12:00:00.000Z',
+    updatedAt: '2026-09-01T12:00:00.000Z',
     ...overrides,
   };
 }
 
-function cardFor(bayCode: string): HTMLElement {
-  const heading = screen.getByText(bayCode);
+function cardFor(bayNumber: number): HTMLElement {
+  const heading = screen.getByText(`Bahía ${bayNumber}`);
   return heading.closest('article') as HTMLElement;
 }
 
 const fourBays: WorkBayMonitoring[] = [
   makeBay({
-    bayId: 1,
-    status: 'EN_DIAGNOSTICO',
-    occupation: {
-      vehiclePlate: '4589-KXA',
-      vehicleDescription: 'Toyota Hilux 2021',
+    bayNumber: 1,
+    isOccupied: true,
+    status: 'OCUPADA',
+    currentWorkOrderId: 'wo-1',
+    currentWorkOrder: {
+      id: 'wo-1',
+      status: 'EN_DIAGNOSTICO',
+      plate: '4589-KXA',
+      vehicleBrand: 'Toyota',
+      vehicleModel: 'Hilux',
+      mechanicId: 'm-1',
       mechanicName: 'Juan Carlos Mamani',
-      workOrderStatus: 'EN_DIAGNOSTICO',
-      hoursInStage: 4,
+      assignedAt: '2026-09-01T08:00:00.000Z',
+      elapsedHours: 4,
     },
   }),
   makeBay({
-    bayId: 2,
-    status: 'EN_ESPERA_DE_REPUESTO',
-    occupation: {
-      vehiclePlate: '3042-XYZ',
-      vehicleDescription: 'Suzuki Grand Vitara 2019',
+    bayNumber: 2,
+    isOccupied: true,
+    status: 'ESPERA_REPUESTO',
+    currentWorkOrderId: 'wo-2',
+    currentWorkOrder: {
+      id: 'wo-2',
+      status: 'EN_ESPERA_DE_REPUESTO',
+      plate: '3042-XYZ',
+      vehicleBrand: 'Suzuki',
+      vehicleModel: 'Grand Vitara',
+      mechanicId: 'm-2',
       mechanicName: 'Roberto Gómez Silva',
-      workOrderStatus: 'ESPERANDO_REPUESTO',
-      hoursInStage: 26,
-      waitingPartName: 'Kit de embrague reforzado',
-      waitingDays: 3,
+      assignedAt: '2026-08-31T10:00:00.000Z',
+      elapsedHours: 26,
     },
   }),
   makeBay({
-    bayId: 3,
-    status: 'EN_REPARACION',
-    occupation: {
-      vehiclePlate: '2190-LPN',
-      vehicleDescription: 'Nissan Frontier 2018',
+    bayNumber: 3,
+    isOccupied: true,
+    status: 'OCUPADA',
+    currentWorkOrderId: 'wo-3',
+    currentWorkOrder: {
+      id: 'wo-3',
+      status: 'EN_REPARACION',
+      plate: '2190-LPN',
+      vehicleBrand: 'Nissan',
+      vehicleModel: 'Frontier',
+      mechanicId: 'm-3',
       mechanicName: 'Diego Morales Claros',
-      workOrderStatus: 'EN_REPARACION',
-      hoursInStage: 9,
+      assignedAt: '2026-09-01T03:00:00.000Z',
+      elapsedHours: 9,
     },
   }),
-  makeBay({ bayId: 4, status: 'DISPONIBLE' }),
+  makeBay({ bayNumber: 4, status: 'LIBRE' }),
 ];
 
 describe('WorkBaysGrid (FE-T18.1)', () => {
@@ -62,16 +83,16 @@ describe('WorkBaysGrid (FE-T18.1)', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
     expect(screen.getAllByRole('article')).toHaveLength(4);
-    expect(screen.getByText('BAHIA-01')).toBeInTheDocument();
-    expect(screen.getByText('BAHIA-02')).toBeInTheDocument();
-    expect(screen.getByText('BAHIA-03')).toBeInTheDocument();
-    expect(screen.getByText('BAHIA-04')).toBeInTheDocument();
+    expect(screen.getByText('Bahía 1')).toBeInTheDocument();
+    expect(screen.getByText('Bahía 2')).toBeInTheDocument();
+    expect(screen.getByText('Bahía 3')).toBeInTheDocument();
+    expect(screen.getByText('Bahía 4')).toBeInTheDocument();
   });
 
   it('muestra explícitamente "Disponible" en una bahía libre', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    const freeCard = cardFor('BAHIA-04');
+    const freeCard = cardFor(4);
     expect(freeCard).toHaveTextContent('Disponible');
     expect(freeCard).not.toHaveTextContent('OT:');
   });
@@ -79,9 +100,9 @@ describe('WorkBaysGrid (FE-T18.1)', () => {
   it('muestra los datos de la bahía ocupada cuando el backend los provee', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    const occupiedCard = cardFor('BAHIA-01');
+    const occupiedCard = cardFor(1);
     expect(occupiedCard).toHaveTextContent('4589-KXA');
-    expect(occupiedCard).toHaveTextContent('Toyota Hilux 2021');
+    expect(occupiedCard).toHaveTextContent('Toyota Hilux');
     expect(occupiedCard).toHaveTextContent('Juan Carlos Mamani');
     expect(occupiedCard).toHaveTextContent('OT: EN_DIAGNOSTICO');
     expect(occupiedCard).toHaveTextContent('4 h en etapa');
@@ -92,46 +113,46 @@ describe('WorkBaysGrid diferenciación visual de estados (FE-T18.2)', () => {
   it('pinta Disponible en gris', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    expect(cardFor('BAHIA-04').className).toContain('border-slate-200');
-    expect(cardFor('BAHIA-04')).toHaveTextContent('Disponible');
+    expect(cardFor(4).className).toContain('border-slate-200');
+    expect(cardFor(4)).toHaveTextContent('Disponible');
   });
 
-  it('pinta En Diagnóstico en azul', () => {
+  it('pinta En Diagnóstico en azul cuando la OT está en diagnóstico', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    expect(cardFor('BAHIA-01').className).toContain('3B82F6');
+    expect(cardFor(1).className).toContain('3B82F6');
   });
 
   it('pinta En Reparación en verde', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    expect(cardFor('BAHIA-03').className).toContain('22C55E');
+    expect(cardFor(3).className).toContain('22C55E');
   });
 
   it('pinta Espera de Repuesto en ámbar y la mantiene como ocupada', () => {
     render(<WorkBaysGrid bays={fourBays} />);
 
-    const waitingCard = cardFor('BAHIA-02');
+    const waitingCard = cardFor(2);
     expect(waitingCard.className).toContain('F59E0B');
-    expect(waitingCard).toHaveTextContent('Espera de Repuesto');
-    expect(waitingCard).toHaveTextContent('Kit de embrague reforzado');
-    expect(waitingCard).toHaveTextContent('3 días de espera');
+    expect(waitingCard).toHaveTextContent('En Espera de Repuesto');
     expect(waitingCard).not.toHaveTextContent('Disponible');
   });
 
   it('no inventa el repuesto o los días cuando el backend no los envía', () => {
-    const withoutWaitingInfo = [
-      makeBay({
-        bayId: 2,
-        status: 'EN_ESPERA_DE_REPUESTO',
-        occupation: { vehiclePlate: '3042-XYZ' },
-      }),
-    ];
-    render(<WorkBaysGrid bays={withoutWaitingInfo} />);
+    render(<WorkBaysGrid bays={fourBays} />);
 
-    const waitingCard = cardFor('BAHIA-02');
-    expect(waitingCard).toHaveTextContent('Espera de Repuesto');
+    const waitingCard = cardFor(2);
+    expect(waitingCard).toHaveTextContent('En Espera de Repuesto');
     expect(waitingCard).not.toHaveTextContent('Repuesto:');
     expect(waitingCard).not.toHaveTextContent('días de espera');
+  });
+
+  it('no muestra undefined/null en una bahía ocupada sin detalle', () => {
+    const occupiedWithoutDetail = [makeBay({ bayNumber: 1, isOccupied: true, status: 'OCUPADA' })];
+    render(<WorkBaysGrid bays={occupiedWithoutDetail} />);
+
+    const occupiedCard = cardFor(1);
+    expect(occupiedCard).toHaveTextContent('Ocupada');
+    expect(occupiedCard.textContent).not.toMatch(/undefined|null/);
   });
 });
