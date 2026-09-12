@@ -1,5 +1,6 @@
 import { AlertCircle, ClipboardList, Search } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router';
 
 import { ApiError } from '../../../shared/api/httpClient';
 import { normalizeTrackingPlate } from '../api/tracking-api';
@@ -21,6 +22,7 @@ const PLATE_PATTERN = /^[A-Z0-9-]{3,10}$/;
 export function WorkOrderTrackingPage() {
   const toast = useToast();
   const { user } = useAuth();
+  const navigate = useNavigate();
   const completeWorkOrder = useCompleteWorkOrder();
 
   const [plate, setPlate] = useState('');
@@ -32,6 +34,13 @@ export function WorkOrderTrackingPage() {
   // US-19 / FE-18: only the WORKSHOP_LEAD may conclude a repair from the
   // tracking board (RN-04); receptionist and admin only read.
   const canComplete = user?.role === 'WORKSHOP_LEAD';
+
+  // US-20 / FE-18: reception, workshop lead and admin may open a settlement
+  // for an order ready for delivery (RN-15 / RN-16).
+  const canSettle =
+    user?.role === 'RECEPTIONIST' ||
+    user?.role === 'WORKSHOP_LEAD' ||
+    user?.role === 'ADMIN';
 
   const normalizedPlate = normalizeTrackingPlate(plate);
   const isValidPlate = PLATE_PATTERN.test(normalizedPlate);
@@ -94,6 +103,7 @@ export function WorkOrderTrackingPage() {
         searchedPlate={searchedPlate}
         onViewHistory={setHistoryPlate}
         onComplete={canComplete ? handleOpenComplete : undefined}
+        onSettle={canSettle ? (orderId) => navigate(`/liquidacion/${orderId}`) : undefined}
       />
 
       {searchedPlate && !query.isPending && !query.isError && query.data?.length === 0 && (
@@ -113,13 +123,13 @@ export function WorkOrderTrackingPage() {
   );
 }
 
-function TrackingResults({ query, searchedPlate, onViewHistory, onComplete }: { query: ReturnType<typeof useWorkOrderTracking>; searchedPlate: string; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void }) {
+function TrackingResults({ query, searchedPlate, onViewHistory, onComplete, onSettle }: { query: ReturnType<typeof useWorkOrderTracking>; searchedPlate: string; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void; onSettle?: (orderId: string) => void }) {
   if (!searchedPlate) return <EmptyTrackingState title="Esperando una placa" message="La orden activa y sus datos de permanencia aparecerán aquí." />;
   if (query.isPending) return <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center" role="status"><span className="mx-auto block h-8 w-8 animate-spin rounded-full border-4 border-lime-400 border-t-transparent" /><p className="mt-3 font-semibold text-slate-700">Consultando seguimiento...</p></div>;
   if (query.isError) return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert"><AlertCircle className="h-6 w-6" aria-hidden="true" /><p className="mt-2 font-bold">No se pudo consultar el seguimiento</p><p className="mt-1 text-sm">{getErrorMessage(query.error)}</p><button type="button" onClick={() => void query.refetch()} className="mt-4 min-h-[44px] rounded-xl bg-red-700 px-4 text-sm font-bold text-white hover:bg-red-800">Reintentar</button></div>;
   if (!query.data?.length) return <EmptyTrackingState title="Sin órdenes activas" message={`No hay órdenes de trabajo activas asociadas a ${searchedPlate}.`} />;
 
-  return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-700">Resultado de seguimiento</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{query.data.length} {query.data.length === 1 ? 'orden encontrada' : 'órdenes encontradas'}</h2></div>{query.data.map((order) => <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} />)}</section>;
+  return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-700">Resultado de seguimiento</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{query.data.length} {query.data.length === 1 ? 'orden encontrada' : 'órdenes encontradas'}</h2></div>{query.data.map((order) => <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} onSettle={onSettle} />)}</section>;
 }
 
 function EmptyTrackingState({ title, message }: { title: string; message: string }) {

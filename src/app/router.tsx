@@ -87,6 +87,21 @@ export const router = createBrowserRouter([
               Component: (await import('../features/work-orders/pages/WorkOrderTrackingPage')).WorkOrderTrackingPage,
             }),
           },
+          {
+            // US-20: settlement index (orders in LISTO_ENTREGA) and the
+            // settlement detail. Only reception, workshop lead and admin can
+            // see monetary values (RN-16).
+            path: 'liquidacion',
+            lazy: async () => ({
+              Component: (await import('../features/settlement/pages/SettlementIndexPage')).SettlementIndexPage,
+            }),
+          },
+          {
+            path: 'liquidacion/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/settlement/pages/SettlementPage')).SettlementPage,
+            }),
+          },
         ],
       },
       {
