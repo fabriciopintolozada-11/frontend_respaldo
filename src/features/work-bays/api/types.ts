@@ -1,24 +1,29 @@
 /**
- * US-18: contrato frontend de monitoreo de bahías.
- * Consume GET /api/v1/work-bays/monitoring. El backend aún no expone este
- * endpoint; cuando exista, revisar el campo DTO y ajustar estos tipos.
+ * US-18: contrato real del backend para el monitoreo de bahías.
+ * Consume GET /api/v1/work-bays/monitoring, que devuelve las 4 bahías
+ * físicas ordenadas por bayNumber (1..4).
  */
-export type WorkBayMonitoringStatus = 'DISPONIBLE' | 'EN_DIAGNOSTICO' | 'EN_REPARACION' | 'EN_ESPERA_DE_REPUESTO';
+export type WorkBayMonitoringStatus = 'LIBRE' | 'OCUPADA' | 'ESPERA_REPUESTO' | 'MANTENIMIENTO';
 
-export interface WorkBayOccupation {
-  vehiclePlate?: string;
-  vehicleDescription?: string;
-  mechanicName?: string;
-  workOrderStatus?: string;
-  hoursInStage?: number;
-  waitingPartName?: string;
-  waitingDays?: number;
+export interface WorkOrderBaySummary {
+  id: string;
+  status: string;
+  plate: string | null;
+  vehicleBrand: string | null;
+  vehicleModel: string | null;
+  mechanicId: string | null;
+  mechanicName: string | null;
+  assignedAt: string | null;
+  elapsedHours: number;
 }
 
 export interface WorkBayMonitoring {
-  bayId: number;
-  bayCode: string;
-  bayName: string;
+  id: string;
+  bayNumber: number;
+  isOccupied: boolean;
   status: WorkBayMonitoringStatus;
-  occupation?: WorkBayOccupation;
+  currentWorkOrderId: string | null;
+  currentWorkOrder: WorkOrderBaySummary | null;
+  createdAt: string;
+  updatedAt: string;
 }
