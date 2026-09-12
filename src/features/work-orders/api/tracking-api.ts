@@ -1,5 +1,6 @@
 import type { components } from '../../../shared/api/schema.gen';
 import { httpClient } from '../../../shared/api/httpClient';
+import { buildOnlyStaleQuotesQueryString } from '../../stale-quotes/only-stale-quotes';
 
 type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
 
@@ -13,5 +14,13 @@ export async function getTrackingSummary(plate: string, signal?: AbortSignal): P
     params: { licensePlate: normalizedPlate },
     signal,
   });
+  return response.data;
+}
+
+export async function getStaleQuoteOrders(signal?: AbortSignal): Promise<TrackingOrder[]> {
+  const response = await httpClient.get<TrackingOrder[]>(
+    `/work-orders/tracking-summary?${buildOnlyStaleQuotesQueryString(true)}`,
+    { signal },
+  );
   return response.data;
 }

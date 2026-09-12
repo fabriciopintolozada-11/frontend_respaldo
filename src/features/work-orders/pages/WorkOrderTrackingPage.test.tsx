@@ -137,4 +137,50 @@ describe('WorkOrderTrackingPage', () => {
       screen.queryByRole('button', { name: /^Concluir Reparación$/ }),
     ).not.toBeInTheDocument();
   });
+
+  it('filters presupuestos estancados desde el backend al activar el filtro (US-16 / RN-06 / FE-T16.3)', async () => {
+    const staleOrder: TrackingOrder = {
+      ...order,
+      status: 'PRESUPUESTO_ENVIADO',
+      missingPartName: null,
+      pausedReason: 'Awaiting customer approval',
+      daysWaitingApproval: 17,
+      isStaleQuote: true,
+    };
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', ({ request }) => {
+        const url = new URL(request.url);
+        if (url.searchParams.get('onlyStaleQuotes') === 'true') {
+          return HttpResponse.json([staleOrder]);
+        }
+        return HttpResponse.json([]);
+      }),
+    );
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(
+      screen.getByRole('switch', { name: 'Solo estancados (≥15 días)' }),
+    );
+
+    expect(await screen.findByText('1 presupuesto estancado')).toBeInTheDocument();
+    expect(screen.getByText('Alerta: 15+ días sin respuesta (17 días)')).toBeInTheDocument();
+    expect(screen.getByText('17 días esperando aprobación del presupuesto')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^WhatsApp$/ })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Llamar$/ })).toBeInTheDocument();
+  });
+
+  it('shows an empty state when there are no stale quotes (US-16)', async () => {
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () => HttpResponse.json([])),
+    );
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.click(
+      screen.getByRole('switch', { name: 'Solo estancados (≥15 días)' }),
+    );
+
+    expect(await screen.findByText('No hay presupuestos estancados')).toBeInTheDocument();
+  });
 });

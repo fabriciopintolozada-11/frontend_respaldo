@@ -2,6 +2,8 @@ import { AlertTriangle, CarFront, Clock3, DollarSign, Flag, MapPin, Phone, UserR
 import type { ReactNode } from 'react';
 
 import type { components } from '../../../shared/api/schema.gen';
+import { ContactCustomer } from '../../stale-quotes/components/ContactCustomer';
+import { StaleQuoteBadge } from '../../stale-quotes/components/StaleQuoteBadge';
 
 type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
 
@@ -43,7 +45,7 @@ const STATUS_STYLES: Record<string, string> = {
 };
 
 export function WorkOrderTrackingCard({ order, onViewHistory, onComplete, onSettle }: WorkOrderTrackingCardProps) {
-  const isPaused = Boolean(order.missingPartName || order.pausedReason);
+  const isPaused = !order.isStaleQuote && Boolean(order.missingPartName || order.pausedReason);
   const statusLabel = STATUS_LABELS[order.status] ?? order.status;
   const statusStyle = STATUS_STYLES[order.status] ?? 'bg-slate-100 text-slate-700';
   const canComplete = Boolean(onComplete) && order.status === 'EN_REPARACION';
@@ -56,11 +58,7 @@ export function WorkOrderTrackingCard({ order, onViewHistory, onComplete, onSett
           <div className="flex flex-wrap items-center gap-2">
             <span className="font-mono text-lg font-extrabold tracking-wide text-slate-900">{order.plate}</span>
             <span className={`rounded-full px-3 py-1 text-xs font-bold ${statusStyle}`}>{statusLabel}</span>
-            {order.isStaleQuote && (
-              <span className="rounded-full bg-red-100 px-3 py-1 text-xs font-bold text-red-700">
-                15+ días sin respuesta
-              </span>
-            )}
+            <StaleQuoteBadge isStaleQuote={order.isStaleQuote} daysWaitingApproval={order.daysWaitingApproval ?? 0} variant="danger" />
           </div>
           <p className="mt-1 flex items-center gap-2 text-sm text-slate-500">
             <CarFront className="h-4 w-4" aria-hidden="true" />
@@ -104,6 +102,20 @@ export function WorkOrderTrackingCard({ order, onViewHistory, onComplete, onSett
         <InfoItem icon={<Clock3 className="h-4 w-4" />} label="Permanencia" value={`${order.daysInWorkshop} ${order.daysInWorkshop === 1 ? 'día' : 'días'}`} />
         <InfoItem icon={<Phone className="h-4 w-4" />} label="Teléfono cliente" value={order.customerPhone ?? 'No registrado'} />
       </dl>
+
+      {order.isStaleQuote && (
+        <div className="mt-5 flex flex-col gap-3 rounded-xl border border-red-200 bg-red-50 p-4 sm:flex-row sm:items-center sm:justify-between" role="status">
+          <div className="flex items-center gap-2 text-sm font-bold text-red-800">
+            <AlertTriangle className="h-4 w-4 shrink-0" aria-hidden="true" />
+            <span>
+              {order.daysWaitingApproval !== null
+                ? `${order.daysWaitingApproval} ${order.daysWaitingApproval === 1 ? 'día' : 'días'} esperando aprobación del presupuesto`
+                : 'Presupuesto enviado sin respuesta del cliente'}
+            </span>
+          </div>
+          <ContactCustomer phone={order.customerPhone ?? undefined} />
+        </div>
+      )}
 
       {isPaused && (
         <div className="mt-5 flex gap-3 rounded-xl border border-orange-200 bg-orange-50 p-4 text-orange-900" role="status">
