@@ -152,7 +152,13 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    // US-17: portal público de consulta de clientes (RN-17). No requiere sesión.
+    // /consulta se mantiene como redirect para no romper enlaces previos.
     path: '/consulta',
+    element: <Navigate to="/tracking" replace />,
+  },
+  {
+    path: '/tracking',
     lazy: async () => ({
       Component: (await import('../features/tracking-public/pages/PublicTrackingPage')).PublicTrackingPage,
     }),
