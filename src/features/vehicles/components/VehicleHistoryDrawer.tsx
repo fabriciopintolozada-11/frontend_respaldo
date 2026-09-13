@@ -3,6 +3,7 @@ import type { ReactNode } from 'react';
 
 import { ApiError } from '../../../shared/api/httpClient';
 import type { components } from '../../../shared/api/schema.gen';
+import { cleanServerMessage } from '../../../shared/lib/utils';
 import { useVehicleHistory } from '../hooks/useVehicleHistory';
 
 interface VehicleHistoryDrawerProps {
@@ -109,7 +110,7 @@ function HistoryContent({ data }: { data: components['schemas']['VehicleHistoryR
         <h3 className="text-lg font-extrabold text-slate-900">Trazabilidad técnica</h3>
         {data.technicalHistory.length === 0 ? <p className="mt-4 text-sm text-slate-500">No hay registros técnicos adicionales.</p> : (
           <ol className="mt-4 space-y-3 border-l-2 border-lime-200 pl-5">
-            {data.technicalHistory.map((entry) => <li key={entry.id} className="relative text-sm text-slate-700"><span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full bg-lime-400 ring-4 ring-white" />{entry.description}<time className="mt-1 block text-xs text-slate-400">{formatDate(entry.createdAt)}</time></li>)}
+            {data.technicalHistory.map((entry) => <li key={entry.id} className="relative text-sm text-slate-700"><span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full bg-lime-400 ring-4 ring-white" />{cleanServerMessage(entry.description)}<time className="mt-1 block text-xs text-slate-400">{formatDate(entry.createdAt)}</time></li>)}
           </ol>
         )}
       </section>
