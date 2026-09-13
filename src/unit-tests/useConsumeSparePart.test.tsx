@@ -83,7 +83,8 @@ describe('useConsumeSparePart', () => {
     const details = translateConsumePartError(result.current.error);
     expect(details.isBusinessRuleError).toBe(true);
     expect(details.code).toBe(422);
-    expect(details.message).toContain('RN-07');
+    expect(details.message).not.toMatch(/RN-\d+|HU-\d+|US-\d+|FE-\d+/i);
+    expect(details.message).toContain('not reserved');
   });
 
   it('maps a 422 insufficient-stock rejection and does not allow negative balances', async () => {
@@ -107,7 +108,8 @@ describe('useConsumeSparePart', () => {
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const details = translateConsumePartError(result.current.error);
     expect(details.isBusinessRuleError).toBe(true);
-    expect(details.message).toContain('RN-01');
+    expect(details.message).not.toMatch(/RN-\d+|HU-\d+|US-\d+|FE-\d+/i);
+    expect(details.message).toContain('insufficient physical stock');
   });
 
   it('maps a 403 authorization rejection contextually (RN-04)', async () => {

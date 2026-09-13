@@ -1,6 +1,7 @@
 import axios, { type AxiosError, type AxiosRequestConfig, type InternalAxiosRequestConfig } from 'axios';
 
 import { env } from '../config/env';
+import { cleanServerMessage } from '../lib/utils';
 
 export interface ApiErrorBody {
   statusCode?: number;
@@ -101,9 +102,12 @@ httpClient.interceptors.response.use(
     }
 
     const body = error.response?.data;
-    const message = Array.isArray(body?.message)
+    const rawMessage = Array.isArray(body?.message)
       ? body.message.join(' · ')
       : body?.message ?? error.message ?? `HTTP ${statusCode}`;
+    // The end user never sees internal requirement codes (RN-xx / HU-xx / US-xx
+    // / FE-xx); they are stripped from the surfaced message.
+    const message = cleanServerMessage(rawMessage) || `HTTP ${statusCode}`;
 
     return Promise.reject(new ApiError(statusCode, message, body));
   },

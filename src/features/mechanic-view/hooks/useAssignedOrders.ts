@@ -63,6 +63,12 @@ function mapRealDetailToAssignedDetail(detail: Record<string, any>): AssignedWor
     reservedParts: detail.reservedParts,
     diagnosticReport: detail.diagnosticReport ?? null,
     statusHistory: detail.statusHistory ?? [],
+    additionalFindingStatus:
+      (detail.additionalFindingStatus as
+        | 'NONE'
+        | 'PENDING_QUOTE'
+        | 'APPROVED'
+        | 'REJECTED') ?? 'NONE',
   };
 }
 

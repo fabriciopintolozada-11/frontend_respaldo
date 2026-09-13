@@ -30,6 +30,10 @@ export interface AssignedWorkOrderDetail {
   reservedParts?: ReservedPartDetail[];
   diagnosticReport: string | null;
   statusHistory: StatusHistoryEntry[];
+  // US-21 (FE-T21.3 / contract aditivo): decision state of the latest
+  // additional finding. Treated as optional until the backend with the field is
+  // deployed. Only the status string, never a cost (RN-16).
+  additionalFindingStatus?: 'NONE' | 'PENDING_QUOTE' | 'APPROVED' | 'REJECTED';
 }
 
 export interface PaginatedResponse<T> {

@@ -72,7 +72,7 @@ export function ApplyDiscountModal({
               Descuento sobre el total de la liquidación
             </p>
             <p className="mt-1 text-xs text-amber-800">
-              Solo el jefe de taller puede aplicar descuentos (RN-15). El
+              Solo el jefe de taller puede aplicar descuentos. El
               monto no puede superar el total disponible.
             </p>
           </div>

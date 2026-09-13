@@ -26,7 +26,10 @@ const summary: AssignedWorkOrderSummary = {
   assignedAt: '2026-09-10T09:00:00.000Z',
 };
 
-function mockDetail(status: string) {
+function mockDetail(
+  status: string,
+  additionalFindingStatus?: 'NONE' | 'PENDING_QUOTE' | 'APPROVED' | 'REJECTED',
+) {
   server.use(
     http.get('/api/v1/work-orders/assigned/ot-123', () =>
       HttpResponse.json({
@@ -44,6 +47,7 @@ function mockDetail(status: string) {
         reservedParts: [],
         diagnosticReport: null,
         statusHistory: [],
+        additionalFindingStatus,
       }),
     ),
   );
@@ -97,5 +101,17 @@ describe('AssignedOrderCard (US-19 / FE-18)', () => {
       screen.getByRole('dialog', { name: /Concluir reparación/i }),
     ).toBeInTheDocument();
     expect(screen.getByText(/OT-OT-123 · ABC-123/i)).toBeInTheDocument();
+  });
+
+  it('reflects the reception decision via the additional finding banner (US-21 / FE-T21.3)', async () => {
+    mockDetail('EN_REPARACION', 'APPROVED');
+    renderCard();
+
+    expect(await screen.findByText('Falla imprevista aprobada')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'La ampliación fue autorizada por el cliente. Puedes intervenir la falla según lo reportado.',
+      ),
+    ).toBeInTheDocument();
   });
 });

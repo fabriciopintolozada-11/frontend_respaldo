@@ -60,7 +60,7 @@ export function VoidAdjustmentModal({
       isOpen={isOpen}
       onClose={handleClose}
       title="Anular descuento"
-      subtitle="La anulación queda registrada en el historial inmutable (RN-19)"
+      subtitle="La anulación queda registrada en el historial inmutable"
       variant="light"
       maxWidth="md"
     >

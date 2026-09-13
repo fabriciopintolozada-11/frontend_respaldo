@@ -1,11 +1,9 @@
 import { AlertTriangle, CarFront, Clock3, DollarSign, Flag, MapPin, Phone, UserRound, Wrench } from 'lucide-react';
 import type { ReactNode } from 'react';
 
-import type { components } from '../../../shared/api/schema.gen';
 import { ContactCustomer } from '../../stale-quotes/components/ContactCustomer';
 import { StaleQuoteBadge } from '../../stale-quotes/components/StaleQuoteBadge';
-
-type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
+import type { TrackingOrder } from '../api/tracking-api';
 
 interface WorkOrderTrackingCardProps {
   order: TrackingOrder;

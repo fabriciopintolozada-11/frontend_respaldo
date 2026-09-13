@@ -18,6 +18,17 @@ import type {
 import { OnlyStaleQuotesFilter } from '../../stale-quotes/components/OnlyStaleQuotesFilter';
 import { useStaleQuoteOrders } from '../../stale-quotes/api/useStaleQuoteOrders';
 import { CompleteRepairModal } from '../../mechanic-view/components/CompleteRepairModal';
+import { useApproveAdditionalFinding } from '../../additional-findings/api/additional-findings.hooks';
+import { useRejectAdditionalFinding } from '../../additional-findings/api/additional-findings.hooks';
+import { translateAdditionalFindingError } from '../../additional-findings/api/additional-findings.errors';
+import {
+  PendingAdditionalFindingCard,
+  type AdditionalFindingResolveContext,
+} from '../../additional-findings/components/PendingAdditionalFindingCard';
+import {
+  ResolveAdditionalFindingModal,
+  type ResolveAdditionalFindingFormValues,
+} from '../../additional-findings/components/ResolveAdditionalFindingModal';
 
 const PLATE_PATTERN = /^[A-Z0-9-]{3,10}$/;
 
@@ -33,6 +44,14 @@ export function WorkOrderTrackingPage() {
   const [onlyStale, setOnlyStale] = useState(false);
   const [completingOrder, setCompletingOrder] =
     useState<CompleteRepairOrderContext | null>(null);
+  const [resolvingOrder, setResolvingOrder] =
+    useState<AdditionalFindingResolveContext | null>(null);
+
+  // US-21 (FE-T21.2): RECEPTIONIST and WORKSHOP_LEAD decide the unforeseen
+  // finding. The page is already gated to those roles plus ADMIN.
+  const approveFinding = useApproveAdditionalFinding(resolvingOrder?.id ?? '');
+  const rejectFinding = useRejectAdditionalFinding(resolvingOrder?.id ?? '');
+  const isResolving = approveFinding.isPending || rejectFinding.isPending;
 
   // US-19 / FE-18: only the WORKSHOP_LEAD may conclude a repair from the
   // tracking board (RN-04); receptionist and admin only read.
@@ -81,6 +100,37 @@ export function WorkOrderTrackingPage() {
     }
   };
 
+  // US-21 (FE-T21.2 / RN-07 / RN-19): approves (reserves suggested parts and
+  // resumes EN_REPARACION) or rejects (archives the damage permanently). The
+  // mutations invalidate the tracking board and the mechanic console.
+  const handleResolve = async (values: ResolveAdditionalFindingFormValues) => {
+    if (!resolvingOrder) return;
+    try {
+      if (values.decision === 'APPROVE') {
+        await approveFinding.mutateAsync({
+          channel: values.channel,
+          customerName: values.customerName,
+          notes: values.notes,
+        });
+        toast.success(
+          'Ampliación aprobada',
+          'La OT retomó EN_REPARACION y los repuestos quedaron reservados.',
+        );
+      } else {
+        await rejectFinding.mutateAsync({ reason: values.reason });
+        toast.success(
+          'Ampliación rechazada',
+          'El hallazgo quedó archivado y la OT retomó EN_REPARACION.',
+        );
+      }
+      setResolvingOrder(null);
+    } catch (err) {
+      const details = translateAdditionalFindingError(err);
+      toast.danger('No se pudo registrar la decisión', details.message);
+      throw err;
+    }
+  };
+
   return (
     <div className="space-y-6">
       <header className="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-8 lg:flex-row lg:items-end lg:justify-between">
@@ -120,6 +170,7 @@ export function WorkOrderTrackingPage() {
             onViewHistory={setHistoryPlate}
             onComplete={canComplete ? handleOpenComplete : undefined}
             onSettle={canSettle ? (orderId) => navigate(`/liquidacion/${orderId}`) : undefined}
+            onResolve={setResolvingOrder}
           />
 
           {searchedPlate && !query.isPending && !query.isError && query.data?.length === 0 && (
@@ -137,17 +188,25 @@ export function WorkOrderTrackingPage() {
         onSubmit={handleComplete}
         isPending={completeWorkOrder.isPending}
       />
+
+      <ResolveAdditionalFindingModal
+        isOpen={Boolean(resolvingOrder)}
+        order={resolvingOrder ?? { plate: '', findingDescription: null }}
+        onClose={() => setResolvingOrder(null)}
+        onConfirm={handleResolve}
+        isPending={isResolving}
+      />
     </div>
   );
 }
 
-function TrackingResults({ query, searchedPlate, onViewHistory, onComplete, onSettle }: { query: ReturnType<typeof useWorkOrderTracking>; searchedPlate: string; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void; onSettle?: (orderId: string) => void }) {
+function TrackingResults({ query, searchedPlate, onViewHistory, onComplete, onSettle, onResolve }: { query: ReturnType<typeof useWorkOrderTracking>; searchedPlate: string; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void; onSettle?: (orderId: string) => void; onResolve: (context: AdditionalFindingResolveContext) => void }) {
   if (!searchedPlate) return <EmptyTrackingState title="Esperando una placa" message="La orden activa y sus datos de permanencia aparecerán aquí." />;
   if (query.isPending) return <div className="rounded-2xl border border-slate-200 bg-white p-8 text-center" role="status"><span className="mx-auto block h-8 w-8 animate-spin rounded-full border-4 border-lime-400 border-t-transparent" /><p className="mt-3 font-semibold text-slate-700">Consultando seguimiento...</p></div>;
   if (query.isError) return <div className="rounded-2xl border border-red-200 bg-red-50 p-5 text-red-900" role="alert"><AlertCircle className="h-6 w-6" aria-hidden="true" /><p className="mt-2 font-bold">No se pudo consultar el seguimiento</p><p className="mt-1 text-sm">{getErrorMessage(query.error)}</p><button type="button" onClick={() => void query.refetch()} className="mt-4 min-h-[44px] rounded-xl bg-red-700 px-4 text-sm font-bold text-white hover:bg-red-800">Reintentar</button></div>;
   if (!query.data?.length) return <EmptyTrackingState title="Sin órdenes activas" message={`No hay órdenes de trabajo activas asociadas a ${searchedPlate}.`} />;
 
-  return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-700">Resultado de seguimiento</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{query.data.length} {query.data.length === 1 ? 'orden encontrada' : 'órdenes encontradas'}</h2></div>{query.data.map((order) => <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} onSettle={onSettle} />)}</section>;
+  return <section className="space-y-4" aria-live="polite"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-lime-700">Resultado de seguimiento</p><h2 className="mt-1 text-2xl font-extrabold text-slate-900">{query.data.length} {query.data.length === 1 ? 'orden encontrada' : 'órdenes encontradas'}</h2></div>{query.data.map((order) => order.hasPendingAdditionalFinding ? <PendingAdditionalFindingCard key={order.id} order={order} onResolve={onResolve} onViewHistory={onViewHistory} /> : <WorkOrderTrackingCard key={order.id} order={order} onViewHistory={onViewHistory} onComplete={onComplete} onSettle={onSettle} />)}</section>;
 }
 
 function StaleResults({ query, onViewHistory, onComplete, onSettle }: { query: ReturnType<typeof useStaleQuoteOrders>; onViewHistory: (plate: string) => void; onComplete?: (orderId: string) => void; onSettle?: (orderId: string) => void }) {

@@ -13,6 +13,7 @@ import { useAssignedOrderDetail } from '../hooks/useAssignedOrders';
 import { ReservedPartsPanel } from './ReservedPartsPanel';
 import { AwaitingPartModal } from './AwaitingPartModal';
 import { CompleteRepairModal } from './CompleteRepairModal';
+import { MechanicAdditionalFindingBanner } from '../../additional-findings/components/MechanicAdditionalFindingBanner';
 
 import type { AssignedWorkOrderSummary, ReservedPartDetail } from '../api/types';
 import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
@@ -131,6 +132,10 @@ export function AssignedOrderCard({
           status={order.status as never}
         />
       </div>
+
+      {/* US-21 (FE-T21.3): reflects whether the reception decided to repair or
+          skip the unforeseen finding (RN-16: no costs). */}
+      <MechanicAdditionalFindingBanner status={detail?.additionalFindingStatus} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
