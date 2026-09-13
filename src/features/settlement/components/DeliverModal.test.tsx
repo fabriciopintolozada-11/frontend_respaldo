@@ -66,6 +66,10 @@ describe('DeliverModal (US-20 / RN-21)', () => {
     const { onSubmit } = renderModal();
 
     await user.type(
+      screen.getByLabelText(/Monto recibido \(BOB\)/i),
+      '1200.00',
+    );
+    await user.type(
       screen.getByLabelText(/Número de comprobante/i),
       '  REC-045  ',
     );
@@ -81,6 +85,53 @@ describe('DeliverModal (US-20 / RN-21)', () => {
       receiptNumber: 'REC-045',
       deliveryNotes: 'Cliente satisfecho',
     });
+  });
+
+  it('computes the cash change while the received amount is entered (FE-T20.1)', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.type(screen.getByLabelText(/Monto recibido \(BOB\)/i), '1200');
+
+    expect(await screen.findByText('59,00 BOB')).toBeInTheDocument();
+  });
+
+  it('requires the received amount for cash payments (FE-T20.1)', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderModal();
+
+    await user.type(screen.getByLabelText(/Número de comprobante/i), 'REC-010');
+    await user.click(screen.getByRole('button', { name: /^Confirmar Entrega$/ }));
+
+    expect(
+      await screen.findByText('Ingresa el monto recibido.'),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('rejects a received amount lower than the total to charge (FE-T20.1)', async () => {
+    const user = userEvent.setup();
+    const { onSubmit } = renderModal();
+
+    await user.type(screen.getByLabelText(/Monto recibido \(BOB\)/i), '500');
+    await user.type(screen.getByLabelText(/Número de comprobante/i), 'REC-011');
+    await user.click(screen.getByRole('button', { name: /^Confirmar Entrega$/ }));
+
+    expect(
+      await screen.findByText('El monto recibido es menor al total a cobrar.'),
+    ).toBeInTheDocument();
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('hides the cash received amount for non-cash methods (FE-T20.1)', async () => {
+    const user = userEvent.setup();
+    renderModal();
+
+    await user.click(screen.getByRole('button', { name: /^QR \/ Transferencia$/ }));
+
+    expect(
+      screen.queryByLabelText(/Monto recibido \(BOB\)/i),
+    ).not.toBeInTheDocument();
   });
 
   it('omits deliveryNotes and sends the selected method when fields are blank (RN-21)', async () => {

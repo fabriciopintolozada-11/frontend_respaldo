@@ -163,7 +163,7 @@ describe('SettlementPage (US-20)', () => {
     expect(await screen.findByText('Descuento anulado')).toBeInTheDocument();
   });
 
-  it('delivers the vehicle, shows the charged total toast and navigates back to the index', async () => {
+  it('delivers the vehicle, shows the charged total toast and opens the note with delivery data (RN-21 / FE-T20.2)', async () => {
     server.use(
       http.post(`/api/v1/work-orders/${ORDER_ID}/deliver`, () =>
         HttpResponse.json(mockDeliverResponse, { status: 201 }),
@@ -178,6 +178,10 @@ describe('SettlementPage (US-20)', () => {
 
     const dialog = screen.getByRole('dialog', { name: /Entregar vehículo y cobrar/i });
     await user.type(
+      within(dialog).getByLabelText(/Monto recibido \(BOB\)/i),
+      '1200',
+    );
+    await user.type(
       within(dialog).getByLabelText(/Número de comprobante/i),
       'REC-001',
     );
@@ -188,7 +192,44 @@ describe('SettlementPage (US-20)', () => {
     expect(
       await screen.findByText(/Cuenta cobrada por 1\.141,00/),
     ).toBeInTheDocument();
+
+    const note = await screen.findByRole('dialog', {
+      name: /Nota de Liquidación y Entrega/i,
+    });
+    expect(within(note).getByText('REC-001')).toBeInTheDocument();
+    expect(within(note).getByText('Efectivo')).toBeInTheDocument();
+
+    await user.click(
+      within(note).getByRole('button', { name: /Volver a liquidaciones/i }),
+    );
     expect(await screen.findByText('INDEX_STUB')).toBeInTheDocument();
+  });
+
+  it('opens the printable liquidation note for any settlement role (FE-T20.2)', async () => {
+    window.print = vi.fn();
+    const user = userEvent.setup();
+    renderPage('WORKSHOP_LEAD');
+
+    await user.click(
+      await screen.findByRole('button', { name: /Imprimir Nota/i }),
+    );
+
+    const note = screen.getByRole('dialog', {
+      name: /Nota de Liquidación y Entrega/i,
+    });
+    expect(
+      within(note).getAllByText(/Documento sin valor fiscal/i).length,
+    ).toBeGreaterThan(0);
+    expect(within(note).getByText('Juan Pérez')).toBeInTheDocument();
+    expect(within(note).getByText('Filtro de aceite')).toBeInTheDocument();
+    expect(
+      within(note).getByText(/Entrega pendiente de cobro/i),
+    ).toBeInTheDocument();
+
+    await user.click(
+      within(note).getByRole('button', { name: /^Imprimir$/ }),
+    );
+    expect(window.print).toHaveBeenCalled();
   });
 
   it('maps a load failure to a translated error state (FE-04)', async () => {

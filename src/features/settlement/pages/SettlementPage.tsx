@@ -1,4 +1,4 @@
-import { ArrowLeft, Banknote, BadgePercent, Car, Package, RotateCcw, Wrench } from 'lucide-react';
+import { ArrowLeft, Banknote, BadgePercent, Car, Package, Printer, RotateCcw, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
@@ -7,6 +7,7 @@ import { ErrorState } from '../../../shared/components/ErrorState';
 import { LoadingSkeleton } from '../../../shared/components/LoadingSkeleton';
 import { MetricCard } from '../../../shared/components/MetricCard';
 import { Badge, WorkOrderStatusBadge } from '../../../shared/components/Badge';
+import { Modal } from '../../../shared/components/Modal';
 import type { WorkOrderStatus } from '../../../shared/types/openapi';
 import { useToast } from '../../../shared/components/ToastContext';
 
@@ -22,10 +23,11 @@ import {
   useSettlement,
   useVoidAdjustment,
 } from '../api/use-settlement';
-import type { SettlementAdjustmentSummary } from '../api/settlement.types';
+import type { DeliverResponse, SettlementAdjustmentSummary } from '../api/settlement.types';
 import { AdjustmentList } from '../components/AdjustmentList';
 import { ApplyDiscountModal } from '../components/ApplyDiscountModal';
 import { DeliverModal } from '../components/DeliverModal';
+import { LiquidationNote } from '../components/LiquidationNote';
 import { SettlementBreakdown } from '../components/SettlementBreakdown';
 import { VoidAdjustmentModal } from '../components/VoidAdjustmentModal';
 import { formatBoB } from '../lib/money';
@@ -48,6 +50,19 @@ export function SettlementPage() {
   const [voidingAdjustment, setVoidingAdjustment] =
     useState<SettlementAdjustmentSummary | null>(null);
   const [isDeliverOpen, setIsDeliverOpen] = useState(false);
+  const [delivered, setDelivered] = useState<DeliverResponse | null>(null);
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
+
+  // US-20 / FE-T20.2: prints only the liquidation note document.
+  const handlePrintNote = () => {
+    document.body.classList.add('settlement-printing');
+    const afterPrint = () => {
+      document.body.classList.remove('settlement-printing');
+      window.removeEventListener('afterprint', afterPrint);
+    };
+    window.addEventListener('afterprint', afterPrint);
+    window.print();
+  };
 
   if (settlementQuery.isPending) {
     return <LoadingSkeleton rows={6} tone="light" />;
@@ -108,11 +123,12 @@ export function SettlementPage() {
     try {
       const response = await deliver.mutateAsync(payload);
       setIsDeliverOpen(false);
+      setDelivered(response);
       toast.success(
         'Vehículo entregado',
         `Cuenta cobrada por ${formatBoB(response.totalCharged)} · OT en estado ENTREGADO.`,
       );
-      navigate('/liquidacion');
+      setIsNoteOpen(true);
     } catch (error) {
       const details = translateDeliverError(error);
       toast.danger('No se pudo registrar la entrega', details.message);
@@ -129,6 +145,13 @@ export function SettlementPage() {
           </Button>
         </div>
         <div className="flex flex-wrap items-center gap-2">
+          <Button
+            variant="outline-light"
+            leftIcon={<Printer className="h-4 w-4" />}
+            onClick={() => setIsNoteOpen(true)}
+          >
+            Imprimir Nota
+          </Button>
           {isWorkshopLead && (
             <Button
               variant="primary"
@@ -240,6 +263,34 @@ export function SettlementPage() {
         onSubmit={handleDeliver}
         isPending={deliver.isPending}
       />
+
+      <Modal
+        isOpen={isNoteOpen}
+        onClose={() => {
+          setIsNoteOpen(false);
+          if (delivered) navigate('/liquidacion');
+        }}
+        title="Nota de Liquidación y Entrega"
+        subtitle="Documento sin valor fiscal · comprobante interno"
+        variant="light"
+        maxWidth="2xl"
+      >
+        <LiquidationNote settlement={settlement} delivery={delivered} />
+        <div className="mt-5 flex flex-col-reverse gap-3 border-t border-slate-200 pt-5 sm:flex-row sm:justify-end">
+          {delivered ? (
+            <Button variant="outline-light" onClick={() => navigate('/liquidacion')}>
+              Volver a liquidaciones
+            </Button>
+          ) : (
+            <Button variant="outline-light" onClick={() => setIsNoteOpen(false)}>
+              Cerrar
+            </Button>
+          )}
+          <Button variant="primary" leftIcon={<Printer className="h-4 w-4" />} onClick={handlePrintNote}>
+            Imprimir
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }
