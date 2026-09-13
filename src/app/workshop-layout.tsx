@@ -91,7 +91,7 @@ export const NAV_ITEMS: NavItem[] = [
     roles: ['RECEPTIONIST', 'ADMIN'],
   },
   {
-    to: '/consulta',
+    to: '/tracking',
     label: 'Portal Cliente',
     icon: <Globe className="w-4 h-4" />,
     roles: ALL_ROLES,
