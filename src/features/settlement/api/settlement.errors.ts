@@ -18,7 +18,7 @@ export function translateSettlementError(error: unknown): SettlementErrorDetails
       case 403:
         return {
           code: 403,
-          message: 'Tu rol no tiene permisos para realizar esta operación (RN-15).',
+          message: 'Tu rol no tiene permisos para realizar esta operación.',
         };
       case 404:
         return {
@@ -94,7 +94,7 @@ export function translateSettlementLoadError(error: unknown): SettlementErrorDet
     if (error.statusCode === 403) {
       return {
         code: 403,
-        message: 'Tu rol no tiene permisos para visualizar la liquidación (RN-16).',
+        message: 'Tu rol no tiene permisos para visualizar la liquidación.',
       };
     }
     if (error.statusCode === 404) {

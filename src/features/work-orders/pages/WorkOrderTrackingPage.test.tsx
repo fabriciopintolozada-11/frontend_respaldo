@@ -183,4 +183,41 @@ describe('WorkOrderTrackingPage', () => {
 
     expect(await screen.findByText('No hay presupuestos estancados')).toBeInTheDocument();
   });
+
+  it('renders the pending additional finding card and opens the resolve flow (US-21 / FE-T21.1)', async () => {
+    const pendingOrder: TrackingOrder & {
+      hasPendingAdditionalFinding: true;
+      additionalFindingDescription: string | null;
+    } = {
+      ...order,
+      hasPendingAdditionalFinding: true,
+      additionalFindingDescription: 'Fuga de aceite detectada durante la reparación.',
+    };
+    server.use(
+      http.get('/api/v1/work-orders/tracking-summary', () =>
+        HttpResponse.json([pendingOrder]),
+      ),
+    );
+    const user = userEvent.setup();
+
+    renderPage();
+    await user.type(screen.getByLabelText(/placa del vehículo/i), 'ABC123');
+
+    expect(
+      await screen.findByText(/Ampliación de Presupuesto Pendiente/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Fuga de aceite detectada durante la reparación\./),
+    ).toBeInTheDocument();
+    expect(screen.getByText('+59170000000')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /Aprobar Ampliación/i }));
+
+    expect(
+      await screen.findByRole('dialog', { name: /Resolver ampliación de presupuesto/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('radio', { name: /Rechazar y continuar reparación base/i }),
+    ).toBeInTheDocument();
+  });
 });

@@ -2,7 +2,15 @@ import type { components } from '../../../shared/api/schema.gen';
 import { httpClient } from '../../../shared/api/httpClient';
 import { buildOnlyStaleQuotesQueryString } from '../../stale-quotes/only-stale-quotes';
 
-type TrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
+type SchemaTrackingOrder = components['schemas']['WorkOrderTrackingResponseDto'];
+
+// US-21 / BE-T21.1: additive contract of the tracking card. The fields can be
+// missing until the backend that includes them is deployed, so both stay
+// optional (contrato aditivo).
+export interface TrackingOrder extends SchemaTrackingOrder {
+  hasPendingAdditionalFinding?: boolean;
+  additionalFindingDescription?: string | null;
+}
 
 export function normalizeTrackingPlate(plate: string): string {
   return plate.trim().toUpperCase();
