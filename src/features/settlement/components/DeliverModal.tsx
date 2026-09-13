@@ -8,7 +8,7 @@ import { Input } from '../../../shared/components/Input';
 import { Modal } from '../../../shared/components/Modal';
 
 import {
-  deliverSchema,
+  createDeliverSchema,
   type DeliverFormValues,
 } from '../schemas/deliver-schema';
 import type { PaymentMethod } from '../api/settlement.types';
@@ -53,12 +53,31 @@ export function DeliverModal({
     reset,
     formState: { errors },
   } = useForm<DeliverFormValues>({
-    resolver: zodResolver(deliverSchema),
-    defaultValues: { paymentMethod: 'CASH', receiptNumber: '', deliveryNotes: '' },
+    resolver: zodResolver(createDeliverSchema(Number(totalToCharge))),
+    defaultValues: {
+      paymentMethod: 'CASH',
+      receiptNumber: '',
+      deliveryNotes: '',
+      receivedAmount: '',
+    },
   });
 
   const [selected, setSelected] = useState<PaymentMethod>('CASH');
   const paymentMethod = watch('paymentMethod');
+  const receivedAmount = watch('receivedAmount');
+
+  // US-20 / FE-T20.1: cash change is computed locally for display only; the
+  // backend always charges the settlement total (BE-13).
+  const cashChange =
+    paymentMethod === 'CASH'
+      ? (() => {
+          const received = Number(receivedAmount.trim().replace(',', '.'));
+          const total = Number(totalToCharge);
+          return Number.isFinite(received) && received >= total
+            ? received - total
+            : null;
+        })()
+      : null;
 
   const selectMethod = (method: PaymentMethod) => {
     setSelected(method);
@@ -132,6 +151,33 @@ export function DeliverModal({
             </p>
           )}
         </div>
+
+        {paymentMethod === 'CASH' && (
+          <div className="space-y-3">
+            <Input
+              id="received-amount"
+              tone="light"
+              type="text"
+              inputMode="decimal"
+              label="Monto recibido (BOB)"
+              required
+              placeholder="Ej. 1200.50"
+              maxLength={15}
+              error={errors.receivedAmount?.message}
+              {...register('receivedAmount')}
+            />
+            {cashChange !== null && (
+              <div className="flex items-center justify-between gap-3 rounded-xl border border-lime-200 bg-lime-50 px-4 py-3">
+                <span className="text-sm font-extrabold text-lime-900">
+                  Cambio a devolver
+                </span>
+                <span className="font-mono text-lg font-extrabold text-lime-800">
+                  {formatBoB(cashChange.toFixed(2))}
+                </span>
+              </div>
+            )}
+          </div>
+        )}
 
         <Input
           id="receipt-number"
