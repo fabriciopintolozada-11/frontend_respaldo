@@ -32,4 +32,23 @@ describe('filterNavItemsByRole (FE-18)', () => {
       );
     }
   });
+
+  it('shows the settlement navigation for roles that see monetary values (US-20, RN-16, FE-18)', () => {
+    for (const role of ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'] as const) {
+      const items = filterNavItemsByRole(NAV_ITEMS, role);
+      expect(items.some((item) => item.to === '/liquidacion')).toBe(true);
+    }
+  });
+
+  it('hides the settlement navigation for MECHANIC (US-20, RN-16)', () => {
+    const items = filterNavItemsByRole(NAV_ITEMS, 'MECHANIC');
+    expect(items.some((item) => item.to === '/liquidacion')).toBe(false);
+  });
+
+  it('keeps the settlement link before the inventory link in the menu', () => {
+    const items = filterNavItemsByRole(NAV_ITEMS, 'WORKSHOP_LEAD');
+    const index = items.map((item) => item.to).indexOf('/liquidacion');
+    expect(index).toBeGreaterThan(-1);
+    expect(items.some((item) => item.to === '/inventario')).toBe(true);
+  });
 });

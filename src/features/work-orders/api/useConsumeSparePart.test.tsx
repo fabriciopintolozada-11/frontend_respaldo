@@ -47,11 +47,11 @@ describe('useConsumeSparePart', () => {
 
     const response = await result.current.mutateAsync({
       workOrderId: 'ot-123',
-      quotePartId: 'qp-1',
+      workOrderPartId: 'qp-1',
       quantity: 1,
     });
 
-    expect(bodySpy).toHaveBeenCalledWith({ quotePartId: 'qp-1', quantity: 1 });
+    expect(bodySpy).toHaveBeenCalledWith({ workOrderPartId: 'qp-1', quantity: 1 });
     expect(response).toEqual({
       id: 'qp-1',
       code: 'REP-FRE-001',
@@ -76,14 +76,15 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 1 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 1 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const details = translateConsumePartError(result.current.error);
     expect(details.isBusinessRuleError).toBe(true);
     expect(details.code).toBe(422);
-    expect(details.message).toContain('RN-07');
+    expect(details.message).not.toMatch(/RN-\d+|HU-\d+|US-\d+|FE-\d+/i);
+    expect(details.message).toContain('not reserved');
   });
 
   it('maps a 422 insufficient-stock rejection and does not allow negative balances', async () => {
@@ -101,13 +102,14 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 99 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 99 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const details = translateConsumePartError(result.current.error);
     expect(details.isBusinessRuleError).toBe(true);
-    expect(details.message).toContain('RN-01');
+    expect(details.message).not.toMatch(/RN-\d+|HU-\d+|US-\d+|FE-\d+/i);
+    expect(details.message).toContain('insufficient physical stock');
   });
 
   it('maps a 403 authorization rejection contextually (RN-04)', async () => {
@@ -125,14 +127,14 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 1 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 1 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
     const details = translateConsumePartError(result.current.error);
     expect(details.isAuthorizationError).toBe(true);
     expect(details.code).toBe(403);
-    expect(details.message).toContain('RN-04');
+    expect(details.message).toContain('mecánico asignado');
   });
 
   it('does not surface a 401 as a business rule (auth required for a new session)', () => {

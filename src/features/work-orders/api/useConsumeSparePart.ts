@@ -17,7 +17,7 @@ export function translateConsumePartError(error: unknown): ConsumePartErrorDetai
       return {
         code: 403,
         message:
-          'RN-04: solo el mecánico asignado u un supervisor autorizado puede confirmar el uso de repuestos.',
+          'Solo el mecánico asignado o un supervisor autorizado puede confirmar el uso de repuestos.',
         isAuthorizationError: true,
         isBusinessRuleError: false,
       };
@@ -76,8 +76,8 @@ export function useConsumeSparePart(mutationKey?: readonly unknown[]) {
 
   return useMutation<ConsumeSparePartResponse, unknown, ConsumePartVariables>({
     mutationKey: mutationKey ?? ['consume-part'],
-    mutationFn: ({ workOrderId, quotePartId, quantity }) =>
-      consumePartApi.consumePart(workOrderId, { quotePartId, quantity }),
+    mutationFn: ({ workOrderId, workOrderPartId, quantity }) =>
+      consumePartApi.consumePart(workOrderId, { workOrderPartId, quantity }),
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['work-orders', variables.workOrderId] }),

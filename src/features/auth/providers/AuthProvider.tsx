@@ -15,7 +15,7 @@ export interface AuthState {
 
 export interface AuthContextValue extends AuthState {
   login: (username: string, password: string) => Promise<authService.AuthUser>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshSession: () => Promise<boolean>;
 }
 
@@ -63,17 +63,34 @@ export function AuthProvider({ children }: AuthProviderProps) {
     storeRefreshToken(tokens.refreshToken);
   }, []);
 
-  const logout = useCallback(() => {
+  // Clears the local session without touching the server. Used internally for
+  // hard failures and as the guaranteed cleanup after a best-effort logout.
+  const clearSession = useCallback(() => {
     setAccessToken(null);
     setAuthToken(null);
     setUser(null);
     clearStoredRefreshToken();
   }, []);
 
+  // US-00 / BE-E10: logs out through the backend so the refresh token is
+  // revoked server-side. Best-effort: the local session is always cleared,
+  // even if the endpoint is unreachable or the token is already invalid.
+  const logout = useCallback(async () => {
+    const stored = getStoredRefreshToken();
+    if (stored) {
+      try {
+        await authService.logout(stored);
+      } catch {
+        // proceed with local cleanup regardless of the server result
+      }
+    }
+    clearSession();
+  }, [clearSession]);
+
   const refreshSession = useCallback(async (): Promise<boolean> => {
     const stored = getStoredRefreshToken();
     if (!stored) {
-      logout();
+      clearSession();
       return false;
     }
 
@@ -87,10 +104,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       });
       return true;
     } catch {
-      logout();
+      clearSession();
       return false;
     }
-  }, [logout, applyTokens]);
+  }, [clearSession, applyTokens]);
 
   const login = useCallback(
     async (username: string, password: string) => {

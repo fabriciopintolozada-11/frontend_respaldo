@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest';
 import { http, HttpResponse } from 'msw';
 import { setupServer } from 'msw/node';
 
-import { login, refresh, getProfile } from '../../src/features/auth/api/auth-service';
+import { login, refresh, getProfile, logout } from '../../src/features/auth/api/auth-service';
 import { setAuthToken } from '../../src/shared/api/httpClient';
 
 const server = setupServer(
@@ -52,6 +52,20 @@ const server = setupServer(
       role: 'RECEPTIONIST',
       isActive: true,
     });
+  }),
+  http.post('/api/v1/auth/logout', async ({ request }) => {
+    const auth = request.headers.get('Authorization');
+    if (!auth?.startsWith('Bearer ')) {
+      return HttpResponse.json({ statusCode: 401, message: 'Unauthorized' }, { status: 401 });
+    }
+    const body = (await request.json()) as { refreshToken?: string };
+    if (body.refreshToken === 'refresh-token-456') {
+      return new HttpResponse(null, { status: 204 });
+    }
+    return HttpResponse.json(
+      { statusCode: 401, message: 'Refresh token inválido o expirado' },
+      { status: 401 },
+    );
   }),
 );
 
@@ -107,6 +121,23 @@ describe('auth-service', () => {
     it('throws an error without a token', async () => {
       setAuthToken(null);
       await expect(getProfile()).rejects.toThrow();
+    });
+  });
+
+  describe('logout', () => {
+    it('revokes the refresh token with a valid access token (BE-E10)', async () => {
+      setAuthToken('valid-access-token');
+      await expect(logout('refresh-token-456')).resolves.toBeUndefined();
+    });
+
+    it('throws an error without a valid access token', async () => {
+      setAuthToken(null);
+      await expect(logout('refresh-token-456')).rejects.toThrow();
+    });
+
+    it('throws an error for an invalid refresh token', async () => {
+      setAuthToken('valid-access-token');
+      await expect(logout('invalid-token')).rejects.toThrow();
     });
   });
 });

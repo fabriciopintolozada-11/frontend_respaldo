@@ -92,7 +92,7 @@ export interface WorkOrderPartItem {
   id: string;
   /** HU-07: id of the approved quote part (RESERVED) that this line maps to.
    *  It differs from `id` and is the value the consume-part endpoint expects. */
-  quotePartId?: string;
+  workOrderPartId?: string;
   partId: string;
   partCode: string;
   description: string;

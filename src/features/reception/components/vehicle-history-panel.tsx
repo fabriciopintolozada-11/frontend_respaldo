@@ -1,4 +1,5 @@
 import { BatteryWarning, CheckCircle2, Clock3, FileClock, Search, Wrench } from 'lucide-react'
+import { cleanServerMessage } from '../../../shared/lib/utils'
 import type { LookupState } from '../reception.types'
 
 export function VehicleHistoryPanel({ lookup }: { lookup: LookupState }) {
@@ -78,7 +79,7 @@ export function VehicleHistoryPanel({ lookup }: { lookup: LookupState }) {
             <li key={item.id}>
               <span className="timeline-dot" />
               <div>
-                <p>{item.description}</p>
+                <p>{cleanServerMessage(item.description)}</p>
                 <time dateTime={item.createdAt}>
                   <Clock3 size={14} /> {formatDate(item.createdAt)}
                 </time>

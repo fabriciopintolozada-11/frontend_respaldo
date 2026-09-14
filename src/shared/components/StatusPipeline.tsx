@@ -40,7 +40,7 @@ export function StatusPipeline<S extends string>({
         <div className="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 flex items-start gap-2.5 text-sm">
           <ShieldAlert className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Regla RN-03 Aplicada:</span> Trabajo en bahía suspendido temporalmente por
+            <span className="font-bold">Suspensión Aplicada:</span> Trabajo en bahía suspendido temporalmente por
             detección de daños adicionales. Requiere autorización explícita del cliente para continuar.
           </div>
         </div>
@@ -50,7 +50,7 @@ export function StatusPipeline<S extends string>({
         <div className="mb-3 p-3 rounded-xl bg-red-50 border border-red-200 text-red-800 flex items-start gap-2.5 text-sm">
           <AlertTriangle className="w-5 h-5 flex-shrink-0 mt-0.5" />
           <div>
-            <span className="font-bold">Alerta RN-06 ({daysWithoutClientResponse} días sin respuesta):</span> La orden
+            <span className="font-bold">Alerta ({daysWithoutClientResponse} días sin respuesta):</span> La orden
             superó los 15 días tras el envío del presupuesto. Notificar al cliente sobre cargos de custodia y parqueo.
           </div>
         </div>

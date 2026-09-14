@@ -2,7 +2,7 @@ import { httpClient } from '../../../shared/api/httpClient';
 
 // HU-07 contract: the payload mirrors the backend ConsumeSparePartDto.
 export interface ConsumeSparePartDto {
-  quotePartId: string;
+  workOrderPartId: string;
   quantity: number;
 }
 
