@@ -37,7 +37,7 @@ function isStatusIn(status: string | undefined, allowed: string[]): boolean {
 
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderSummary;
-  onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
+  onConsumePart: (workOrderId: string, workOrderPartId: string, quantity: number) => void;
   onDiagnose: (order: AssignedWorkOrderSummary) => void;
   onAwaitingPart: (
     orderId: string,
@@ -55,11 +55,12 @@ function formatCode(id: string): string {
 }
 
 // HU-07: maps the backend ReservedPartDetail line to the ReservedPart the
-// panel consumes. quotePartId is the identifier the consume-part endpoint needs.
+// panel consumes. workOrderPartId is the identifier the consume-part endpoint
+// needs.
 function mapToReservedPart(part: ReservedPartDetail) {
   return {
-    id: part.quotePartId,
-    quotePartId: part.quotePartId,
+    id: part.workOrderPartId,
+    workOrderPartId: part.workOrderPartId,
     code: part.code,
     name: part.name,
     quantityReserved: part.quantityReserved,

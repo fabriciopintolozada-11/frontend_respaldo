@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { describe, expect, it, beforeAll, afterAll, afterEach } from 'vitest';
@@ -76,6 +76,31 @@ describe('MechanicConsoleView (HU-03)', () => {
     await user.click(screen.getAllByRole('button', { name: /confirmar uso/i })[0]);
 
     expect(await screen.findByText('Repuesto instalado')).toBeInTheDocument();
+  });
+
+  it('sends workOrderPartId for a partial consume (US-07 esc. 4, FE-E13)', async () => {
+    const { http, HttpResponse } = await import('msw');
+    const { vi } = await import('vitest');
+    const bodySpy = vi.fn();
+    mechanicsServer.use(
+      http.post('/api/v1/work-orders/:id/consume-part', async ({ request }) => {
+        bodySpy(await request.json());
+        return HttpResponse.json({ status: 201 });
+      }),
+    );
+
+    const user = userEvent.setup();
+    renderConsole();
+
+    await screen.findByText('Kit retén trasero de cigüeñal');
+    const qtyInput = screen.getByLabelText(/cantidad a instalar/i, {
+      selector: '#qty-qp-100',
+    });
+    fireEvent.change(qtyInput, { target: { value: '1' } });
+    await user.click(screen.getAllByRole('button', { name: /confirmar uso/i })[0]);
+
+    expect(await screen.findByText('Repuesto instalado')).toBeInTheDocument();
+    expect(bodySpy).toHaveBeenCalledWith({ workOrderPartId: 'qp-100', quantity: 1 });
   });
 
   it('shows the empty state when there are no assigned orders', async () => {

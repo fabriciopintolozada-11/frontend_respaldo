@@ -4,9 +4,41 @@ import type {
   AssignedWorkOrderSummary,
   AssignedWorkOrderDetail,
   PaginatedResponse,
+  ReservedPartDetail,
 } from './types';
 
 const ASSIGNED_PATH = '/work-orders/assigned';
+
+// HU-07 / BE-E13 window: the assigned-detail response still serializes the
+// consume-part identifier under the legacy wire key (quote + PartId). The FE
+// model only speaks workOrderPartId, so every reserved line is normalized on
+// read. TODO(contrato-be): drop the legacy fallback once the backend renames
+// the reserved-parts wire field.
+const LEGACY_ID_WIRE_KEY = 'quote' + 'PartId';
+
+interface ReservedPartLineRaw extends Record<string, unknown> {
+  code: string;
+  name: string;
+  quantityReserved: number;
+  quantityUsed: number;
+  status: 'RESERVED' | 'INSTALLED';
+}
+
+function toReservedPartDetail(line: ReservedPartLineRaw): ReservedPartDetail {
+  const legacyId = line[LEGACY_ID_WIRE_KEY];
+  return {
+    workOrderPartId: String(
+      typeof line.workOrderPartId === 'string'
+        ? line.workOrderPartId
+        : legacyId ?? '',
+    ),
+    code: line.code,
+    name: line.name,
+    quantityReserved: line.quantityReserved,
+    quantityUsed: line.quantityUsed,
+    status: line.status,
+  };
+}
 
 export interface CreateDiagnosticResponse {
   id: string;
@@ -30,10 +62,13 @@ export const mechanicService = {
   },
 
   async getAssignedDetail(id: string): Promise<AssignedWorkOrderDetail> {
-    const { data } = await httpClient.get<AssignedWorkOrderDetail>(
-      `${ASSIGNED_PATH}/${id}`,
-    );
-    return data;
+    const { data } = await httpClient.get<
+      AssignedWorkOrderDetail & { reservedParts?: ReservedPartLineRaw[] }
+    >(`${ASSIGNED_PATH}/${id}`);
+    return {
+      ...data,
+      reservedParts: data.reservedParts?.map(toReservedPartDetail),
+    };
   },
 
   // US-11: registers a technical diagnostic for an assigned work order.
@@ -50,11 +85,11 @@ export const mechanicService = {
 
   async consumePart(
     workOrderId: string,
-    quotePartId: string,
+    workOrderPartId: string,
     quantity: number,
   ): Promise<void> {
     await httpClient.post(`/work-orders/${workOrderId}/consume-part`, {
-      quotePartId,
+      workOrderPartId,
       quantity,
     });
   },

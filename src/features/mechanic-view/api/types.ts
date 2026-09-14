@@ -68,10 +68,10 @@ export interface StatusHistoryEntry {
 }
 
 // HU-07 / RN-16: a reserved spare part line as exposed by the backend for an
-// assigned work order. quotePartId is the identifier the consume-part endpoint
-// needs. No financial fields are present.
+// assigned work order. workOrderPartId is the identifier the consume-part
+// endpoint expects. No financial fields are present.
 export interface ReservedPartDetail {
-  quotePartId: string;
+  workOrderPartId: string;
   code: string;
   name: string;
   quantityReserved: number;
@@ -84,10 +84,10 @@ export interface ReservedPart {
   id: string;
   /** HU-07: id of the approved quote part (RESERVED) that this line maps to.
    *  It differs from `id` and is the value the consume-part endpoint expects. */
-  quotePartId?: string;
-  partCode: string;
-  description: string;
-  quantityRequired: number;
+  workOrderPartId?: string;
+  code: string;
+  name: string;
+  quantityReserved: number;
   quantityUsed: number;
   status: 'RESERVED' | 'INSTALLED';
 }

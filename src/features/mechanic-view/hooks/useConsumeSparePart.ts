@@ -3,7 +3,7 @@ import { mechanicService } from '../api/mechanic-service';
 
 interface ConsumePartVariables {
   workOrderId: string;
-  quotePartId: string;
+  workOrderPartId: string;
   quantity: number;
 }
 
@@ -11,8 +11,8 @@ export function useConsumeSparePart() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ workOrderId, quotePartId, quantity }: ConsumePartVariables) =>
-      mechanicService.consumePart(workOrderId, quotePartId, quantity),
+    mutationFn: ({ workOrderId, workOrderPartId, quantity }: ConsumePartVariables) =>
+      mechanicService.consumePart(workOrderId, workOrderPartId, quantity),
 
     onSuccess: () => {
       void queryClient.invalidateQueries({

@@ -79,13 +79,13 @@ export function MechanicConsoleView() {
 
   const handleConsumePart = async (
     workOrderId: string,
-    quotePartId: string,
+    workOrderPartId: string,
     quantity: number,
   ) => {
     try {
       await consumePart.mutateAsync({
         workOrderId,
-        quotePartId,
+        workOrderPartId,
         quantity,
       });
       toast.success(
