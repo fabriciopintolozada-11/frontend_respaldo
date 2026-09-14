@@ -45,10 +45,10 @@ const detailById = (id: string) => ({
     id === '11111111-1111-4111-8111-111111111102'
       ? [
           {
-            quotePartId: 'qp-100',
+            workOrderPartId: 'qp-100',
             code: 'REP-RET-001',
             name: 'Kit retén trasero de cigüeñal',
-            quantityReserved: 1,
+            quantityReserved: 2,
             quantityUsed: 0,
             status: 'RESERVED',
           },
@@ -77,15 +77,15 @@ export const mechanicsServer = setupServer(
   }),
 
   http.post('/api/v1/work-orders/:id/consume-part', async ({ request, params }) => {
-    const body = (await request.json()) as { quotePartId?: string; quantity?: number };
-    if (!body.quotePartId || !body.quantity || body.quantity < 1) {
+    const body = (await request.json()) as { workOrderPartId?: string; quantity?: number };
+    if (!body.workOrderPartId || !body.quantity || body.quantity < 1) {
       return HttpResponse.json(
         { statusCode: 400, message: 'Invalid payload' },
         { status: 400 },
       );
     }
     return HttpResponse.json(
-      { workOrderId: String(params.id), quotePartId: body.quotePartId, quantity: body.quantity },
+      { workOrderId: String(params.id), workOrderPartId: body.workOrderPartId, quantity: body.quantity },
       { status: 201 },
     );
   }),

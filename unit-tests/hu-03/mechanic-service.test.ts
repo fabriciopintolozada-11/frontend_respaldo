@@ -43,9 +43,9 @@ describe('mechanic-service (HU-03)', () => {
       expect(detail.model).toBe('Corolla');
       expect(detail.year).toBe(2020);
       expect(detail.reservedParts[0]).toMatchObject({
-        quotePartId: 'qp-100',
+        workOrderPartId: 'qp-100',
         code: 'REP-RET-001',
-        quantityReserved: 1,
+        quantityReserved: 2,
         status: 'RESERVED',
       });
     });
@@ -70,7 +70,7 @@ describe('mechanic-service (HU-03)', () => {
   });
 
   describe('consumePart (HU-07)', () => {
-    it('posts the quotePartId and quantity to consume-part', async () => {
+    it('posts the workOrderPartId and quantity to consume-part', async () => {
       await expect(
         mechanicService.consumePart(
           '11111111-1111-4111-8111-111111111102',

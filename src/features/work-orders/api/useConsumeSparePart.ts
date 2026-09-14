@@ -76,8 +76,8 @@ export function useConsumeSparePart(mutationKey?: readonly unknown[]) {
 
   return useMutation<ConsumeSparePartResponse, unknown, ConsumePartVariables>({
     mutationKey: mutationKey ?? ['consume-part'],
-    mutationFn: ({ workOrderId, quotePartId, quantity }) =>
-      consumePartApi.consumePart(workOrderId, { quotePartId, quantity }),
+    mutationFn: ({ workOrderId, workOrderPartId, quantity }) =>
+      consumePartApi.consumePart(workOrderId, { workOrderPartId, quantity }),
     onSuccess: async (_data, variables) => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ['work-orders', variables.workOrderId] }),

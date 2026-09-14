@@ -47,11 +47,11 @@ describe('useConsumeSparePart', () => {
 
     const response = await result.current.mutateAsync({
       workOrderId: 'ot-123',
-      quotePartId: 'qp-1',
+      workOrderPartId: 'qp-1',
       quantity: 1,
     });
 
-    expect(bodySpy).toHaveBeenCalledWith({ quotePartId: 'qp-1', quantity: 1 });
+    expect(bodySpy).toHaveBeenCalledWith({ workOrderPartId: 'qp-1', quantity: 1 });
     expect(response).toEqual({
       id: 'qp-1',
       code: 'REP-FRE-001',
@@ -76,7 +76,7 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 1 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 1 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
@@ -102,7 +102,7 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 99 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 99 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
@@ -127,7 +127,7 @@ describe('useConsumeSparePart', () => {
     });
 
     await expect(
-      result.current.mutateAsync({ workOrderId: 'ot-123', quotePartId: 'qp-1', quantity: 1 }),
+      result.current.mutateAsync({ workOrderId: 'ot-123', workOrderPartId: 'qp-1', quantity: 1 }),
     ).rejects.toBeTruthy();
 
     await waitFor(() => expect(result.current.error).toBeTruthy());
