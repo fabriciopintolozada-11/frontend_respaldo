@@ -60,7 +60,10 @@ function daysSince(dateString?: string): string {
   if (!dateString) {
     return 'Sin movimientos';
   }
-  const days = Math.floor((Date.now() - new Date(dateString).getTime()) / 86_400_000);
+  const today = new Date();
+  const seen = new Date(dateString);
+  const dayStart = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.round((dayStart(today) - dayStart(seen)) / 86_400_000);
   if (days < 0) return 'Hoy';
   if (days === 0) return 'Hoy';
   if (days === 1) return 'Hace 1 día';

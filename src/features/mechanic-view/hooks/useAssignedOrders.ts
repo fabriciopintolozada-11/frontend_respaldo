@@ -36,7 +36,37 @@ function mapQuotePartToWorkOrderPart(part: {
   };
 }
 
-function mapRealDetailToAssignedDetail(detail: Record<string, any>): AssignedWorkOrderDetail {
+// Minimal shape of the real backend response — only the fields the mapper
+// actually reads. This replaces the previous Record<string, any> (FE-P04).
+interface RealWorkOrderDetail {
+  id: string;
+  vehicleId?: string;
+  plate?: string;
+  status?: string;
+  initialComplaint?: string;
+  assignedAt?: string;
+  vehicle?: { brand: string; model: string; year: number };
+  brand?: string;
+  model?: string;
+  year?: number;
+  tasks?: WorkOrderTask[];
+  parts?: WorkOrderPart[];
+  reservedParts?: unknown;
+  diagnosticReport?: unknown;
+  statusHistory?: unknown[];
+  additionalFindingStatus?: 'NONE' | 'PENDING_QUOTE' | 'APPROVED' | 'REJECTED';
+  quote?: {
+    parts?: Array<{
+      id: string;
+      sparePartId: string;
+      quantity: number;
+      status: string;
+      sparePart: { id: string; code: string; name: string };
+    }>;
+  };
+}
+
+function mapRealDetailToAssignedDetail(detail: RealWorkOrderDetail): AssignedWorkOrderDetail {
   const quoteParts = Array.isArray(detail.quote?.parts)
     ? detail.quote.parts.map(mapQuotePartToWorkOrderPart)
     : [];
@@ -58,17 +88,12 @@ function mapRealDetailToAssignedDetail(detail: Record<string, any>): AssignedWor
     brand: detail.brand ?? vehicle.brand,
     model: detail.model ?? vehicle.model,
     year: detail.year ?? vehicle.year,
-    tasks: (detail.tasks as WorkOrderTask[]) ?? [],
-    parts: quoteParts.length > 0 ? quoteParts : ((detail.parts as WorkOrderPart[]) ?? []),
+    tasks: detail.tasks ?? [],
+    parts: quoteParts.length > 0 ? quoteParts : (detail.parts ?? []),
     reservedParts: detail.reservedParts,
     diagnosticReport: detail.diagnosticReport ?? null,
     statusHistory: detail.statusHistory ?? [],
-    additionalFindingStatus:
-      (detail.additionalFindingStatus as
-        | 'NONE'
-        | 'PENDING_QUOTE'
-        | 'APPROVED'
-        | 'REJECTED') ?? 'NONE',
+    additionalFindingStatus: detail.additionalFindingStatus ?? 'NONE',
   };
 }
 
