@@ -116,7 +116,7 @@ export const billingService = {
             {
               status: 'ENTREGADA',
               timestamp: new Date().toISOString(),
-              changedBy: 'Caja / Liquidación (RN-21, RN-22)',
+              changedBy: 'Caja / Liquidación',
               reason: `Liquidación formal completada. Pago total de ${bill.totalAmountBOB} BOB recibido.`,
             },
             ...orders[oIdx].statusHistory,
@@ -170,7 +170,7 @@ export const billingService = {
               {
                 status: 'ENTREGADA',
                 timestamp: new Date().toISOString(),
-                changedBy: 'Caja / Liquidación (RN-21, RN-22)',
+                changedBy: 'Caja / Liquidación',
                 reason: `Liquidación completada. Pago total de ${bill.totalAmountBOB} BOB recibido. Vehículo retirado por cliente.`,
               },
               ...orders[oIdx].statusHistory,

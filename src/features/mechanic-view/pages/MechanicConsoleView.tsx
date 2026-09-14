@@ -20,8 +20,11 @@ import type { DiagnosticPayload } from '../../work-orders/schemas/diagnostic-sch
 import { useAssignedOrders } from '../hooks/useAssignedOrders';
 import { useConsumeSparePart } from '../hooks/useConsumeSparePart';
 import { useSetAwaitingPart } from '../hooks/useSetAwaitingPart';
+import { useCompleteWorkOrder } from '../hooks/useCompleteWorkOrder';
 import { mechanicService } from '../api/mechanic-service';
 import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
+import { translateCompleteError } from '../api/complete-work-order.error';
+import type { CompleteWorkOrderPayload } from '../api/complete-work-order.types';
 
 import { AssignedOrderCard } from '../components/AssignedOrderCard';
 
@@ -32,6 +35,7 @@ export function MechanicConsoleView() {
   const queryClient = useQueryClient();
   const consumePart = useConsumeSparePart();
   const awaitingPart = useSetAwaitingPart();
+  const completeWorkOrder = useCompleteWorkOrder();
 
   const assignedQuery = useAssignedOrders();
   const orders = assignedQuery.data ?? [];
@@ -75,13 +79,13 @@ export function MechanicConsoleView() {
 
   const handleConsumePart = async (
     workOrderId: string,
-    quotePartId: string,
+    workOrderPartId: string,
     quantity: number,
   ) => {
     try {
       await consumePart.mutateAsync({
         workOrderId,
-        quotePartId,
+        workOrderPartId,
         quantity,
       });
       toast.success(
@@ -115,6 +119,30 @@ export function MechanicConsoleView() {
       const msg =
         err instanceof Error ? err.message : 'No se pudo registrar la espera';
       toast.danger('Fallo de la espera', msg);
+      throw err;
+    }
+  };
+
+  // US-19 / RN-05 / RN-14: the mechanic (or the workshop lead) concludes the
+  // repair. The middleware owns the business rules (EN_REPARACION only, owns
+  // the order); the console drives the modal and refreshes the lists.
+  const handleComplete = async (
+    orderId: string,
+    payload: CompleteWorkOrderPayload,
+  ) => {
+    try {
+      await completeWorkOrder.mutateAsync({
+        workOrderId: orderId,
+        ...payload,
+      });
+      toast.success(
+        'Reparación concluida',
+        'La OT está lista para entrega y la bahía quedó disponible.',
+      );
+      refresh();
+    } catch (err) {
+      const details = translateCompleteError(err);
+      toast.danger('No se pudo concluir la reparación', details.message);
       throw err;
     }
   };
@@ -193,7 +221,12 @@ export function MechanicConsoleView() {
               onConsumePart={handleConsumePart}
               onDiagnose={openDiagnosticForm}
               onAwaitingPart={handleAwaitingPart}
-              isMutating={consumePart.isPending || awaitingPart.isPending}
+              onComplete={handleComplete}
+              isMutating={
+                consumePart.isPending ||
+                awaitingPart.isPending ||
+                completeWorkOrder.isPending
+              }
             />
           ))
         )}

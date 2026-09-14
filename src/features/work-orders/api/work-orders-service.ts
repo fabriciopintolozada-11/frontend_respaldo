@@ -138,7 +138,7 @@ export const workOrdersService = {
           {
             status: (order.status === 'EN_REPARACION' ? 'PRESUPUESTO_ENVIADO' : 'EN_DIAGNOSTICO') as WorkOrderStatus,
             timestamp: new Date().toISOString(),
-            changedBy: 'Mecánico autenticado (Diagnóstico técnico US-11)',
+            changedBy: 'Mecánico autenticado (Diagnóstico técnico)',
           },
           ...order.statusHistory,
         ],
@@ -227,7 +227,7 @@ export const workOrdersService = {
           {
             status: 'REGISTRADA',
             timestamp: new Date().toISOString(),
-            changedBy: 'Recepción - Formulario de Ingreso HU-01',
+            changedBy: 'Recepción - Formulario de Ingreso',
           },
         ],
       };
@@ -261,13 +261,13 @@ export const workOrdersService = {
 
       // Check RN-02: Para pasar a EN_PROGRESO debe estar APROBADO
       if (newStatus === 'EN_PROGRESO' && order.status !== 'APROBADO' && order.status !== 'EN_ESPERA_REPUESTO') {
-        throw new Error('Regla RN-02: La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
+        throw new Error('La orden debe ser aprobada explícitamente por el cliente antes de iniciar trabajos.');
       }
 
       // Check RN-03: No puede avanzar si está suspendida por trabajos adicionales
       if (newStatus === 'EN_PROGRESO' && order.isSuspendedForAdditionalWork) {
         throw new Error(
-          'Regla RN-03: La orden está suspendida debido a detección de trabajos adicionales pendientes de aprobación del cliente.'
+          'La orden está suspendida debido a detección de trabajos adicionales pendientes de aprobación del cliente.'
         );
       }
 
@@ -465,7 +465,7 @@ export const workOrdersService = {
             status: order.status,
             timestamp: new Date().toISOString(),
             changedBy: 'Mecánico / Diagnóstico',
-            reason: `[SUSPENSIÓN RN-03] Se detectó trabajo adicional: ${description}. Suspensión aplicada.`,
+            reason: `Se detectó trabajo adicional: ${description}. Suspensión aplicada.`,
           },
           ...order.statusHistory,
         ],
@@ -495,7 +495,7 @@ export const workOrdersService = {
             status: order.status,
             timestamp: new Date().toISOString(),
             changedBy: `Cliente (${approvalMethod})`,
-            reason: 'Aprobación explícita de trabajos y repuestos adicionales (RN-02, RN-03). Se reanudan trabajos en bahía.',
+            reason: 'Aprobación explícita de trabajos y repuestos adicionales. Se reanudan trabajos en bahía.',
           },
           ...order.statusHistory,
         ],
@@ -537,10 +537,10 @@ export const workOrdersService = {
       const partItem = order.partsItems.find((p) => p.id === partItemId);
       if (!partItem) throw new Error('Repuesto en OT no encontrado');
       if (!['APROBADO', 'EN_PROGRESO', 'EN_ESPERA_REPUESTO'].includes(order.status)) {
-        throw new Error('Regla RN-02: no se puede consumir un repuesto sin aprobación del presupuesto.');
+        throw new Error('No se puede consumir un repuesto sin aprobación del presupuesto.');
       }
       if (!partItem.isReserved) {
-        throw new Error('Regla RN-07: el repuesto no está reservado para esta OT.');
+        throw new Error('El repuesto no está reservado para esta OT.');
       }
 
       // RN-07, RN-08: Descontar de inventario y liberar reserva

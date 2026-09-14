@@ -66,6 +66,24 @@ export const authHandlers = [
     }
     return HttpResponse.json(profileResponse);
   }),
+
+  http.post('/api/v1/auth/logout', async ({ request }) => {
+    const auth = request.headers.get('Authorization');
+    if (!auth?.startsWith('Bearer ')) {
+      return HttpResponse.json(
+        { statusCode: 401, message: 'Unauthorized' },
+        { status: 401 },
+      );
+    }
+    const body = (await request.json()) as { refreshToken?: string };
+    if (body.refreshToken) {
+      return new HttpResponse(null, { status: 204 });
+    }
+    return HttpResponse.json(
+      { statusCode: 400, message: 'refreshToken should not be empty' },
+      { status: 400 },
+    );
+  }),
 ];
 
 export const authServer = setupServer(...authHandlers);

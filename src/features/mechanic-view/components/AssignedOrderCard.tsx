@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   AlertTriangle,
   FileText,
+  Flag,
   RefreshCw,
 } from 'lucide-react';
 
@@ -11,9 +12,12 @@ import { WorkOrderStatusBadge } from '../../../shared/components/Badge';
 import { useAssignedOrderDetail } from '../hooks/useAssignedOrders';
 import { ReservedPartsPanel } from './ReservedPartsPanel';
 import { AwaitingPartModal } from './AwaitingPartModal';
+import { CompleteRepairModal } from './CompleteRepairModal';
+import { MechanicAdditionalFindingBanner } from '../../additional-findings/components/MechanicAdditionalFindingBanner';
 
 import type { AssignedWorkOrderSummary, ReservedPartDetail } from '../api/types';
 import type { SetAwaitingPartPayload } from '../api/awaiting-part-api';
+import type { CompleteWorkOrderPayload } from '../api/complete-work-order.types';
 
 const DIAGNOSTIC_ELIGIBLE = ['RECIBIDO', 'ASIGNADA', 'EN_DIAGNOSTICO', 'EN_REPARACION'];
 
@@ -24,17 +28,24 @@ const CONSUME_ELIGIBLE = ['APROBADO', 'EN_REPARACION'];
 // RN-05: a work order can only transition to awaiting part while in repair.
 const AWAITING_PART_ELIGIBLE = ['EN_REPARACION'];
 
+// RN-05 (E4): only EN_REPARACION can be concluded (US-19, BE-T19.2).
+const COMPLETE_ELIGIBLE = ['EN_REPARACION'];
+
 function isStatusIn(status: string | undefined, allowed: string[]): boolean {
   return Boolean(status && allowed.includes(status.toUpperCase()));
 }
 
 interface AssignedOrderCardProps {
   order: AssignedWorkOrderSummary;
-  onConsumePart: (workOrderId: string, quotePartId: string, quantity: number) => void;
+  onConsumePart: (workOrderId: string, workOrderPartId: string, quantity: number) => void;
   onDiagnose: (order: AssignedWorkOrderSummary) => void;
   onAwaitingPart: (
     orderId: string,
     payload: SetAwaitingPartPayload,
+  ) => Promise<void>;
+  onComplete: (
+    orderId: string,
+    payload: CompleteWorkOrderPayload,
   ) => Promise<void>;
   isMutating: boolean;
 }
@@ -44,11 +55,12 @@ function formatCode(id: string): string {
 }
 
 // HU-07: maps the backend ReservedPartDetail line to the ReservedPart the
-// panel consumes. quotePartId is the identifier the consume-part endpoint needs.
+// panel consumes. workOrderPartId is the identifier the consume-part endpoint
+// needs.
 function mapToReservedPart(part: ReservedPartDetail) {
   return {
-    id: part.quotePartId,
-    quotePartId: part.quotePartId,
+    id: part.workOrderPartId,
+    workOrderPartId: part.workOrderPartId,
     code: part.code,
     name: part.name,
     quantityReserved: part.quantityReserved,
@@ -62,11 +74,13 @@ export function AssignedOrderCard({
   onConsumePart,
   onDiagnose,
   onAwaitingPart,
+  onComplete,
   isMutating,
 }: AssignedOrderCardProps) {
   const detailQuery = useAssignedOrderDetail(order.id);
   const detail = detailQuery.data;
   const [awaitingPartOpen, setAwaitingPartOpen] = useState(false);
+  const [completeOpen, setCompleteOpen] = useState(false);
 
   // HU-07: the reserved parts are exposed by the backend in the detail
   // response (RN-16: no financial fields). When the backend has none, the
@@ -76,6 +90,7 @@ export function AssignedOrderCard({
     : undefined;
 
   const canConsume = isStatusIn(detail?.status, CONSUME_ELIGIBLE);
+  const canComplete = isStatusIn(detail?.status, COMPLETE_ELIGIBLE);
 
   return (
     <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-4 sm:p-5 text-slate-900 space-y-4">
@@ -118,6 +133,10 @@ export function AssignedOrderCard({
           status={order.status as never}
         />
       </div>
+
+      {/* US-21 (FE-T21.3): reflects whether the reception decided to repair or
+          skip the unforeseen finding (RN-16: no costs). */}
+      <MechanicAdditionalFindingBanner status={detail?.additionalFindingStatus} />
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
         <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200">
@@ -198,6 +217,18 @@ export function AssignedOrderCard({
                 Repuesto faltante
               </Button>
             )}
+
+          {canComplete && (
+            <Button
+              variant="primary"
+              size="md"
+              leftIcon={<Flag className="w-5 h-5" />}
+              onClick={() => setCompleteOpen(true)}
+              disabled={isMutating}
+            >
+              Concluir Reparación
+            </Button>
+          )}
         </div>
       </div>
 
@@ -206,6 +237,18 @@ export function AssignedOrderCard({
         order={detail}
         onClose={() => setAwaitingPartOpen(false)}
         onSubmit={onAwaitingPart}
+        isPending={isMutating}
+      />
+
+      <CompleteRepairModal
+        isOpen={completeOpen}
+        order={
+          detail
+            ? { id: order.id, plate: order.plate }
+            : null
+        }
+        onClose={() => setCompleteOpen(false)}
+        onSubmit={onComplete}
         isPending={isMutating}
       />
     </div>

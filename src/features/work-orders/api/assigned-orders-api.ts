@@ -44,7 +44,7 @@ export interface WorkOrderTask {
 export interface WorkOrderPart {
   id: string
   /** HU-07: id of the approved quote part (RESERVED) that this line maps to. */
-  quotePartId?: string
+  workOrderPartId?: string
   partCode: string
   description: string
   quantityRequired: number

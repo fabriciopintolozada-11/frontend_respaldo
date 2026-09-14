@@ -77,13 +77,13 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
             </h1>
           </div>
           <p className="text-xs text-[#8E949F] mt-1.5">
-            Máquina de estados visual, bitácora de auditoría, control de alertas (RN-06) y suspensiones (RN-03).
+            Máquina de estados visual, bitácora de auditoría, control de alertas y suspensiones.
           </p>
         </div>
 
         <div className="flex items-center gap-2">
           <Button variant="primary" size="md" leftIcon={<PlusCircle className="w-4 h-4" />} onClick={onNewOrder}>
-            Nueva Recepción (HU-01)
+            Nueva Recepción
           </Button>
         </div>
       </div>
@@ -102,7 +102,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <div className="flex items-center gap-3">
                 <AlertTriangle className="w-5 h-5 text-[#EF4444] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta RN-06</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn06Count} Orden(es) con Alerta</h4>
                   <p className="text-[11px] text-[#8E949F]">&gt;15 días sin respuesta tras presupuesto</p>
                 </div>
               </div>
@@ -118,7 +118,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
               <div className="flex items-center gap-3">
                 <ShieldAlert className="w-5 h-5 text-[#F97316] shrink-0" />
                 <div>
-                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas RN-03</h4>
+                  <h4 className="font-bold text-xs sm:text-sm text-white">{rn03Count} Orden(es) Suspendidas</h4>
                   <p className="text-[11px] text-[#8E949F]">Trabajos adicionales pendientes de aprobación</p>
                 </div>
               </div>
@@ -185,7 +185,7 @@ export const WorkOrdersListView: React.FC<WorkOrdersListViewProps> = ({ onSelect
           icon={<FileText className="w-8 h-8 text-[#8E949F]" />}
           title="No se encontraron órdenes de trabajo"
           description="Ajusta los filtros de búsqueda o registra un nuevo vehículo en el taller."
-          actionLabel="Registrar Vehículo (HU-01)"
+          actionLabel="Registrar Vehículo"
           onAction={onNewOrder}
         />
       ) : (

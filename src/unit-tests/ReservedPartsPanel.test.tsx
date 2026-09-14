@@ -8,7 +8,7 @@ import {
 
 const parts: ReservedPartLine[] = [
   {
-    quotePartId: 'qp-01',
+    workOrderPartId: 'qp-01',
     id: 'pot-02',
     code: 'REP-FRE-001',
     name: 'Pastillas de Freno',
@@ -18,7 +18,7 @@ const parts: ReservedPartLine[] = [
     unitPriceBOB: 390,
   },
   {
-    quotePartId: 'qp-02',
+    workOrderPartId: 'qp-02',
     id: 'pot-06',
     code: 'REP-TRA-002',
     name: 'Aceite de Transmisión',
@@ -69,7 +69,7 @@ describe('ReservedPartsPanel', () => {
     await user.click(confirmButtons[0]);
 
     expect(onConfirm).toHaveBeenCalledWith(
-      expect.objectContaining({ quotePartId: 'qp-01' }),
+      expect.objectContaining({ workOrderPartId: 'qp-01' }),
       1,
     );
   });

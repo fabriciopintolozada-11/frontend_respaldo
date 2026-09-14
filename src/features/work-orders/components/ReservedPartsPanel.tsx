@@ -8,7 +8,7 @@ import { Card } from '../../../shared/components/Card';
 // fields are optional on purpose: when the consumer is a MECHANIC they must
 // be undefined so no price is ever rendered (FE-T07.3).
 export interface ReservedPartLine {
-  quotePartId: string;
+  workOrderPartId: string;
   id: string;
   code: string;
   name: string;
@@ -21,7 +21,7 @@ export interface ReservedPartLine {
 export type ReservedPartsViewerRole = 'MECHANIC' | 'WORKSHOP_LEAD';
 
 interface ReservedPartsPanelProps {
-  parts: ReservedPartLine[];
+  parts?: ReservedPartLine[] | null;
   userRole: ReservedPartsViewerRole | string;
   onConfirm: (part: ReservedPartLine, quantity: number) => Promise<void> | void;
   isPending?: boolean;
@@ -44,8 +44,9 @@ export function ReservedPartsPanel({
   // RN-16: only WORKSHOP_LEAD (or ADMIN) may see prices. Any other role is
   // treated as a mechanic and prices are hidden both from state and render.
   const canSeePrices = userRole === 'WORKSHOP_LEAD';
+  const partsUnavailable = parts == null;
 
-  const reserved = parts
+  const reserved = (parts ?? [])
     .map((part) => ({ ...part, remaining: remainingQuantity(part) }))
     .filter((part) => part.remaining > 0);
 
@@ -59,7 +60,9 @@ export function ReservedPartsPanel({
           </h3>
         </div>
         <p className="text-xs text-slate-600 italic">
-          No hay repuestos reservados pendientes de instalación para esta orden.
+          {partsUnavailable
+            ? 'Los repuestos reservados se mostrarán aquí cuando estén disponibles desde el backend.'
+            : 'No hay repuestos reservados pendientes de instalación para esta orden.'}
         </p>
       </Card>
     );
@@ -79,12 +82,12 @@ export function ReservedPartsPanel({
 
       <div className="space-y-2">
         {reserved.map((part) => {
-          const isPartPending = isPending && pendingPartId === part.quotePartId;
-          const selectedQty = quantities[part.quotePartId] ?? part.remaining;
+          const isPartPending = isPending && pendingPartId === part.workOrderPartId;
+          const selectedQty = quantities[part.workOrderPartId] ?? part.remaining;
 
           return (
             <div
-              key={part.quotePartId}
+              key={part.workOrderPartId}
               className="p-3.5 rounded-xl border border-slate-200 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-3"
             >
               <div className="min-w-0">
@@ -109,13 +112,13 @@ export function ReservedPartsPanel({
                 </div>
                 <div className="flex items-center gap-2 mt-2">
                   <label
-                    htmlFor={`qty-${part.quotePartId}`}
+                    htmlFor={`qty-${part.workOrderPartId}`}
                     className="text-[11px] font-semibold text-slate-600 uppercase tracking-wider"
                   >
                     Cantidad a instalar
                   </label>
                   <input
-                    id={`qty-${part.quotePartId}`}
+                    id={`qty-${part.workOrderPartId}`}
                     type="number"
                     min={1}
                     max={part.remaining}
@@ -127,7 +130,7 @@ export function ReservedPartsPanel({
                       );
                       setQuantities((prev) => ({
                         ...prev,
-                        [part.quotePartId]: value,
+                        [part.workOrderPartId]: value,
                       }));
                     }}
                     className="w-20 rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 text-sm font-semibold text-slate-900 text-center min-h-[44px] focus:outline-none focus:border-orange-400"

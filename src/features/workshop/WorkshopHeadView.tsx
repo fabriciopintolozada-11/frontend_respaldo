@@ -50,11 +50,11 @@ function getAssignmentErrorMessage(error: unknown, fallback: string): string {
   if (error instanceof ApiError) {
     switch (error.statusCode) {
       case 403:
-        return 'Solo el Jefe de Taller puede asignar órdenes de trabajo (RN-14).';
+        return 'Solo el Jefe de Taller puede asignar órdenes de trabajo.';
       case 404:
         return 'La orden de trabajo o el mecánico ya no existen en el sistema.';
       case 422:
-        return 'La orden ya no es asignable o el mecánico no está activo (RN-14).';
+        return 'La orden ya no es asignable o el mecánico no está activo.';
       default:
         return error.message;
     }
@@ -140,7 +140,7 @@ export function WorkshopHeadView() {
             </h1>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Asignación de órdenes de trabajo recibidas a mecánicos activos (HU-04 / RN-14).
+            Asignación de órdenes de trabajo recibidas a mecánicos activos.
           </p>
         </div>
         <Button
@@ -269,7 +269,7 @@ export function WorkshopHeadView() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         title="Asignar Orden de Trabajo"
-        subtitle="Asigna la OT recibida a un mecánico activo (HU-04 / RN-14)."
+        subtitle="Asigna la OT recibida a un mecánico activo."
         maxWidth="md"
       >
         <div className="space-y-4">

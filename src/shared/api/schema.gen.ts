@@ -37,6 +37,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/work-orders/tracking-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get work order tracking summary by plate, status or bay (US-05 / BE-T05.1, RN-20) */
+        get: operations["WorkOrdersController_getTrackingSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/work-orders": {
         parameters: {
             query?: never;
@@ -180,6 +197,66 @@ export interface components {
             /** @description Whether the vehicle is ready for pickup */
             readyForPickup: boolean;
         };
+        VehicleHistoryCustomerDto: {
+            id: string;
+            identification: string;
+            name: string;
+            phone: string | null;
+        };
+        VehicleHistoryTechnicalEntryDto: {
+            id: string;
+            description: string;
+            createdAt: string;
+        };
+        VehicleHistoryDiagnosticDto: {
+            id: string;
+            description: string;
+            suggestedTasks: string[];
+            estimatedHours: number;
+            createdAt: string;
+        };
+        VehicleHistoryConsumedPartDto: {
+            sparePartId: string;
+            code: string;
+            name: string;
+            quantity: number;
+            createdAt: string;
+        };
+        VehicleWorkOrderHistoryDto: {
+            id: string;
+            status: string;
+            createdAt: string;
+            diagnostic: components["schemas"]["VehicleHistoryDiagnosticDto"] | null;
+            consumedParts: components["schemas"]["VehicleHistoryConsumedPartDto"][];
+        };
+        VehicleHistoryResponseDto: {
+            id: string;
+            plate: string;
+            brand: string;
+            model: string;
+            year: number;
+            isFullyElectric: boolean;
+            customerId: string;
+            customer: components["schemas"]["VehicleHistoryCustomerDto"];
+            technicalHistory: components["schemas"]["VehicleHistoryTechnicalEntryDto"][];
+            workOrders: components["schemas"]["VehicleWorkOrderHistoryDto"][];
+        };
+        WorkOrderTrackingResponseDto: {
+            id: string;
+            plate: string;
+            model: string;
+            status: string;
+            entryDate: string;
+            daysInWorkshop: number;
+            bayId: string | null;
+            bayNumber: number | null;
+            mechanicName: string | null;
+            customerPhone: string | null;
+            missingPartName: string | null;
+            pausedReason: string | null;
+            daysWaitingApproval: number | null;
+            isStaleQuote: boolean;
+        };
     };
     responses: never;
     parameters: never;
@@ -218,6 +295,56 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["VehicleHistoryResponseDto"];
+                };
+            };
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    WorkOrdersController_getTrackingSummary: {
+        parameters: {
+            query: {
+                licensePlate?: string;
+                status?: string;
+                workBayId?: string;
+                onlyStaleQuotes?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkOrderTrackingResponseDto"][];
+                };
+            };
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: {
                 headers: {
                     [name: string]: unknown;
                 };

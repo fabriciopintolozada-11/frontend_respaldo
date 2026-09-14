@@ -46,7 +46,10 @@ function daysSince(dateString?: string | null): string {
   if (!dateString) {
     return 'Sin movimientos';
   }
-  const days = Math.floor((Date.now() - new Date(dateString).getTime()) / 86_400_000);
+  const today = new Date();
+  const seen = new Date(dateString);
+  const dayStart = (d: Date) => Date.UTC(d.getFullYear(), d.getMonth(), d.getDate());
+  const days = Math.round((dayStart(today) - dayStart(seen)) / 86_400_000);
   if (days <= 0) return 'Hoy';
   if (days === 1) return 'Hace 1 día';
   return `Hace ${days} días`;
@@ -123,7 +126,7 @@ export function InventoryAlertsView() {
             <h1 className="text-xl sm:text-2xl font-extrabold text-slate-950 tracking-tight">Alertas de Inventario</h1>
           </div>
           <p className="text-xs text-slate-600 mt-1.5">
-            Repuestos sin rotación por 60 días o más (RN-10) y disponibilidad crítica por reservas.
+            Repuestos sin rotación por 60 días o más y disponibilidad crítica por reservas.
           </p>
         </div>
         <Button variant="outline" size="sm" className="border-slate-300 bg-white text-slate-700 hover:bg-slate-100 hover:text-slate-950" onClick={() => void refetch()} leftIcon={<RefreshCw className="w-4 h-4" />}>

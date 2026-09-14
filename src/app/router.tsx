@@ -8,6 +8,7 @@ import { LoginPage } from '../features/auth/pages/LoginPage';
 const RECEPTION_AND_LEAD: UserRole[] = ['RECEPTIONIST', 'WORKSHOP_LEAD', 'ADMIN'];
 const RECEPTION_AND_ADMIN: UserRole[] = ['RECEPTIONIST', 'ADMIN'];
 const LEAD_AND_ADMIN: UserRole[] = ['WORKSHOP_LEAD', 'ADMIN'];
+const LEAD_ONLY: UserRole[] = ['WORKSHOP_LEAD'];
 const MECHANIC_ONLY: UserRole[] = ['MECHANIC'];
 const ALL_ROLES: UserRole[] = ['RECEPTIONIST', 'MECHANIC', 'WORKSHOP_LEAD', 'ADMIN'];
 
@@ -25,7 +26,8 @@ export const router = createBrowserRouter([
         element: <Navigate to="/taller" replace />,
       },
       {
-        element: <ProtectedRoute allowedRoles={LEAD_AND_ADMIN} />,
+        // US-00: the workshop head board is exclusive to WORKSHOP_LEAD.
+        element: <ProtectedRoute allowedRoles={LEAD_ONLY} />,
         children: [
           {
             path: 'taller',
@@ -33,10 +35,21 @@ export const router = createBrowserRouter([
               Component: (await import('../features/workshop/WorkshopHeadView')).WorkshopHeadView,
             }),
           },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={LEAD_AND_ADMIN} />,
+        children: [
           {
             path: 'inventario/alertas',
             lazy: async () => ({
               Component: (await import('../features/inventory/pages/InventoryAlertsView')).InventoryAlertsView,
+            }),
+          },
+          {
+            path: 'workshop-bays',
+            lazy: async () => ({
+              Component: (await import('../features/work-bays/pages/WorkBaysMonitoringPage')).WorkBaysMonitoringPage,
             }),
           },
         ],
@@ -61,6 +74,32 @@ export const router = createBrowserRouter([
             path: 'recepcion',
             lazy: async () => ({
               Component: (await import('../features/reception/vehicle-reception-page')).VehicleReceptionPage,
+            }),
+          },
+        ],
+      },
+      {
+        element: <ProtectedRoute allowedRoles={RECEPTION_AND_LEAD} />,
+        children: [
+          {
+            path: 'seguimiento',
+            lazy: async () => ({
+              Component: (await import('../features/work-orders/pages/WorkOrderTrackingPage')).WorkOrderTrackingPage,
+            }),
+          },
+          {
+            // US-20: settlement index (orders in LISTO_ENTREGA) and the
+            // settlement detail. Only reception, workshop lead and admin can
+            // see monetary values (RN-16).
+            path: 'liquidacion',
+            lazy: async () => ({
+              Component: (await import('../features/settlement/pages/SettlementIndexPage')).SettlementIndexPage,
+            }),
+          },
+          {
+            path: 'liquidacion/:orderId',
+            lazy: async () => ({
+              Component: (await import('../features/settlement/pages/SettlementPage')).SettlementPage,
             }),
           },
         ],
@@ -113,7 +152,13 @@ export const router = createBrowserRouter([
     ],
   },
   {
+    // US-17: portal público de consulta de clientes (RN-17). No requiere sesión.
+    // /consulta se mantiene como redirect para no romper enlaces previos.
     path: '/consulta',
+    element: <Navigate to="/tracking" replace />,
+  },
+  {
+    path: '/tracking',
     lazy: async () => ({
       Component: (await import('../features/tracking-public/pages/PublicTrackingPage')).PublicTrackingPage,
     }),

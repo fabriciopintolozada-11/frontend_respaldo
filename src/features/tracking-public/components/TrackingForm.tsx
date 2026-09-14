@@ -40,10 +40,11 @@ export function TrackingForm({ disabled = false, onSubmit }: TrackingFormProps) 
         />
         <Input
           id="tracking-identification"
-          label="Documento de identidad"
-          placeholder="Ingresa tu documento"
+          label="Cédula de identidad (CI)"
+          placeholder="Ej. CI-1234567"
           autoComplete="off"
-          inputMode="numeric"
+          inputMode="text"
+          maxLength={50}
           tone="light"
           required
           disabled={disabled}
@@ -62,7 +63,7 @@ export function TrackingForm({ disabled = false, onSubmit }: TrackingFormProps) 
           Consultar estado
         </Button>
       </form>
-      <p className="mt-4 text-xs text-slate-500">Consulta pública segura. Solo necesitamos la placa y el documento asociado a la orden.</p>
+      <p className="mt-4 text-xs text-slate-500">Consulta pública segura. Solo necesitamos la placa y la cédula asociada a la orden.</p>
     </Card>
   );
 }
