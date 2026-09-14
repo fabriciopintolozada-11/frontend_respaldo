@@ -7,11 +7,11 @@
   "scripts": {
     "dev": "vite",
     "dev:web": "vite",
-    "mock": "node mock-server/server.cjs",
+    "mock": "json-server --watch mock-api/db.json",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
     "typecheck": "tsc --noEmit",
-    "lint": "tsc --noEmit",
+    "lint": "tsc --noEmit && oxlint",
     "test": "vitest run",
     "test:watch": "vitest",
     "gen:schema": "openapi-typescript http://localhost:3000/api/docs-json -o src/shared/api/schema.gen.ts"
@@ -46,6 +46,7 @@
     "json-server": "^0.17.4",
     "msw": "^2.15.0",
     "openapi-typescript": "^7.13.0",
+    "oxlint": "^1.83.0",
     "typescript": "^5.9.3",
     "vite": "^8.2.1",
     "vitest": "^4.1.11"
